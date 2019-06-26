@@ -20,36 +20,65 @@ main = do
   records <- unidata
   printLong records
 
-unidata :: IO [UnicodeDataRecord]
+unidata :: IO [UnicodeDataRange]
 unidata = do
   txt <- B.readFile "data/latest/ucd/UnicodeData.txt"
   let parsed = A.parseOnly (unicodeData <* A.endOfInput) txt
   case parsed of
     Left err -> fail err
-    Right records -> pure records
+    Right records ->
+      case rangeify records of
+        Left err -> fail err
+        Right ranges -> pure ranges
+
+data UnicodeDataRange
+  = Single Word32 UnicodeName UnicodeData
+  | Range Word32 Word32 ByteString UnicodeData
+  deriving (Eq, Show)
+
+rangeify :: [UnicodeDataRecord] -> Either String [UnicodeDataRange]
+rangeify [] = Right []
+rangeify (UDRecord (Regular uname) code datum:rest) =
+  (Single code uname datum :) <$> rangeify rest
+rangeify (start@(UDRecord (RangeStart rname1) code1 datum1):end@(UDRecord (RangeEnd rname2) code2 datum2):rest)
+  | rname1 == rname2 && datum1 == datum2 =
+    (Range code1 code2 rname1 datum1 :) <$> rangeify rest
+  | otherwise =
+    Left $ "Mismatch between\n" ++ show start ++ "\nand\n" ++ show end
+rangeify (record:_) = Left $ "Unpaired record " ++ show record
 
 data UnicodeDataRecord =
-  UDR
-    { udrCode :: Word32
-    , udrName :: UnicodeDataName
-    , udrCategory :: C.GeneralCategory
-    , udrCanonicalCombiningClass :: Word8
-    , udrBidiClass :: BidiClass
-    , udrDecompositionMapping :: Maybe (Maybe CompatibilityMappingTag, [Word32])
-    , udrNumeric :: Maybe NumericProp
-    , udrBidiMirrored :: Bool
-    , udrUnicode1Name :: ByteString
-    , udrSimpleUppercaseMapping :: Maybe Word32
-    , udrSimpleLowercaseMapping :: Maybe Word32
-    , udrSimpleTitlecaseMapping :: Maybe Word32
+  UDRecord
+    { udrName :: UnicodeDataRecordType
+    , udrCode :: Word32
+    , udrData :: UnicodeData
     }
   deriving (Eq, Show)
 
-data UnicodeDataName
-  = UName ByteString
-  | Unnamed ByteString
+data UnicodeData =
+  UData
+    { udCategory :: C.GeneralCategory
+    , udCanonicalCombiningClass :: Word8
+    , udBidiClass :: BidiClass
+    , udDecompositionMapping :: Maybe (Maybe CompatibilityMappingTag, [Word32])
+    , udNumeric :: Maybe NumericProp
+    , udBidiMirrored :: Bool
+    , udUnicode1Name :: ByteString
+    , udSimpleUppercaseMapping :: Maybe Word32
+    , udSimpleLowercaseMapping :: Maybe Word32
+    , udSimpleTitlecaseMapping :: Maybe Word32
+    }
+  deriving (Eq, Show)
+
+data UnicodeDataRecordType
+  = Regular UnicodeName
   | RangeStart ByteString
   | RangeEnd ByteString
+  deriving (Eq, Show)
+
+data UnicodeName
+  = UName ByteString
+  | Unnamed ByteString
   deriving (Eq, Show)
 
 data BidiClass
@@ -136,24 +165,27 @@ udr = do
   sep
   titlecase <- optional A.hexadecimal A.<?> "simple titlecase mapping"
   pure $
-    UDR
-      { udrCode = code
-      , udrName = name
-      , udrCategory = gc
-      , udrCanonicalCombiningClass = ccc
-      , udrBidiClass = bidi
-      , udrDecompositionMapping = decomp
-      , udrNumeric = nprops
-      , udrBidiMirrored = mirrored
-      , udrUnicode1Name = u1name
-      , udrSimpleUppercaseMapping = uppercase
-      , udrSimpleLowercaseMapping = lowercase
-      , udrSimpleTitlecaseMapping = titlecase
+    UDRecord
+      { udrName = name
+      , udrCode = code
+      , udrData =
+          UData
+            { udCategory = gc
+            , udCanonicalCombiningClass = ccc
+            , udBidiClass = bidi
+            , udDecompositionMapping = decomp
+            , udNumeric = nprops
+            , udBidiMirrored = mirrored
+            , udUnicode1Name = u1name
+            , udSimpleUppercaseMapping = uppercase
+            , udSimpleLowercaseMapping = lowercase
+            , udSimpleTitlecaseMapping = titlecase
+            }
       }
   where
     sep = void $ A.char ';'
 
-udn :: A.Parser UnicodeDataName
+udn :: A.Parser UnicodeDataRecordType
 udn = (special <|> regular) A.<?> "unicode character name"
   where
     special = do
@@ -164,8 +196,8 @@ udn = (special <|> regular) A.<?> "unicode character name"
           Nothing ->
             case B.stripSuffix ", Last" field of
               Just range -> RangeEnd range
-              Nothing -> Unnamed field
-    regular = UName <$> A.takeWhile1 (/= ';')
+              Nothing -> Regular $ Unnamed field
+    regular = Regular . UName <$> A.takeWhile1 (/= ';')
 
 ugc :: A.Parser C.GeneralCategory
 ugc =
