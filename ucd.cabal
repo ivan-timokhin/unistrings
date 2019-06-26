@@ -26,8 +26,17 @@ library
 
 executable ucd-gen
   main-is:             Main.hs
+  ghc-options:         -Wall
+                       -Wincomplete-uni-patterns
+                       -Wincomplete-record-updates
+                       -Wmissing-import-lists
+                       -Widentities
+                       -Wcompat
+                       -O2
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13
+                     , attoparsec >= 0.13.2 && < 0.14
+                     , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      gen
   default-language:    Haskell2010
