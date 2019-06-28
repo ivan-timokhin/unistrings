@@ -29,8 +29,8 @@ instance Enum CodePoint where
     | x < 0 || x > 0x10FFFF =
       errorWithoutStackTrace
         "Enum.toEnum{Data.UCD.CodePoint}: value out of bounds"
-    | otherwise = CodePoint $ fromIntegral x
-  fromEnum = fromIntegral . getCodePoint
+    | otherwise = CodePoint $ toEnum x
+  fromEnum = fromEnum . getCodePoint
   enumFrom n = enumFromTo n maxBound
   enumFromThen n1 n2
     | n1 > n2 = enumFromThenTo n1 n2 minBound

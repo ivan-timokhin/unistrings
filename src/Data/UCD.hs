@@ -6,7 +6,7 @@ module Data.UCD
 
 import Data.Char (GeneralCategory, ord)
 
-import Data.UCD.Internal (CodePoint(CodePoint, getCodePoint))
+import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.GeneralCategory as GC
 
 class IsCodePoint c where
@@ -16,7 +16,7 @@ instance IsCodePoint CodePoint where
   toCodePoint = id
 
 instance IsCodePoint Char where
-  toCodePoint = CodePoint . fromIntegral . ord
+  toCodePoint = CodePoint . toEnum . ord
 
 generalCategory :: IsCodePoint cp => cp -> GeneralCategory
-generalCategory = GC.retrieve . fromIntegral . getCodePoint . toCodePoint
+generalCategory = GC.retrieve . fromEnum . toCodePoint
