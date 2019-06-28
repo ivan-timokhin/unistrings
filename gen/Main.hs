@@ -17,12 +17,14 @@ import Data.Traversable (for)
 import Data.Tuple (swap)
 import qualified Data.Vector as V
 
-import UCD.UnicodeData (unidata)
+import qualified UCD.UnicodeData
 
 main :: IO ()
 main = do
-  records <- unidata
-  printLong records
+  records <- UCD.UnicodeData.fetch
+  let gcs = UCD.UnicodeData.generalCategoryVector records
+      trie = mkTrie gcs [16, 12, 8]
+  print trie
 
 data TrieDesc t a
   = Bottom (t (V.Vector a))

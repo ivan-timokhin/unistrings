@@ -2,14 +2,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UCD.UnicodeData
-  ( UnicodeDataRange(Single, Range)
+  ( Range(Single, Range)
   , generalCategoryVector
   , unicodeTableSize
-  , UnicodeData(..)
-  , UnicodeName(UName, Unnamed)
+  , Properties(..)
+  , Name(Name, Unnamed)
   , BidiClass(..)
   , CompatibilityMappingTag(..)
-  , unidata
+  , NumericProperties(..)
+  , fetch
   ) where
 
 import Control.Applicative ((<|>), many, optional)
@@ -25,10 +26,10 @@ import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 
-unidata :: IO [UnicodeDataRange]
-unidata = do
+fetch :: IO [Range]
+fetch = do
   txt <- B.readFile "data/latest/ucd/UnicodeData.txt"
-  let parsed = A.parseOnly (unicodeData <* A.endOfInput) txt
+  let parsed = A.parseOnly (parser <* A.endOfInput) txt
   case parsed of
     Left err -> fail err
     Right records ->
@@ -36,66 +37,67 @@ unidata = do
         Left err -> fail err
         Right ranges -> pure ranges
 
-generalCategoryVector :: [UnicodeDataRange] -> V.Vector C.GeneralCategory
+generalCategoryVector :: [Range] -> V.Vector C.GeneralCategory
 generalCategoryVector ranges =
   V.replicate unicodeTableSize C.NotAssigned V.// assignments
   where
     assignments =
       ranges >>= \case
-        Single code _ udata -> [(fromIntegral code, udCategory udata)]
+        Single code _ udata -> [(fromIntegral code, propCategory udata)]
         Range lo hi _ udata ->
-          [(fromIntegral i, udCategory udata) | i <- [lo .. hi]]
+          [(fromIntegral i, propCategory udata) | i <- [lo .. hi]]
 
 unicodeTableSize :: Int
 unicodeTableSize = 0x110000
 
-data UnicodeDataRange
-  = Single Word32 UnicodeName UnicodeData
-  | Range Word32 Word32 ByteString UnicodeData
+data Range
+  = Single Word32 Name Properties
+  | Range Word32 Word32 ByteString Properties
   deriving (Eq, Show)
 
-rangeify :: [UnicodeDataRecord] -> Either String [UnicodeDataRange]
+rangeify :: [Record] -> Either String [Range]
 rangeify [] = Right []
-rangeify (UDRecord (Regular uname) code datum:rest) =
+rangeify (Record (Regular uname) code datum:rest) =
   (Single code uname datum :) <$> rangeify rest
-rangeify (start@(UDRecord (RangeStart rname1) code1 datum1):end@(UDRecord (RangeEnd rname2) code2 datum2):rest)
+rangeify (start@(Record (RangeStart rname1) code1 datum1):end@(Record (RangeEnd rname2) code2 datum2):rest)
   | rname1 == rname2 && datum1 == datum2 =
     (Range code1 code2 rname1 datum1 :) <$> rangeify rest
   | otherwise =
     Left $ "Mismatch between\n" ++ show start ++ "\nand\n" ++ show end
 rangeify (record:_) = Left $ "Unpaired record " ++ show record
 
-data UnicodeDataRecord =
-  UDRecord
-    { udrName :: UnicodeDataRecordType
-    , udrCode :: Word32
-    , udrData :: UnicodeData
+data Record =
+  Record
+    { recordType :: RecordType
+    , recordCode :: Word32
+    , recordData :: Properties
     }
   deriving (Eq, Show)
 
-data UnicodeData =
-  UData
-    { udCategory :: C.GeneralCategory
-    , udCanonicalCombiningClass :: Word8
-    , udBidiClass :: BidiClass
-    , udDecompositionMapping :: Maybe (Maybe CompatibilityMappingTag, [Word32])
-    , udNumeric :: Maybe NumericProp
-    , udBidiMirrored :: Bool
-    , udUnicode1Name :: ByteString
-    , udSimpleUppercaseMapping :: Maybe Word32
-    , udSimpleLowercaseMapping :: Maybe Word32
-    , udSimpleTitlecaseMapping :: Maybe Word32
+data Properties =
+  Properties
+    { propCategory :: C.GeneralCategory
+    , propCanonicalCombiningClass :: Word8
+    , propBidiClass :: BidiClass
+    , propDecompositionMapping :: Maybe ( Maybe CompatibilityMappingTag
+                                        , [Word32])
+    , propNumeric :: Maybe NumericProperties
+    , propBidiMirrored :: Bool
+    , propUnicode1Name :: ByteString
+    , propSimpleUppercaseMapping :: Maybe Word32
+    , propSimpleLowercaseMapping :: Maybe Word32
+    , propSimpleTitlecaseMapping :: Maybe Word32
     }
   deriving (Eq, Show)
 
-data UnicodeDataRecordType
-  = Regular UnicodeName
+data RecordType
+  = Regular Name
   | RangeStart ByteString
   | RangeEnd ByteString
   deriving (Eq, Show)
 
-data UnicodeName
-  = UName ByteString
+data Name
+  = Name ByteString
   | Unnamed ByteString
   deriving (Eq, Show)
 
@@ -144,30 +146,30 @@ data CompatibilityMappingTag
   | Compat
   deriving (Eq, Ord, Show, Enum, Bounded, Read)
 
-data NumericProp
+data NumericProperties
   = Decimal Word8
   | Digit Word8
   | Numeric Rational
   deriving (Eq, Show)
 
-unicodeData :: A.Parser [UnicodeDataRecord]
-unicodeData = many (udr <* A.char '\n')
+parser :: A.Parser [Record]
+parser = many (pRecord <* A.char '\n')
 
-udr :: A.Parser UnicodeDataRecord
-udr = do
+pRecord :: A.Parser Record
+pRecord = do
   code <- A.hexadecimal A.<?> "code point"
   sep
-  name <- udn
+  ty <- pType
   sep
-  gc <- ugc
+  gc <- pCategory
   sep
   ccc <- A.decimal A.<?> "canonical combining class"
   sep
-  bidi <- bidiClass
+  bidi <- pBidiClass
   sep
-  decomp <- optional decompMapping
+  decomp <- optional pDecompositionMapping
   sep
-  nprops <- numericProp
+  nprops <- pNumericProperties
   sep
   mirrored <-
     True <$ A.char 'Y' <|> False <$ A.char 'N' A.<?> "bidi mirrored property"
@@ -183,28 +185,28 @@ udr = do
   sep
   titlecase <- optional A.hexadecimal A.<?> "simple titlecase mapping"
   pure $
-    UDRecord
-      { udrName = name
-      , udrCode = code
-      , udrData =
-          UData
-            { udCategory = gc
-            , udCanonicalCombiningClass = ccc
-            , udBidiClass = bidi
-            , udDecompositionMapping = decomp
-            , udNumeric = nprops
-            , udBidiMirrored = mirrored
-            , udUnicode1Name = u1name
-            , udSimpleUppercaseMapping = uppercase
-            , udSimpleLowercaseMapping = lowercase
-            , udSimpleTitlecaseMapping = titlecase
+    Record
+      { recordType = ty
+      , recordCode = code
+      , recordData =
+          Properties
+            { propCategory = gc
+            , propCanonicalCombiningClass = ccc
+            , propBidiClass = bidi
+            , propDecompositionMapping = decomp
+            , propNumeric = nprops
+            , propBidiMirrored = mirrored
+            , propUnicode1Name = u1name
+            , propSimpleUppercaseMapping = uppercase
+            , propSimpleLowercaseMapping = lowercase
+            , propSimpleTitlecaseMapping = titlecase
             }
       }
   where
     sep = void $ A.char ';'
 
-udn :: A.Parser UnicodeDataRecordType
-udn = (special <|> regular) A.<?> "unicode character name"
+pType :: A.Parser RecordType
+pType = (special <|> regular) A.<?> "unicode character name"
   where
     special = do
       field <- A.char '<' *> A.takeWhile1 (/= '>') <* A.char '>'
@@ -215,10 +217,10 @@ udn = (special <|> regular) A.<?> "unicode character name"
             case B.stripSuffix ", Last" field of
               Just range -> RangeEnd range
               Nothing -> Regular $ Unnamed field
-    regular = Regular . UName <$> A.takeWhile1 (/= ';')
+    regular = Regular . Name <$> A.takeWhile1 (/= ';')
 
-ugc :: A.Parser C.GeneralCategory
-ugc =
+pCategory :: A.Parser C.GeneralCategory
+pCategory =
   A.choice
     (map
        (\(str, gc) -> gc <$ A.string str)
@@ -257,8 +259,8 @@ ugc =
   where
     (~>) = (,)
 
-bidiClass :: A.Parser BidiClass
-bidiClass =
+pBidiClass :: A.Parser BidiClass
+pBidiClass =
   A.choice
     (map (\(str, bd) -> bd <$ A.string str) $
      sortOn
@@ -291,8 +293,8 @@ bidiClass =
   where
     (~>) = (,)
 
-decompMapping :: A.Parser (Maybe CompatibilityMappingTag, [Word32])
-decompMapping =
+pDecompositionMapping :: A.Parser (Maybe CompatibilityMappingTag, [Word32])
+pDecompositionMapping =
   (do tag <-
         optional $
         A.char '<' *>
@@ -324,8 +326,8 @@ decompMapping =
   where
     (~>) = (,)
 
-numericProp :: A.Parser (Maybe NumericProp)
-numericProp =
+pNumericProperties :: A.Parser (Maybe NumericProperties)
+pNumericProperties =
   decimal <|>
   A.char ';' *>
   (digit <|> A.char ';' *> (numeric <|> pure Nothing)) A.<?>
