@@ -18,6 +18,7 @@ extra-source-files:  CHANGELOG.md
 
 library
   exposed-modules:     Data.UCD
+                     , Data.UCD.Internal
   other-modules:       Data.UCD.Internal.Ptr
                      , Data.UCD.Internal.GeneralCategory
   -- other-extensions:
