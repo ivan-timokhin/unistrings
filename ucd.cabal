@@ -34,6 +34,7 @@ executable ucd-gen
                        -Wcompat
                        -O2
   other-modules:       UCD.UnicodeData
+                     , Trie
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13
                      , attoparsec >= 0.13.2 && < 0.14
