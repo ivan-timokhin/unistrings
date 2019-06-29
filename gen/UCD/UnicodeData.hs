@@ -343,18 +343,18 @@ pNumericProperties =
   "numeric type and value"
   where
     decimal = do
-      val <- A.decimal
-      guard $ 0 <= val && val <= 9
-      let strval = B.pack $ show val
-      _ <- A.char ';' *> A.string strval *> A.char ';' *> A.string strval
+      (val, rep) <- field
+      _ <- A.char ';' *> rep *> A.char ';' *> rep
       pure $ Just $ Decimal val
     digit = do
-      val <- A.decimal
-      guard $ 0 <= val && val <= 9
-      let strval = B.pack $ show val
-      _ <- A.char ';' *> A.string strval
+      (val, rep) <- field
+      _ <- A.char ';' *> rep
       pure $ Just $ Digit val
     numeric =
       fmap (Just . Numeric) $
       ((%) <$> A.signed A.decimal <* A.char '/' <*> A.decimal) <|>
       A.signed ((fromIntegral :: Integer -> Rational) <$> A.decimal)
+    field = do
+      val <- A.decimal
+      guard $ 0 <= val && val <= 9
+      pure (val, A.string $ B.pack $ show val)
