@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Gen.Type
   ( EnumTy
@@ -13,6 +14,7 @@ import Data.Int (Int16, Int32, Int8)
 import Data.List (find)
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Semigroup (Max(Max, getMax), Min(Min, getMin))
+import qualified Data.Vector as V
 import Data.Word (Word16, Word8)
 
 import Gen.Cost (SizedTy(sizeInBytes))
@@ -37,10 +39,17 @@ instance SizedTy IntegralType where
   sizeInBytes = itSize
 
 typeEnum :: (Foldable t, Enum a) => TrieDesc () t a -> TrieDesc EnumTy t a
-typeEnum (Bottom _ xs) =
-  Bottom (findTypeForRange $ minMax 0 fromEnum (Compose xs)) xs
-typeEnum (Layer _ nbits xs rest) =
-  Layer (findTypeForRange $ minMax 0 id (Compose xs)) nbits xs (typeEnum rest)
+typeEnum = typeG $ \xs -> findTypeForRange $ minMax 0 fromEnum (Compose xs)
+
+typeG ::
+     (Foldable t, LayerAnnotation annTy ~ IntegralType)
+  => (forall f. Foldable f =>
+                  f (V.Vector a) -> BottomAnnotation annTy)
+  -> TrieDesc ann t a
+  -> TrieDesc annTy t a
+typeG f (Bottom _ xs) = Bottom (f xs) xs
+typeG f (Layer _ nbits xs rest) =
+  Layer (findTypeForRange $ minMax 0 id (Compose xs)) nbits xs (typeG f rest)
 
 integralType ::
      Integral a => ByteString -> ByteString -> a -> a -> Int -> IntegralType
