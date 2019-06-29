@@ -57,6 +57,7 @@ executable ucd-gen
                      , Trie
                      , Gen
                      , Gen.Type
+                     , ListM
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13
                      , attoparsec >= 0.13.2 && < 0.14

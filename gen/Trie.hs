@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -13,12 +14,14 @@ import Control.Arrow (first, second)
 import qualified Control.Monad.Trans.State.Strict as S
 import Data.Bits (shiftL)
 import Data.Functor.Compose (Compose(Compose))
-import Data.Functor.Identity (Identity(Identity))
+import Data.Functor.Identity (Identity(Identity, runIdentity))
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import Data.Traversable (for)
 import Data.Tuple (swap)
 import qualified Data.Vector as V
+
+import ListM (ListM(Cons, Nil), fromList)
 
 type family LayerAnnotation ann
 
@@ -38,19 +41,25 @@ deriving instance
          Show (TrieDesc ann t a)
 
 mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc () Identity a
-mkTrie xs [] = Bottom () (Identity xs)
-mkTrie xs (lowBits:rest) = split (go rest) lowBits (Identity xs)
+mkTrie xs bits = runIdentity $ mkTrieM xs (fromList bits)
+
+mkTrieM ::
+     (Ord a, Monad m) => V.Vector a -> ListM m Int -> m (TrieDesc () Identity a)
+mkTrieM xs Nil = pure $ Bottom () (Identity xs)
+mkTrieM xs (Cons lowBits rest) = split (go rest) lowBits (Identity xs)
   where
-    go [] = Bottom ()
-    go (lb:lbs) = split (go lbs) lb
+    go mbits ys =
+      mbits >>= \case
+        Nil -> pure $ Bottom () ys
+        Cons lb lbs -> split (go lbs) lb ys
 
 split ::
-     (Traversable t, Ord a)
-  => (V.Vector (V.Vector a) -> TrieDesc () V.Vector a)
+     (Traversable t, Ord a, Functor f)
+  => (V.Vector (V.Vector a) -> f (TrieDesc () V.Vector a))
   -> Int
   -> t (V.Vector a)
-  -> TrieDesc () t a
-split recur lowBits xs = Layer () lowBits indices $ recur compressed
+  -> f (TrieDesc () t a)
+split recur lowBits xs = Layer () lowBits indices <$> recur compressed
   where
     (Compose indices, compressed) =
       deduplicate $ Compose $ fmap (matricise lowBits) xs
