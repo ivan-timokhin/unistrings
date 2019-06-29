@@ -1,8 +1,11 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Trie
   ( TrieDesc(Bottom, Layer)
+  , LayerAnnotation
+  , BottomAnnotation
   , mkTrie
   ) where
 
@@ -17,28 +20,37 @@ import Data.Traversable (for)
 import Data.Tuple (swap)
 import qualified Data.Vector as V
 
-data TrieDesc t a
-  = Bottom (t (V.Vector a))
-  | Layer Int (t (V.Vector Int)) (TrieDesc V.Vector a)
+type family LayerAnnotation ann
+
+type family BottomAnnotation ann
+
+type instance LayerAnnotation () = ()
+
+type instance BottomAnnotation () = ()
+
+data TrieDesc ann t a
+  = Bottom (BottomAnnotation ann) (t (V.Vector a))
+  | Layer (LayerAnnotation ann) Int (t (V.Vector Int)) (TrieDesc ann V.Vector a)
 
 deriving instance
-         (Show (t (V.Vector Int)), Show (t (V.Vector a)), Show a) =>
-         Show (TrieDesc t a)
+         (Show (t (V.Vector Int)), Show (t (V.Vector a)), Show a,
+          Show (BottomAnnotation ann), Show (LayerAnnotation ann)) =>
+         Show (TrieDesc ann t a)
 
-mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc Identity a
-mkTrie xs [] = Bottom (Identity xs)
+mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc () Identity a
+mkTrie xs [] = Bottom () (Identity xs)
 mkTrie xs (lowBits:rest) = split (go rest) lowBits (Identity xs)
   where
-    go [] = Bottom
+    go [] = Bottom ()
     go (lb:lbs) = split (go lbs) lb
 
 split ::
      (Traversable t, Ord a)
-  => (V.Vector (V.Vector a) -> TrieDesc V.Vector a)
+  => (V.Vector (V.Vector a) -> TrieDesc () V.Vector a)
   -> Int
   -> t (V.Vector a)
-  -> TrieDesc t a
-split recur lowBits xs = Layer lowBits indices $ recur compressed
+  -> TrieDesc () t a
+split recur lowBits xs = Layer () lowBits indices $ recur compressed
   where
     (Compose indices, compressed) =
       deduplicate $ Compose $ fmap (matricise lowBits) xs

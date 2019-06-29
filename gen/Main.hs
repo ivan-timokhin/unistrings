@@ -1,24 +1,26 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import Data.Foldable (for_)
 import qualified Data.ByteString.Char8 as B
+import Data.Foldable (for_)
 import System.Directory (createDirectoryIfMissing)
-import System.IO (withFile, IOMode(WriteMode), hPrint)
+import System.IO (IOMode(WriteMode), hPrint, withFile)
 
-import qualified UCD.UnicodeData
-import Trie (mkTrie)
 import Gen
   ( EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
   , Module(moduleC, moduleHs)
   , generateEnum
   )
+import Gen.Type (typeEnum)
+import Trie (mkTrie)
+import qualified UCD.UnicodeData
 
 main :: IO ()
 main = do
   records <- UCD.UnicodeData.fetch
   let gcs = UCD.UnicodeData.generalCategoryVector records
-      trie = mkTrie gcs [16, 8]
+      trie = typeEnum $ mkTrie gcs [16, 8]
       md =
         generateEnum
           EnumSpec
@@ -33,6 +35,7 @@ main = do
   B.writeFile
     "generated/hs/Data/UCD/Internal/GeneralCategory.hs"
     (B.unlines $
+     "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
      "module Data.UCD.Internal.GeneralCategory (retrieve) where\n" : moduleHs md)
   createDirectoryIfMissing True "generated/test_data"
   withFile "generated/test_data/general_category.txt" WriteMode $ \h ->
