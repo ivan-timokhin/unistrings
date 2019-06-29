@@ -5,6 +5,7 @@ module UCD.UnicodeData
   ( Range(Single, Range)
   , generalCategoryVector
   , unicodeTableSize
+  , Table
   , Properties(..)
   , Name(Name, Unnamed)
   , BidiClass(..)
@@ -26,7 +27,12 @@ import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 
-fetch :: IO [Range]
+newtype Table =
+  Table
+    { getTable :: [Range]
+    }
+
+fetch :: IO Table
 fetch = do
   txt <- B.readFile "data/latest/ucd/UnicodeData.txt"
   let parsed = A.parseOnly (parser <* A.endOfInput) txt
@@ -35,14 +41,14 @@ fetch = do
     Right records ->
       case rangeify records of
         Left err -> fail err
-        Right ranges -> pure ranges
+        Right ranges -> pure $ Table ranges
 
-generalCategoryVector :: [Range] -> V.Vector C.GeneralCategory
+generalCategoryVector :: Table -> V.Vector C.GeneralCategory
 generalCategoryVector ranges =
   V.replicate unicodeTableSize C.NotAssigned V.// assignments
   where
     assignments =
-      ranges >>= \case
+      getTable ranges >>= \case
         Single code _ udata -> [(fromIntegral code, propCategory udata)]
         Range lo hi _ udata ->
           [(fromIntegral i, propCategory udata) | i <- [lo .. hi]]
