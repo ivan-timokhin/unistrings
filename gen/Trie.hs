@@ -8,6 +8,8 @@ module Trie
   , LayerAnnotation
   , BottomAnnotation
   , mkTrie
+  , mkTrieM
+  , partitioning
   ) where
 
 import Control.Arrow (first, second)
@@ -39,6 +41,10 @@ deriving instance
          (Show (t (V.Vector Int)), Show (t (V.Vector a)), Show a,
           Show (BottomAnnotation ann), Show (LayerAnnotation ann)) =>
          Show (TrieDesc ann t a)
+
+partitioning :: TrieDesc ann f a -> [Int]
+partitioning (Bottom _ _) = []
+partitioning (Layer _ b _ rest) = b : partitioning rest
 
 mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc () Identity a
 mkTrie xs bits = runIdentity $ mkTrieM xs (fromList bits)

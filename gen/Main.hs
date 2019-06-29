@@ -4,6 +4,7 @@ module Main where
 
 import qualified Data.ByteString.Char8 as B
 import Data.Foldable (for_)
+import Data.Maybe (fromMaybe)
 import System.Directory (createDirectoryIfMissing)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
@@ -12,15 +13,19 @@ import Gen
   , Module(moduleC, moduleHs)
   , generateEnum
   )
+import Gen.Cost (pickBest, totalCost)
 import Gen.Type (typeEnum)
-import Trie (mkTrie)
+import ListM (generatePartitionings)
+import Trie (mkTrieM, partitioning)
 import qualified UCD.UnicodeData
 
 main :: IO ()
 main = do
   records <- UCD.UnicodeData.fetch
   let gcs = UCD.UnicodeData.generalCategoryVector records
-      trie = typeEnum $ mkTrie gcs [16, 8]
+      partitionings = generatePartitionings 4 0 16
+      tries = map typeEnum $ partitionings >>= mkTrieM gcs
+      trie = fromMaybe (error "Can't pick best trie") $ pickBest tries
       md =
         generateEnum
           EnumSpec
@@ -29,6 +34,8 @@ main = do
             , esHsTypeModule = "Data.Char"
             }
           trie
+  print $ partitioning trie
+  print $ totalCost trie
   createDirectoryIfMissing True "generated/cbits"
   createDirectoryIfMissing True "generated/hs/Data/UCD/Internal"
   B.writeFile "generated/cbits/general_category.c" (B.unlines $ moduleC md)

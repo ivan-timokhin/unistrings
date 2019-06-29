@@ -58,6 +58,7 @@ executable ucd-gen
                      , Gen
                      , Gen.Type
                      , ListM
+                     , Gen.Cost
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13
                      , attoparsec >= 0.13.2 && < 0.14
