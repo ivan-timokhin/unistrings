@@ -28,6 +28,17 @@ import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 
+import Data.UCD.Internal.Types
+  ( BidiClass(ArabicLetter, ArabicNumber, BoundaryNeutral,
+          CommonSeparator, EuropeanNumber, EuropeanSeparator,
+          EuropeanTerminator, FirstStrongIsolate, LeftToRight,
+          LeftToRightEmbedding, LeftToRightIsolate, LeftToRightOverride,
+          NonSpacingMark, OtherNeutral, ParagraphSeparator,
+          PopDirectionalFormat, PopDirectionalIsolate, RightToLeft,
+          RightToLeftEmbedding, RightToLeftIsolate, RightToLeftOverride,
+          SegmentSeparator, WhiteSpace)
+  )
+
 newtype Table a =
   Table
     { getTable :: [Range a]
@@ -109,32 +120,6 @@ data Name
   = Name ByteString
   | Unnamed ByteString
   deriving (Eq, Show)
-
-data BidiClass
-  = LeftToRight
-  | RightToLeft
-  | ArabicLetter
-  | EuropeanNumber
-  | EuropeanSeparator
-  | EuropeanTerminator
-  | ArabicNumber
-  | CommonSeparator
-  | NonSpacingMark
-  | BoundaryNeutral
-  | ParagraphSeparator
-  | SegmentSeparator
-  | WhiteSpace
-  | OtherNeutral
-  | LeftToRightEmbedding
-  | LeftToRightOverride
-  | RightToLeftEmbedding
-  | RightToLeftOverride
-  | PopDirectionalFormat
-  | LeftToRightIsolate
-  | RightToLeftIsolate
-  | FirstStrongIsolate
-  | PopDirectionalIsolate
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
 
 data CompatibilityMappingTag
   = Font

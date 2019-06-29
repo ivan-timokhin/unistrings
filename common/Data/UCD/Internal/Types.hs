@@ -1,0 +1,29 @@
+module Data.UCD.Internal.Types
+  ( BidiClass(..)
+  ) where
+
+data BidiClass
+  = LeftToRight
+  | RightToLeft
+  | ArabicLetter
+  | EuropeanNumber
+  | EuropeanSeparator
+  | EuropeanTerminator
+  | ArabicNumber
+  | CommonSeparator
+  | NonSpacingMark
+  | BoundaryNeutral
+  | ParagraphSeparator
+  | SegmentSeparator
+  | WhiteSpace
+  | OtherNeutral
+  | LeftToRightEmbedding
+  | LeftToRightOverride
+  | RightToLeftEmbedding
+  | RightToLeftOverride
+  | PopDirectionalFormat
+  | LeftToRightIsolate
+  | RightToLeftIsolate
+  | FirstStrongIsolate
+  | PopDirectionalIsolate
+  deriving (Eq, Ord, Enum, Bounded, Show, Read)
