@@ -9,11 +9,11 @@ module Gen.Type
   ) where
 
 import Data.ByteString.Char8 (ByteString)
+import Data.Foldable (foldl')
 import Data.Functor.Compose (Compose(Compose))
 import Data.Int (Int16, Int32, Int8)
 import Data.List (find)
-import Data.Maybe (fromJust, fromMaybe)
-import Data.Semigroup (Max(Max, getMax), Min(Min, getMin))
+import Data.Maybe (fromJust)
 import qualified Data.Vector as V
 import Data.Word (Word16, Word8)
 
@@ -68,13 +68,17 @@ findTypeForRange :: (Int, Int) -> IntegralType
 findTypeForRange (lo, hi) =
   fromJust $ find (\ty -> itMin ty <= lo && itMax ty >= hi) ffiIntegralTypes
 
+data Pair a b =
+  Pair !a !b
+
+pair2tuple :: Pair a b -> (a, b)
+pair2tuple (Pair x y) = (x, y)
+
 minMax :: (Foldable f, Ord b) => b -> (a -> b) -> f a -> (b, b)
-minMax def f xs =
-  (getMin $ fromMaybe (Min def) mMin, getMax $ fromMaybe (Max def) mMax)
-  where
-    (mMin, mMax) =
-      foldMap
-        (\x ->
-           let y = f x
-            in (Just (Min y), Just (Max y)))
-        xs
+minMax def f =
+  pair2tuple .
+  foldl'
+    (\(Pair curMin curMax) x ->
+       let b = f x
+        in Pair (min curMin b) (max curMax b))
+    (Pair def def)
