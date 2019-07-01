@@ -6,6 +6,13 @@ module Gen.Type
   ( EnumTy
   , IntegralType(..)
   , typeEnum
+  , IntTy
+  , typeIntegral
+  , int8
+  , word8
+  , int16
+  , word16
+  , int32
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -26,6 +33,12 @@ type instance BottomAnnotation EnumTy = IntegralType
 
 type instance LayerAnnotation EnumTy = IntegralType
 
+data IntTy
+
+type instance BottomAnnotation IntTy = IntegralType
+
+type instance LayerAnnotation IntTy = IntegralType
+
 data IntegralType =
   IntegralType
     { itHaskell :: ByteString
@@ -38,8 +51,18 @@ data IntegralType =
 instance SizedTy IntegralType where
   sizeInBytes = itSize
 
-typeEnum :: (Foldable t, Enum a) => TrieDesc () t a -> TrieDesc EnumTy t a
-typeEnum = typeG $ \xs -> findTypeForRange $ minMax 0 fromEnum (Compose xs)
+typeEnum :: (Foldable t, Enum a) => TrieDesc ann t a -> TrieDesc EnumTy t a
+typeEnum = typeG (findTypeForTable fromEnum)
+
+typeIntegral ::
+     (Foldable t, Integral a)
+  => IntegralType
+  -> TrieDesc ann t a
+  -> TrieDesc IntTy t a
+-- TODO: check that the stated integral type admits all values.
+-- This will be caught later in the test suite anyway, but it may be
+-- worthwhile to check here.
+typeIntegral intTy = typeG (const intTy)
 
 typeG ::
      (Foldable t, LayerAnnotation annTy ~ IntegralType)
@@ -49,20 +72,29 @@ typeG ::
   -> TrieDesc annTy t a
 typeG f (Bottom _ xs) = Bottom (f xs) xs
 typeG f (Layer _ nbits xs rest) =
-  Layer (findTypeForRange $ minMax 0 id (Compose xs)) nbits xs (typeG f rest)
+  Layer (findTypeForTable id xs) nbits xs (typeG f rest)
+
+findTypeForTable ::
+     (Foldable f1, Foldable f2) => (a -> Int) -> f1 (f2 a) -> IntegralType
+findTypeForTable f xs = findTypeForRange $ minMax 0 f (Compose xs)
 
 integralType ::
      Integral a => ByteString -> ByteString -> a -> a -> Int -> IntegralType
 integralType h c mi ma = IntegralType h c (fromIntegral mi) (fromIntegral ma)
 
+int8, word8, int16, word16, int32 :: IntegralType
+int8 = integralType "Int8" "HsInt8" (minBound :: Int8) maxBound 1
+
+word8 = integralType "Word8" "HsWord8" (minBound :: Word8) maxBound 1
+
+int16 = integralType "Int16" "HsInt16" (minBound :: Int16) maxBound 2
+
+word16 = integralType "Word16" "HsWord16" (minBound :: Word16) maxBound 2
+
+int32 = integralType "Int32" "HsInt32" (minBound :: Int32) maxBound 4
+
 ffiIntegralTypes :: [IntegralType]
-ffiIntegralTypes =
-  [ integralType "Int8" "HsInt8" (minBound :: Int8) maxBound 1
-  , integralType "Word8" "HsWord8" (minBound :: Word8) maxBound 1
-  , integralType "Int16" "HsInt16" (minBound :: Int16) maxBound 2
-  , integralType "Word16" "HsWord16" (minBound :: Word16) maxBound 2
-  , integralType "Int32" "HsInt32" (minBound :: Int32) maxBound 4
-  ]
+ffiIntegralTypes = [int8, word8, int16, word16, int32]
 
 findTypeForRange :: (Int, Int) -> IntegralType
 findTypeForRange (lo, hi) =

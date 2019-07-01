@@ -10,11 +10,13 @@ import System.IO (IOMode(WriteMode), hPrint, withFile)
 
 import Gen
   ( EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
+  , IntSpec(IntSpec, isCPrefix, isHsType)
   , Module(moduleC, moduleHs)
   , generateEnum
+  , generateIntegral
   )
 import Gen.Cost (pickBest, totalCost)
-import Gen.Type (typeEnum)
+import Gen.Type (typeEnum, typeIntegral, word8)
 import ListM (generatePartitionings)
 import Trie (mkTrieM, partitioning)
 import qualified UCD.UnicodeData
@@ -47,6 +49,28 @@ main = do
   createDirectoryIfMissing True "generated/test_data"
   withFile "generated/test_data/general_category.txt" WriteMode $ \h ->
     for_ gcs $ hPrint h
+  let cccs =
+        UCD.UnicodeData.tableToVector 0 $
+        fmap UCD.UnicodeData.propCanonicalCombiningClass records
+      cctries = map (typeIntegral word8) $ partitionings >>= mkTrieM cccs
+      cctrie = fromMaybe (error "Can't pick best trie") $ pickBest cctries
+      ccmd =
+        generateIntegral
+          IntSpec {isCPrefix = "canonical_combining_class", isHsType = "Word8"}
+          cctrie
+  print $ partitioning cctrie
+  print $ totalCost cctrie
+  B.writeFile
+    "generated/hs/Data/UCD/Internal/CanonicalCombiningClass.hs"
+    (B.unlines $
+     "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
+     "module Data.UCD.Internal.CanonicalCombiningClass (retrieve) where\n" :
+     moduleHs ccmd)
+  B.writeFile
+    "generated/cbits/canonical_combining_class.c"
+    (B.unlines $ moduleC ccmd)
+  withFile "generated/test_data/canonical_combining_class.txt" WriteMode $ \h ->
+    for_ cccs $ hPrint h
 
 printLong :: Show a => [a] -> IO ()
 printLong entries

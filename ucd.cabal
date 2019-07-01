@@ -21,6 +21,7 @@ library
                      , Data.UCD.Internal
   other-modules:       Data.UCD.Internal.Ptr
                      , Data.UCD.Internal.GeneralCategory
+                     , Data.UCD.Internal.CanonicalCombiningClass
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
@@ -29,6 +30,7 @@ library
                        -Widentities
                        -Wcompat
   c-sources:           generated/cbits/general_category.c
+                     , generated/cbits/canonical_combining_class.c
   build-depends:       base >=4.12 && <4.13
   hs-source-dirs:      src
                      , generated/hs
