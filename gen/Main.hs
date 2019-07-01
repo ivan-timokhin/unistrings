@@ -1,10 +1,16 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
 import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
+import Data.Char (GeneralCategory(NotAssigned), toUpper)
 import Data.Foldable (for_)
 import Data.Maybe (fromMaybe)
+import qualified Data.Vector as V
 import System.Directory (createDirectoryIfMissing)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
@@ -15,62 +21,103 @@ import Gen
   , generateEnum
   , generateIntegral
   )
-import Gen.Cost (pickBest, totalCost)
-import Gen.Type (typeEnum, typeIntegral, word8)
+import Gen.Cost (SizedTy, pickBest, totalCost)
+import Gen.Type
+  ( EnumTy
+  , IntTy
+  , IntegralType(itHaskell)
+  , typeEnum
+  , typeIntegral
+  , word8
+  )
 import ListM (generatePartitionings)
-import Trie (mkTrieM, partitioning)
+import Trie (BottomAnnotation, LayerAnnotation, TrieDesc, mkTrieM, partitioning)
 import qualified UCD.UnicodeData
 
 main :: IO ()
 main = do
   records <- UCD.UnicodeData.fetch
-  let gcs = UCD.UnicodeData.generalCategoryVector records
-      partitionings = generatePartitionings 4 0 16
-      tries = map typeEnum $ partitionings >>= mkTrieM gcs
-      trie = fromMaybe (error "Can't pick best trie") $ pickBest tries
-      md =
-        generateEnum
-          EnumSpec
-            { esCPrefix = "general_category"
-            , esHsType = "GeneralCategory"
-            , esHsTypeModule = "Data.Char"
-            }
-          trie
-  print $ partitioning trie
-  print $ totalCost trie
   createDirectoryIfMissing True "generated/cbits"
   createDirectoryIfMissing True "generated/hs/Data/UCD/Internal"
-  B.writeFile "generated/cbits/general_category.c" (B.unlines $ moduleC md)
-  B.writeFile
-    "generated/hs/Data/UCD/Internal/GeneralCategory.hs"
-    (B.unlines $
-     "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
-     "module Data.UCD.Internal.GeneralCategory (retrieve) where\n" : moduleHs md)
   createDirectoryIfMissing True "generated/test_data"
-  withFile "generated/test_data/general_category.txt" WriteMode $ \h ->
-    for_ gcs $ hPrint h
-  let cccs =
-        UCD.UnicodeData.tableToVector 0 $
-        fmap UCD.UnicodeData.propCanonicalCombiningClass records
-      cctries = map (typeIntegral word8) $ partitionings >>= mkTrieM cccs
-      cctrie = fromMaybe (error "Can't pick best trie") $ pickBest cctries
-      ccmd =
-        generateIntegral
-          IntSpec {isCPrefix = "canonical_combining_class", isHsType = "Word8"}
-          cctrie
-  print $ partitioning cctrie
-  print $ totalCost cctrie
-  B.writeFile
-    "generated/hs/Data/UCD/Internal/CanonicalCombiningClass.hs"
-    (B.unlines $
-     "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
-     "module Data.UCD.Internal.CanonicalCombiningClass (retrieve) where\n" :
-     moduleHs ccmd)
-  B.writeFile
-    "generated/cbits/canonical_combining_class.c"
-    (B.unlines $ moduleC ccmd)
-  withFile "generated/test_data/canonical_combining_class.txt" WriteMode $ \h ->
-    for_ cccs $ hPrint h
+  processTable
+    TableDesc
+      { tdSnakeName = "general_category"
+      , tdType = EnumTable "GeneralCategory" "Data.Char"
+      } $
+    UCD.UnicodeData.tableToVector NotAssigned $
+    fmap UCD.UnicodeData.propCategory records
+  processTable
+    TableDesc
+      {tdSnakeName = "canonical_combining_class", tdType = IntegralTable word8} $
+    UCD.UnicodeData.tableToVector 0 $
+    fmap UCD.UnicodeData.propCanonicalCombiningClass records
+
+processTable ::
+     forall a ty.
+     ( Ord a
+     , SizedTy (BottomAnnotation ty)
+     , SizedTy (LayerAnnotation ty)
+     , Show a
+     )
+  => TableDesc ty a
+  -> V.Vector a
+  -> IO ()
+processTable desc values = do
+  print $ partitioning trie
+  print $ totalCost trie
+  let hsFile = "generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
+  B.writeFile (B.unpack hsFile) $
+    B.unlines $
+    "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
+    ("module Data.UCD.Internal." <> hsModuleName <> " (retrieve) where\n") :
+    moduleHs modul
+  B.writeFile (B.unpack $ "generated/cbits/" <> tdSnakeName desc <> ".c") $
+    B.unlines $ moduleC modul
+  withFile
+    (B.unpack $ "generated/test_data/" <> tdSnakeName desc <> ".txt")
+    WriteMode $ \h -> for_ values $ hPrint h
+  where
+    hsModuleName = snake2camel $ tdSnakeName desc
+    modul :: Module
+    modul =
+      case tdType desc of
+        EnumTable typ modTy ->
+          generateEnum
+            EnumSpec
+              {esCPrefix = cprefix, esHsType = typ, esHsTypeModule = modTy}
+            trie
+        IntegralTable ty ->
+          generateIntegral
+            IntSpec {isCPrefix = cprefix, isHsType = itHaskell ty}
+            trie
+    cprefix = "_hs__ucd__" <> tdSnakeName desc
+    trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
+    candidates = map typeTrie $ partitionings >>= mkTrieM values
+    typeTrie :: Foldable f => TrieDesc ann f a -> TrieDesc ty f a
+    typeTrie =
+      case tdType desc of
+        EnumTable _ _ -> typeEnum
+        IntegralTable ty -> typeIntegral ty
+    partitionings = generatePartitionings 4 0 16
+
+data TableDesc ty a =
+  TableDesc
+    { tdSnakeName :: ByteString
+    , tdType :: TableType ty a
+    }
+
+data TableType ty a where
+  EnumTable :: Enum a => ByteString -> ByteString -> TableType EnumTy a
+  IntegralTable :: Integral a => IntegralType -> TableType IntTy a
+
+snake2camel :: ByteString -> ByteString
+snake2camel = B.concat . map titlecase . B.split '_'
+  where
+    titlecase bstr =
+      case B.uncons bstr of
+        Nothing -> bstr
+        Just (c, cs) -> B.cons (toUpper c) cs
 
 printLong :: Show a => [a] -> IO ()
 printLong entries
