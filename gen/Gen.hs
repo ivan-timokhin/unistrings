@@ -133,17 +133,19 @@ generateIntGHs spec trie =
     foreignImports :: Foldable t => Int -> TrieDesc ann t a -> [ByteString]
     foreignImports _ (Bottom ty _) =
       [ B.concat
-          [ "foreign import ccall \"&\" "
+          [ "foreign import ccall \"&"
           , igsCPrefix spec
-          , "_bottom :: Ptr "
+          , "_bottom\" bottom :: Ptr "
           , itHaskell ty
           ]
       ]
     foreignImports lv (Layer ty _ _ rest) =
       B.concat
-        [ "foreign import ccall \"&\" "
+        [ "foreign import ccall \"&"
         , igsCPrefix spec
         , "_layer_"
+        , B.pack (show lv)
+        , "\" layer_"
         , B.pack (show lv)
         , " :: Ptr "
         , itHaskell ty
@@ -162,18 +164,11 @@ generateIntGHs spec trie =
           case trie of
             Bottom _ (Identity _) ->
               [ B.concat
-                  [ "val = "
-                  , igsHsConvert spec
-                  , " $ unsafeReadPtr "
-                  , igsCPrefix spec
-                  , "_bottom cp"
-                  ]
+                  ["val = ", igsHsConvert spec, " $ unsafeReadPtr bottom cp"]
               ]
             Layer _ nbits _ rest ->
               B.concat
-                [ "i0 = fromEnum $ unsafeReadPtr "
-                , igsCPrefix spec
-                , "_layer_0 $ cp `shiftR` "
+                [ "i0 = fromEnum $ unsafeReadPtr layer_0 $ cp `shiftR` "
                 , B.pack $ show nbits
                 ] :
               go 0 nbits rest
@@ -182,9 +177,7 @@ generateIntGHs spec trie =
           [ B.concat
               [ "val = "
               , igsHsConvert spec
-              , " $ unsafeReadPtr "
-              , igsCPrefix spec
-              , "_bottom $ i"
+              , " $ unsafeReadPtr bottom $ i"
               , B.pack $ show depth
               , " `shiftL` "
               , B.pack $ show prevBits
@@ -196,9 +189,7 @@ generateIntGHs spec trie =
           B.concat
             [ "i"
             , B.pack $ show (depth + 1)
-            , " = fromEnum $ unsafeReadPtr "
-            , igsCPrefix spec
-            , "_layer_"
+            , " = fromEnum $ unsafeReadPtr layer_"
             , B.pack $ show (depth + 1)
             , " $ i"
             , B.pack $ show depth
