@@ -22,6 +22,7 @@ main =
           , C.bgroup
               "Canonical combining class"
               [C.bench "UCD" $ mkBenchmark udhr UCD.canonicalCombiningClass]
+          , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]
 
