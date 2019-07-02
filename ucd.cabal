@@ -70,6 +70,9 @@ executable ucd-gen
                        -Widentities
                        -Wcompat
                        -O2
+                       -threaded
+                       -rtsopts
+                       -with-rtsopts "-N -A256m"
   other-modules:       UCD.UnicodeData
                      , Trie
                      , Gen
@@ -86,6 +89,7 @@ executable ucd-gen
                      , containers >= 0.6.0 && < 0.7
                      , transformers >= 0.5.6 && < 0.6
                      , directory >= 1.3.3 && < 1.4
+                     , async >= 2.2.2 && < 2.3
   hs-source-dirs:      gen
                      , common
   default-language:    Haskell2010
