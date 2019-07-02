@@ -51,6 +51,7 @@ mkTrie xs bits = runIdentity $ mkTrieM xs (fromList bits)
 
 mkTrieM ::
      (Ord a, Monad m) => V.Vector a -> ListM m Int -> m (TrieDesc () Identity a)
+{-# INLINE mkTrieM #-}
 mkTrieM xs Nil = pure $ Bottom () (Identity xs)
 mkTrieM xs (Cons lowBits rest) = split (go rest) lowBits (Identity xs)
   where
@@ -65,6 +66,7 @@ split ::
   -> Int
   -> t (V.Vector a)
   -> f (TrieDesc () t a)
+{-# INLINE split #-}
 split recur lowBits xs = Layer () lowBits indices <$> recur compressed
   where
     (Compose indices, compressed) =
@@ -82,6 +84,7 @@ matricise lowBits xs
     (columnSize, remainder) = fullSize `divMod` rowSize
 
 deduplicate :: (Traversable t, Ord a) => t a -> (t Int, V.Vector a)
+{-# INLINE deduplicate #-}
 deduplicate xs =
   second invertMap . flip S.runState M.empty . for xs $ \x -> do
     assocMap <- S.get

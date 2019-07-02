@@ -54,7 +54,8 @@ instance TableValue Word8 where
   generateModule prefix =
     generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Word8"}
 
-processTable :: (TableValue a) => ByteString -> V.Vector a -> IO ()
+processTable :: TableValue a => ByteString -> V.Vector a -> IO ()
+{-# INLINE processTable #-}
 processTable snakeName values = do
   print $ partitioning trie
   print $ totalCost trie
