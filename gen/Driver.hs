@@ -22,23 +22,23 @@ import Gen
   , generateIntegral
   )
 import Gen.Cost (SizedTy, pickBest, totalCost)
-import Gen.Type (EnumTy, IntTy, typeEnum, typeIntegral, word8)
+import Gen.Type (IntegralType, typeEnum, typeIntegral, word8)
 import ListM (generatePartitionings)
-import Trie (BottomAnnotation, LayerAnnotation, TrieDesc, mkTrieM, partitioning)
+import Trie (TrieDesc, mkTrieM, partitioning)
 
-class ( SizedTy (BottomAnnotation (TrieTy a))
-      , SizedTy (LayerAnnotation (TrieTy a))
-      , Ord a
-      , Show a
-      ) =>
+class (SizedTy (BottomType a), Ord a, Show a) =>
       TableValue a
   where
-  type TrieTy a
-  typeTrie :: Traversable f => TrieDesc ann f a -> TrieDesc (TrieTy a) f a
-  generateModule :: ByteString -> TrieDesc (TrieTy a) Identity a -> Module
+  type BottomType a
+  typeTrie ::
+       Traversable f
+    => TrieDesc la ba f a
+    -> TrieDesc IntegralType (BottomType a) f a
+  generateModule ::
+       ByteString -> TrieDesc IntegralType (BottomType a) Identity a -> Module
 
 instance TableValue GeneralCategory where
-  type TrieTy GeneralCategory = EnumTy
+  type BottomType GeneralCategory = IntegralType
   typeTrie = typeEnum
   generateModule prefix =
     generateEnum
@@ -49,7 +49,7 @@ instance TableValue GeneralCategory where
         }
 
 instance TableValue Word8 where
-  type TrieTy Word8 = IntTy
+  type BottomType Word8 = IntegralType
   typeTrie = typeIntegral word8
   generateModule prefix =
     generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Word8"}

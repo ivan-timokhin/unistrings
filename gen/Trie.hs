@@ -5,8 +5,6 @@
 
 module Trie
   ( TrieDesc(Bottom, Layer)
-  , LayerAnnotation
-  , BottomAnnotation
   , mkTrie
   , mkTrieM
   , partitioning
@@ -25,32 +23,31 @@ import qualified Data.Vector as V
 
 import ListM (ListM(Cons, Nil), fromList)
 
-type family LayerAnnotation ann
-
-type family BottomAnnotation ann
-
-type instance LayerAnnotation () = ()
-
-type instance BottomAnnotation () = ()
-
-data TrieDesc ann t a
-  = Bottom (BottomAnnotation ann) (t (V.Vector a))
-  | Layer (LayerAnnotation ann) Int (t (V.Vector Int)) (TrieDesc ann V.Vector a)
+data TrieDesc layerAnnotation bottomAnnotation t a
+  = Bottom bottomAnnotation (t (V.Vector a))
+  | Layer
+      layerAnnotation
+      Int
+      (t (V.Vector Int))
+      (TrieDesc layerAnnotation bottomAnnotation V.Vector a)
 
 deriving instance
          (Show (t (V.Vector Int)), Show (t (V.Vector a)), Show a,
-          Show (BottomAnnotation ann), Show (LayerAnnotation ann)) =>
-         Show (TrieDesc ann t a)
+          Show layerAnnotation, Show bottomAnnotation) =>
+         Show (TrieDesc layerAnnotation bottomAnnotation t a)
 
-partitioning :: TrieDesc ann f a -> [Int]
+partitioning :: TrieDesc la ba f a -> [Int]
 partitioning (Bottom _ _) = []
 partitioning (Layer _ b _ rest) = b : partitioning rest
 
-mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc () Identity a
+mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc () () Identity a
 mkTrie xs bits = runIdentity $ mkTrieM xs (fromList bits)
 
 mkTrieM ::
-     (Ord a, Monad m) => V.Vector a -> ListM m Int -> m (TrieDesc () Identity a)
+     (Ord a, Monad m)
+  => V.Vector a
+  -> ListM m Int
+  -> m (TrieDesc () () Identity a)
 {-# INLINE mkTrieM #-}
 mkTrieM xs Nil = pure $ Bottom () (Identity xs)
 mkTrieM xs (Cons lowBits rest) = split (go rest) lowBits (Identity xs)
@@ -62,10 +59,10 @@ mkTrieM xs (Cons lowBits rest) = split (go rest) lowBits (Identity xs)
 
 split ::
      (Traversable t, Ord a, Functor f)
-  => (V.Vector (V.Vector a) -> f (TrieDesc () V.Vector a))
+  => (V.Vector (V.Vector a) -> f (TrieDesc () () V.Vector a))
   -> Int
   -> t (V.Vector a)
-  -> f (TrieDesc () t a)
+  -> f (TrieDesc () () t a)
 {-# INLINE split #-}
 split recur lowBits xs = Layer () lowBits indices <$> recur compressed
   where

@@ -19,8 +19,8 @@ import Data.Functor.Identity (Identity(Identity))
 import qualified Data.Vector as V
 import Numeric (showHex)
 
-import Gen.Type (EnumTy, IntTy, IntegralType(itC, itHaskell))
-import Trie (BottomAnnotation, LayerAnnotation, TrieDesc(Bottom, Layer))
+import Gen.Type (IntegralType(itC, itHaskell))
+import Trie (TrieDesc(Bottom, Layer))
 
 data Module =
   Module
@@ -36,7 +36,11 @@ data EnumSpec =
     , esHsTypeModule :: ByteString
     }
 
-generateEnum :: Enum a => EnumSpec -> TrieDesc EnumTy Identity a -> Module
+generateEnum ::
+     Enum a
+  => EnumSpec
+  -> TrieDesc IntegralType IntegralType Identity a
+  -> Module
 generateEnum spec = generateIntG (enumSpec2IntGSpec spec)
 
 enumSpec2IntGSpec :: Enum a => EnumSpec -> IntGSpec a
@@ -56,7 +60,11 @@ data IntSpec =
     , isHsType :: ByteString
     }
 
-generateIntegral :: Integral a => IntSpec -> TrieDesc IntTy Identity a -> Module
+generateIntegral ::
+     Integral a
+  => IntSpec
+  -> TrieDesc IntegralType IntegralType Identity a
+  -> Module
 generateIntegral spec =
   generateIntG
     IntGSpec
@@ -77,9 +85,8 @@ data IntGSpec a =
     }
 
 generateIntG ::
-     (BottomAnnotation ann ~ IntegralType, LayerAnnotation ann ~ IntegralType)
-  => IntGSpec a
-  -> TrieDesc ann Identity a
+     IntGSpec a
+  -> TrieDesc IntegralType IntegralType Identity a
   -> Module
 generateIntG igspec trie =
   Module
@@ -88,15 +95,18 @@ generateIntG igspec trie =
     }
 
 generateIntGC ::
-     forall a ann.
-     (BottomAnnotation ann ~ IntegralType, LayerAnnotation ann ~ IntegralType)
-  => (a -> Integer)
+     forall a.
+     (a -> Integer)
   -> ByteString
-  -> TrieDesc ann Identity a
+  -> TrieDesc IntegralType IntegralType Identity a
   -> [ByteString]
 generateIntGC f prefix = (cHeader :) . go 0
   where
-    go :: Foldable t => Int -> TrieDesc ann t a -> [ByteString]
+    go ::
+         Foldable t
+      => Int
+      -> TrieDesc IntegralType IntegralType t a
+      -> [ByteString]
     go _ (Bottom ty xs) = generateBottom ty xs
     go lv (Layer ty _ layer rest) =
       B.concat
@@ -122,15 +132,18 @@ generateIntGC f prefix = (cHeader :) . go 0
           B.intercalate ", " $ map (B.pack . show . f) $ toList (Compose xs)
 
 generateIntGHs ::
-     forall a ann.
-     (BottomAnnotation ann ~ IntegralType, LayerAnnotation ann ~ IntegralType)
-  => IntGSpec a
-  -> TrieDesc ann Identity a
+     forall a.
+     IntGSpec a
+  -> TrieDesc IntegralType IntegralType Identity a
   -> [ByteString]
 generateIntGHs spec trie =
   header ++ [""] ++ foreignImports 0 trie ++ [""] ++ function
   where
-    foreignImports :: Foldable t => Int -> TrieDesc ann t a -> [ByteString]
+    foreignImports ::
+         Foldable t
+      => Int
+      -> TrieDesc IntegralType IntegralType t a
+      -> [ByteString]
     foreignImports _ (Bottom ty _) =
       [ B.concat
           [ "foreign import ccall \"&"
@@ -172,7 +185,11 @@ generateIntGHs spec trie =
                 , B.pack $ show nbits
                 ] :
               go 0 nbits rest
-        go :: Int -> Int -> TrieDesc ann V.Vector a -> [ByteString]
+        go ::
+             Int
+          -> Int
+          -> TrieDesc IntegralType IntegralType V.Vector a
+          -> [ByteString]
         go depth prevBits (Bottom _ _) =
           [ B.concat
               [ "val = "

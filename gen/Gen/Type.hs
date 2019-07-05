@@ -3,12 +3,9 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Gen.Type
-  ( EnumTy
-  , IntegralType(..)
+  ( IntegralType(..)
   , typeEnum
-  , IntTy
   , typeIntegral
-  , ASCIIStringTy
   , typeASCII
   , int8
   , word8
@@ -32,26 +29,7 @@ import qualified Data.Vector as V
 import Data.Word (Word16, Word8)
 
 import Gen.Cost (SizedTy(sizeInBytes))
-import Trie (BottomAnnotation, LayerAnnotation, TrieDesc(Bottom, Layer))
-
-data EnumTy
-
-type instance BottomAnnotation EnumTy = IntegralType
-
-type instance LayerAnnotation EnumTy = IntegralType
-
-data IntTy
-
-type instance BottomAnnotation IntTy = IntegralType
-
-type instance LayerAnnotation IntTy = IntegralType
-
-data ASCIIStringTy
-
-type instance BottomAnnotation ASCIIStringTy =
-     (IntegralType, ByteString)
-
-type instance LayerAnnotation ASCIIStringTy = IntegralType
+import Trie (TrieDesc(Bottom, Layer))
 
 data IntegralType =
   IntegralType
@@ -65,21 +43,26 @@ data IntegralType =
 instance SizedTy IntegralType where
   sizeInBytes = itSize
 
-typeEnum :: (Traversable t, Enum a) => TrieDesc ann t a -> TrieDesc EnumTy t a
+typeEnum ::
+     (Traversable t, Enum a)
+  => TrieDesc la ba t a
+  -> TrieDesc IntegralType IntegralType t a
 typeEnum = typeG (findTypeForTable fromEnum)
 
 typeIntegral ::
      (Traversable t, Integral a)
   => IntegralType
-  -> TrieDesc ann t a
-  -> TrieDesc IntTy t a
+  -> TrieDesc la ba t a
+  -> TrieDesc IntegralType IntegralType t a
 -- TODO: check that the stated integral type admits all values.
 -- This will be caught later in the test suite anyway, but it may be
 -- worthwhile to check here.
 typeIntegral intTy = typeG (const intTy)
 
 typeASCII ::
-     Traversable t => TrieDesc ann t ByteString -> TrieDesc ASCIIStringTy t Int
+     Traversable t
+  => TrieDesc la ba t ByteString
+  -> TrieDesc IntegralType (IntegralType, ByteString) t Int
 typeASCII = typeGMod typeBottom
   where
     typeBottom ::
@@ -103,19 +86,19 @@ typeASCII = typeGMod typeBottom
                 pure currentLen
 
 typeG ::
-     (Traversable t, LayerAnnotation annTy ~ IntegralType)
+     (Traversable t)
   => (forall f. Traversable f =>
-                  f (V.Vector a) -> BottomAnnotation annTy)
-  -> TrieDesc ann t a
-  -> TrieDesc annTy t a
+                  f (V.Vector a) -> bottomAnnotation)
+  -> TrieDesc la ba t a
+  -> TrieDesc IntegralType bottomAnnotation t a
 typeG f = typeGMod (\xs -> (f xs, xs))
 
 typeGMod ::
-     (Traversable t, LayerAnnotation annTy ~ IntegralType)
+     (Traversable t)
   => (forall f. Traversable f =>
-                  f (V.Vector a) -> (BottomAnnotation annTy, f (V.Vector b)))
-  -> TrieDesc ann t a
-  -> TrieDesc annTy t b
+                  f (V.Vector a) -> (bottomAnnotation, f (V.Vector b)))
+  -> TrieDesc la ba t a
+  -> TrieDesc IntegralType bottomAnnotation t b
 typeGMod f (Bottom _ xs) =
   let (ann, ys) = f xs
    in Bottom ann ys
