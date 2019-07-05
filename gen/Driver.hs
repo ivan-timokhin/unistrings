@@ -1,9 +1,15 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Driver where
 
+import Control.Arrow ((&&&))
+import Data.Bifunctor (first)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory, toUpper)
@@ -22,24 +28,31 @@ import Gen
   , generateIntegral
   )
 import Gen.Cost (SizedTy, pickBest, totalCost)
-import Gen.Type (IntegralType, typeEnum, typeIntegral, word8)
+import Gen.Type (IntegralType, typeEnum, typeLayers, word8)
 import ListM (generatePartitionings)
 import Trie (TrieDesc, mkTrieM, partitioning)
 
-class (SizedTy (BottomType a), Ord a, Show a) =>
+class (SizedTy (BottomType a), Ord (BottomVal a), Show a) =>
       TableValue a
   where
   type BottomType a
-  typeTrie ::
-       Traversable f
-    => TrieDesc f la ba a
-    -> TrieDesc f IntegralType (BottomType a) a
+  type BottomVal a
+  type BottomVal a = a
+  {-# MINIMAL (typeVals | typeVals_), generateModule #-}
+  typeVals :: V.Vector a -> (BottomType a, V.Vector (BottomVal a))
+  default typeVals :: (BottomVal a ~ a) =>
+    V.Vector a -> (BottomType a, V.Vector (BottomVal a))
+  typeVals = typeVals_ &&& id
+  typeVals_ :: V.Vector a -> BottomType a
+  typeVals_ = fst . typeVals
   generateModule ::
-       ByteString -> TrieDesc Identity IntegralType (BottomType a) a -> Module
+       ByteString
+    -> TrieDesc Identity IntegralType (BottomType a) (BottomVal a)
+    -> Module
 
 instance TableValue GeneralCategory where
   type BottomType GeneralCategory = IntegralType
-  typeTrie = typeEnum
+  typeVals_ = typeEnum
   generateModule prefix =
     generateEnum
       EnumSpec
@@ -50,11 +63,15 @@ instance TableValue GeneralCategory where
 
 instance TableValue Word8 where
   type BottomType Word8 = IntegralType
-  typeTrie = typeIntegral word8
+  typeVals_ = const word8
   generateModule prefix =
     generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Word8"}
 
-processTable :: TableValue a => ByteString -> V.Vector a -> IO ()
+processTable ::
+     forall a. TableValue a
+  => ByteString
+  -> V.Vector a
+  -> IO ()
 {-# INLINE processTable #-}
 processTable snakeName values = do
   print $ partitioning trie
@@ -71,11 +88,13 @@ processTable snakeName values = do
     for_ values $ hPrint h
   where
     hsModuleName = snake2camel $ snakeName
-    modul = generateModule cprefix trie
+    modul = generateModule @a cprefix trie
     cprefix = "_hs__ucd__" <> snakeName
     trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
-    candidates = map typeTrie $ partitionings >>= mkTrieM values
+    candidates =
+      map (first (const bty) . typeLayers) $ partitionings >>= mkTrieM bvals
     partitionings = generatePartitionings 4 0 16
+    (bty, bvals) = typeVals values
 
 snake2camel :: ByteString -> ByteString
 snake2camel = B.concat . map titlecase . B.split '_'

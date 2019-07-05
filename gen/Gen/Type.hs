@@ -5,8 +5,8 @@
 module Gen.Type
   ( IntegralType(..)
   , typeEnum
-  , typeIntegral
   , typeASCII
+  , typeLayers
   , int8
   , word8
   , int16
@@ -20,7 +20,7 @@ import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Lazy (toStrict)
 import Data.Foldable (foldl')
-import Data.Functor.Compose (Compose(Compose, getCompose))
+import Data.Functor.Compose (Compose(Compose))
 import Data.Int (Int16, Int32, Int8)
 import Data.List (find)
 import Data.Maybe (fromJust)
@@ -43,71 +43,33 @@ data IntegralType =
 instance SizedTy IntegralType where
   sizeInBytes = itSize
 
-typeEnum ::
-     (Traversable t, Enum a)
-  => TrieDesc t la ba a
-  -> TrieDesc t IntegralType IntegralType a
-typeEnum = typeG (findTypeForTable fromEnum)
+typeEnum :: Enum a => V.Vector a -> IntegralType
+typeEnum = findTypeForTable fromEnum
 
-typeIntegral ::
-     (Traversable t, Integral a)
-  => IntegralType
-  -> TrieDesc t la ba a
-  -> TrieDesc t IntegralType IntegralType a
--- TODO: check that the stated integral type admits all values.
--- This will be caught later in the test suite anyway, but it may be
--- worthwhile to check here.
-typeIntegral intTy = typeG (const intTy)
-
-typeASCII ::
-     Traversable t
-  => TrieDesc t la ba ByteString
-  -> TrieDesc t IntegralType (IntegralType, ByteString) Int
-typeASCII = typeGMod typeBottom
+typeASCII :: V.Vector ByteString -> ((IntegralType, ByteString), V.Vector Int)
+typeASCII strings = ((findTypeForTable id indices, collapsed), indices)
   where
-    typeBottom ::
-         Traversable f
-      => f (V.Vector ByteString)
-      -> ((IntegralType, ByteString), f (V.Vector Int))
-    typeBottom strings = ((findTypeForTable id indices, collapsed), indices)
-      where
-        collapsed =
-          toStrict $
-          BB.toLazyByteString $ foldMap BB.byteString (Compose strings)
-        indices =
-          getCompose $
-          flip evalState 0 $
-          for (Compose strings) $ \string ->
-            if B.null string
-              then pure 0
-              else do
-                currentLen <- get
-                put $! currentLen + B.length string
-                pure currentLen
+    collapsed = toStrict $ BB.toLazyByteString $ foldMap BB.byteString strings
+    indices =
+      flip evalState 0 $
+      for strings $ \string ->
+        if B.null string
+          then pure 0
+          else do
+            currentLen <- get
+            put $! currentLen + B.length string
+            pure currentLen
 
-typeG ::
-     (Traversable t)
-  => (forall f. Traversable f =>
-                  f (V.Vector a) -> bottomAnnotation)
-  -> TrieDesc t la ba a
-  -> TrieDesc t IntegralType bottomAnnotation a
-typeG f = typeGMod (\xs -> (f xs, xs))
+typeLayers ::
+     Foldable f
+  => TrieDesc f layerAnnotation bottomAnnotation a
+  -> TrieDesc f IntegralType bottomAnnotation a
+typeLayers (Bottom ann xs) = Bottom ann xs
+typeLayers (Layer _ nbits xs rest) =
+  Layer (findTypeForTable id (Compose xs)) nbits xs (typeLayers rest)
 
-typeGMod ::
-     (Traversable t)
-  => (forall f. Traversable f =>
-                  f (V.Vector a) -> (bottomAnnotation, f (V.Vector b)))
-  -> TrieDesc t la ba a
-  -> TrieDesc t IntegralType bottomAnnotation b
-typeGMod f (Bottom _ xs) =
-  let (ann, ys) = f xs
-   in Bottom ann ys
-typeGMod f (Layer _ nbits xs rest) =
-  Layer (findTypeForTable id xs) nbits xs (typeGMod f rest)
-
-findTypeForTable ::
-     (Foldable f1, Foldable f2) => (a -> Int) -> f1 (f2 a) -> IntegralType
-findTypeForTable f xs = findTypeForRange $ minMax 0 f (Compose xs)
+findTypeForTable :: Foldable f => (a -> Int) -> f a -> IntegralType
+findTypeForTable f xs = findTypeForRange $ minMax 0 f xs
 
 integralType ::
      Integral a => ByteString -> ByteString -> a -> a -> Int -> IntegralType
