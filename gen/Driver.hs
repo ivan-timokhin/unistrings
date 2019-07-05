@@ -32,10 +32,10 @@ class (SizedTy (BottomType a), Ord a, Show a) =>
   type BottomType a
   typeTrie ::
        Traversable f
-    => TrieDesc la ba f a
-    -> TrieDesc IntegralType (BottomType a) f a
+    => TrieDesc f la ba a
+    -> TrieDesc f IntegralType (BottomType a) a
   generateModule ::
-       ByteString -> TrieDesc IntegralType (BottomType a) Identity a -> Module
+       ByteString -> TrieDesc Identity IntegralType (BottomType a) a -> Module
 
 instance TableValue GeneralCategory where
   type BottomType GeneralCategory = IntegralType

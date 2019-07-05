@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Trie
@@ -20,34 +21,40 @@ import Data.Maybe (fromMaybe)
 import Data.Traversable (for)
 import Data.Tuple (swap)
 import qualified Data.Vector as V
+import Data.Bifunctor (Bifunctor(bimap))
 
 import ListM (ListM(Cons, Nil), fromList)
 
-data TrieDesc layerAnnotation bottomAnnotation t a
+data TrieDesc t layerAnnotation bottomAnnotation a
   = Bottom bottomAnnotation (t (V.Vector a))
   | Layer
       layerAnnotation
       Int
       (t (V.Vector Int))
-      (TrieDesc layerAnnotation bottomAnnotation V.Vector a)
+      (TrieDesc V.Vector layerAnnotation bottomAnnotation a)
+  deriving (Functor, Foldable, Traversable)
+
+instance Functor t => Bifunctor (TrieDesc t layerAnnotation) where
+  bimap f g (Bottom ann xs) = Bottom (f ann) (fmap (fmap g) xs)
+  bimap f g (Layer ann nbits is rest) = Layer ann nbits is (bimap f g rest)
 
 deriving instance
          (Show (t (V.Vector Int)), Show (t (V.Vector a)), Show a,
           Show layerAnnotation, Show bottomAnnotation) =>
-         Show (TrieDesc layerAnnotation bottomAnnotation t a)
+         Show (TrieDesc t layerAnnotation bottomAnnotation a)
 
-partitioning :: TrieDesc la ba f a -> [Int]
+partitioning :: TrieDesc f la ba a -> [Int]
 partitioning (Bottom _ _) = []
 partitioning (Layer _ b _ rest) = b : partitioning rest
 
-mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc () () Identity a
+mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc Identity () () a
 mkTrie xs bits = runIdentity $ mkTrieM xs (fromList bits)
 
 mkTrieM ::
      (Ord a, Monad m)
   => V.Vector a
   -> ListM m Int
-  -> m (TrieDesc () () Identity a)
+  -> m (TrieDesc Identity () () a)
 {-# INLINE mkTrieM #-}
 mkTrieM xs Nil = pure $ Bottom () (Identity xs)
 mkTrieM xs (Cons lowBits rest) = split (go rest) lowBits (Identity xs)
@@ -59,10 +66,10 @@ mkTrieM xs (Cons lowBits rest) = split (go rest) lowBits (Identity xs)
 
 split ::
      (Traversable t, Ord a, Functor f)
-  => (V.Vector (V.Vector a) -> f (TrieDesc () () V.Vector a))
+  => (V.Vector (V.Vector a) -> f (TrieDesc V.Vector () () a))
   -> Int
   -> t (V.Vector a)
-  -> f (TrieDesc () () t a)
+  -> f (TrieDesc t () () a)
 {-# INLINE split #-}
 split recur lowBits xs = Layer () lowBits indices <$> recur compressed
   where

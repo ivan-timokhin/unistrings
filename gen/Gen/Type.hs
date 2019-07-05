@@ -45,15 +45,15 @@ instance SizedTy IntegralType where
 
 typeEnum ::
      (Traversable t, Enum a)
-  => TrieDesc la ba t a
-  -> TrieDesc IntegralType IntegralType t a
+  => TrieDesc t la ba a
+  -> TrieDesc t IntegralType IntegralType a
 typeEnum = typeG (findTypeForTable fromEnum)
 
 typeIntegral ::
      (Traversable t, Integral a)
   => IntegralType
-  -> TrieDesc la ba t a
-  -> TrieDesc IntegralType IntegralType t a
+  -> TrieDesc t la ba a
+  -> TrieDesc t IntegralType IntegralType a
 -- TODO: check that the stated integral type admits all values.
 -- This will be caught later in the test suite anyway, but it may be
 -- worthwhile to check here.
@@ -61,8 +61,8 @@ typeIntegral intTy = typeG (const intTy)
 
 typeASCII ::
      Traversable t
-  => TrieDesc la ba t ByteString
-  -> TrieDesc IntegralType (IntegralType, ByteString) t Int
+  => TrieDesc t la ba ByteString
+  -> TrieDesc t IntegralType (IntegralType, ByteString) Int
 typeASCII = typeGMod typeBottom
   where
     typeBottom ::
@@ -89,16 +89,16 @@ typeG ::
      (Traversable t)
   => (forall f. Traversable f =>
                   f (V.Vector a) -> bottomAnnotation)
-  -> TrieDesc la ba t a
-  -> TrieDesc IntegralType bottomAnnotation t a
+  -> TrieDesc t la ba a
+  -> TrieDesc t IntegralType bottomAnnotation a
 typeG f = typeGMod (\xs -> (f xs, xs))
 
 typeGMod ::
      (Traversable t)
   => (forall f. Traversable f =>
                   f (V.Vector a) -> (bottomAnnotation, f (V.Vector b)))
-  -> TrieDesc la ba t a
-  -> TrieDesc IntegralType bottomAnnotation t b
+  -> TrieDesc t la ba a
+  -> TrieDesc t IntegralType bottomAnnotation b
 typeGMod f (Bottom _ xs) =
   let (ann, ys) = f xs
    in Bottom ann ys

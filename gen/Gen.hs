@@ -39,7 +39,7 @@ data EnumSpec =
 generateEnum ::
      Enum a
   => EnumSpec
-  -> TrieDesc IntegralType IntegralType Identity a
+  -> TrieDesc Identity IntegralType IntegralType a
   -> Module
 generateEnum spec = generateIntG (enumSpec2IntGSpec spec)
 
@@ -63,7 +63,7 @@ data IntSpec =
 generateIntegral ::
      Integral a
   => IntSpec
-  -> TrieDesc IntegralType IntegralType Identity a
+  -> TrieDesc Identity IntegralType IntegralType a
   -> Module
 generateIntegral spec =
   generateIntG
@@ -86,7 +86,7 @@ data IntGSpec a =
 
 generateIntG ::
      IntGSpec a
-  -> TrieDesc IntegralType IntegralType Identity a
+  -> TrieDesc Identity IntegralType IntegralType a
   -> Module
 generateIntG igspec trie =
   Module
@@ -98,14 +98,14 @@ generateIntGC ::
      forall a.
      (a -> Integer)
   -> ByteString
-  -> TrieDesc IntegralType IntegralType Identity a
+  -> TrieDesc Identity IntegralType IntegralType a
   -> [ByteString]
 generateIntGC f prefix = (cHeader :) . go 0
   where
     go ::
          Foldable t
       => Int
-      -> TrieDesc IntegralType IntegralType t a
+      -> TrieDesc t IntegralType IntegralType a
       -> [ByteString]
     go _ (Bottom ty xs) = generateBottom ty xs
     go lv (Layer ty _ layer rest) =
@@ -134,7 +134,7 @@ generateIntGC f prefix = (cHeader :) . go 0
 generateIntGHs ::
      forall a.
      IntGSpec a
-  -> TrieDesc IntegralType IntegralType Identity a
+  -> TrieDesc Identity IntegralType IntegralType a
   -> [ByteString]
 generateIntGHs spec trie =
   header ++ [""] ++ foreignImports 0 trie ++ [""] ++ function
@@ -142,7 +142,7 @@ generateIntGHs spec trie =
     foreignImports ::
          Foldable t
       => Int
-      -> TrieDesc IntegralType IntegralType t a
+      -> TrieDesc t IntegralType IntegralType a
       -> [ByteString]
     foreignImports _ (Bottom ty _) =
       [ B.concat
@@ -188,7 +188,7 @@ generateIntGHs spec trie =
         go ::
              Int
           -> Int
-          -> TrieDesc IntegralType IntegralType V.Vector a
+          -> TrieDesc V.Vector IntegralType IntegralType a
           -> [ByteString]
         go depth prevBits (Bottom _ _) =
           [ B.concat
