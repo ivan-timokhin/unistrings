@@ -34,7 +34,7 @@ class ( SizedTy (BottomAnnotation (TrieTy a))
       TableValue a
   where
   type TrieTy a
-  typeTrie :: Foldable f => TrieDesc ann f a -> TrieDesc (TrieTy a) f a
+  typeTrie :: Traversable f => TrieDesc ann f a -> TrieDesc (TrieTy a) f a
   generateModule :: ByteString -> TrieDesc (TrieTy a) Identity a -> Module
 
 instance TableValue GeneralCategory where
