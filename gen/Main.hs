@@ -10,7 +10,7 @@ import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
 import System.Directory (createDirectoryIfMissing)
 
-import Driver (processTable)
+import Driver (generateASCIITableSources, processTable)
 import qualified UCD.UnicodeData
 
 main :: IO ()
@@ -27,6 +27,7 @@ main = do
     , processTable "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
+    , generateASCIITableSources "name" $ UCD.UnicodeData.tableToNames records
     ]
 
 printLong :: Show a => [a] -> IO ()

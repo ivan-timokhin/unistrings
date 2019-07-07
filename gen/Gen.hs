@@ -8,9 +8,12 @@ module Gen
   , EnumSpec(..)
   , generateIntegral
   , IntSpec(..)
+  , generateASCII
+  , ASCIISpec(..)
   ) where
 
 import Data.Bits (shiftL)
+import qualified Data.ByteString as BW8
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 import Data.Foldable (toList)
@@ -100,6 +103,36 @@ intGSpec2Generic ispec =
     , gsHsIntegralType = id
     , gsConvert = igsConvert ispec
     }
+
+newtype ASCIISpec =
+  ASCIISpec
+    { asCPrefix :: ByteString
+    }
+
+generateASCII ::
+     ASCIISpec
+  -> TrieDesc Identity IntegralType (IntegralType, ByteString) Int
+  -> Module
+generateASCII = generateGeneric . aSpec2Generic
+  where
+    aSpec2Generic spec =
+      GSpec
+        { gsCPrefix = asCPrefix spec
+        , gsCExtras =
+            \(_, vals) ->
+              renderCArray
+                "HsWord8"
+                (asCPrefix spec <> "_values")
+                (BW8.unpack vals)
+                []
+        , gsHsType = "Ptr Word8"
+        , gsHsImports = ["import Foreign.Ptr (plusPtr)"]
+        , gsHsFFI =
+            [renderHsCBinding (asCPrefix spec <> "_values") "values" "Word8"]
+        , gsHsConvert = ("plusPtr values . fromEnum $ " <>)
+        , gsHsIntegralType = fst
+        , gsConvert = toInteger
+        }
 
 data GenericSpec ann a =
   GSpec

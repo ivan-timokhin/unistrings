@@ -4,6 +4,7 @@
 
 module UCD.UnicodeData
   ( tableToVector
+  , tableToNames
   , generalCategoryVector
   , unicodeTableSize
   , Table
@@ -23,6 +24,7 @@ import qualified Data.ByteString.Char8 as B
 import qualified Data.Char as C
 import Data.Functor (void)
 import Data.List (sortOn)
+import Data.Maybe (mapMaybe)
 import Data.Ord (Down(Down))
 import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
@@ -63,6 +65,15 @@ tableToVector def table = V.replicate unicodeTableSize def V.// assignments
       getTable table >>= \case
         Single code _ udata -> [(fromIntegral code, udata)]
         Range lo hi _ udata -> [(fromIntegral i, udata) | i <- [lo .. hi]]
+
+tableToNames :: Table a -> V.Vector ByteString
+tableToNames table =
+  V.replicate unicodeTableSize "" V.//
+  mapMaybe
+    (\case
+       Single cp (Name n) _ -> Just (fromIntegral cp, n)
+       _ -> Nothing)
+    (getTable table)
 
 generalCategoryVector :: Table Properties -> V.Vector C.GeneralCategory
 generalCategoryVector = tableToVector C.NotAssigned . fmap propCategory
