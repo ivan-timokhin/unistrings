@@ -19,7 +19,8 @@ main = do
   createDirectoryIfMissing True "generated/cbits"
   createDirectoryIfMissing True "generated/hs/Data/UCD/Internal"
   createDirectoryIfMissing True "generated/test_data"
-  mapConcurrently_ id $
+  mapConcurrently_
+    id
     [ processTable "general_category" $
       UCD.UnicodeData.tableToVector NotAssigned $
       fmap UCD.UnicodeData.propCategory records

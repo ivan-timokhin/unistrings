@@ -87,7 +87,7 @@ processTable snakeName values = do
   withFile (B.unpack $ "generated/test_data/" <> snakeName <> ".txt") WriteMode $ \h ->
     for_ values $ hPrint h
   where
-    hsModuleName = snake2camel $ snakeName
+    hsModuleName = snake2camel snakeName
     modul = generateModule @a cprefix trie
     cprefix = "_hs__ucd__" <> snakeName
     trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
