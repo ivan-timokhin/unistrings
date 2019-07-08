@@ -49,6 +49,8 @@ test-suite ucd-test
   build-depends:       base
                      , HUnit
                      , ucd
+                     , attoparsec
+                     , bytestring
   hs-source-dirs:      test
   default-language:    Haskell2010
 
