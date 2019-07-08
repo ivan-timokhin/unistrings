@@ -28,7 +28,6 @@ library
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates
-                       -Wmissing-import-lists
                        -Widentities
                        -Wcompat
   c-sources:           generated/cbits/general_category.c
@@ -51,6 +50,19 @@ test-suite ucd-test
                      , HUnit
                      , ucd
   hs-source-dirs:      test
+  default-language:    Haskell2010
+
+test-suite ucd-test-icu
+  type:                exitcode-stdio-1.0
+  main-is:             Main.hs
+  ghc-options:         -Wall
+                       -Wcompat
+  build-depends:       base
+                     , HUnit
+                     , ucd
+                     , text-icu
+                     , bytestring
+  hs-source-dirs:      test-icu
   default-language:    Haskell2010
 
 benchmark ucd-bench

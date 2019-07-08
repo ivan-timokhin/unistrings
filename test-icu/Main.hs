@@ -1,0 +1,107 @@
+module Main where
+
+import Control.Monad (unless, when)
+import qualified Data.ByteString.Char8 as B
+import Data.Char (ord)
+import Data.Foldable (for_)
+import qualified Data.Text.ICU.Char as ICU
+import Numeric (showHex)
+import System.Exit (exitFailure)
+import Test.HUnit
+
+import qualified Data.UCD as UCD
+
+main :: IO ()
+main = do
+  let tests = TestList [generalCategory, canonicalCombiningClass, charName]
+  results <- runTestTT tests
+  when (errors results + failures results /= 0) exitFailure
+
+canonicalCombiningClass :: Test
+canonicalCombiningClass =
+  TestLabel "Canonical combining class" $
+  TestCase $
+  for_ [minBound .. maxBound] $ \c ->
+    assertEqual
+      (showHex (ord c) "")
+      (ICU.property ICU.CanonicalCombiningClass c)
+      (fromIntegral $ UCD.canonicalCombiningClass c)
+
+generalCategory :: Test
+generalCategory =
+  TestLabel "General category" $
+  TestCase $
+  for_ [minBound .. maxBound] $ \c ->
+    assertEqual
+      (showHex (ord c) "")
+      (icu2ucd $ ICU.property ICU.GeneralCategory c)
+      (UCD.generalCategory c)
+  where
+    icu2ucd :: ICU.GeneralCategory -> UCD.GeneralCategory
+    icu2ucd c =
+      case c of
+        ICU.GeneralOtherType -> UCD.NotAssigned
+        ICU.UppercaseLetter -> UCD.UppercaseLetter
+        ICU.LowercaseLetter -> UCD.LowercaseLetter
+        ICU.TitlecaseLetter -> UCD.TitlecaseLetter
+        ICU.ModifierLetter -> UCD.ModifierLetter
+        ICU.OtherLetter -> UCD.OtherLetter
+        ICU.NonSpacingMark -> UCD.NonSpacingMark
+        ICU.EnclosingMark -> UCD.EnclosingMark
+        ICU.CombiningSpacingMark -> UCD.SpacingCombiningMark
+        ICU.DecimalDigitNumber -> UCD.DecimalNumber
+        ICU.LetterNumber -> UCD.LetterNumber
+        ICU.OtherNumber -> UCD.OtherNumber
+        ICU.SpaceSeparator -> UCD.Space
+        ICU.LineSeparator -> UCD.LineSeparator
+        ICU.ParagraphSeparator -> UCD.ParagraphSeparator
+        ICU.ControlChar -> UCD.Control
+        ICU.FormatChar -> UCD.Format
+        ICU.PrivateUseChar -> UCD.PrivateUse
+        ICU.Surrogate -> UCD.Surrogate
+        ICU.DashPunctuation -> UCD.DashPunctuation
+        ICU.StartPunctuation -> UCD.OpenPunctuation
+        ICU.EndPunctuation -> UCD.ClosePunctuation
+        ICU.ConnectorPunctuation -> UCD.ConnectorPunctuation
+        ICU.OtherPunctuation -> UCD.OtherPunctuation
+        ICU.MathSymbol -> UCD.MathSymbol
+        ICU.CurrencySymbol -> UCD.CurrencySymbol
+        ICU.ModifierSymbol -> UCD.ModifierSymbol
+        ICU.OtherSymbol -> UCD.OtherSymbol
+        ICU.InitialPunctuation -> UCD.InitialQuote
+        ICU.FinalPunctuation -> UCD.FinalQuote
+
+charName :: Test
+charName =
+  TestLabel "Name" $
+  TestCase $
+  for_ [minBound .. maxBound] $ \c ->
+    unless (excluded c) $
+    assertEqual (showHex (ord c) "") (B.pack $ ICU.charName c) (UCD.name c)
+  where
+    -- The ranges marked ??? are not present in the Table 4-8 (from
+    -- which these are otherwise taken), but seem to be present in
+    -- UnicodeData.txt (as extensions of immediately preceding ones)
+    -- and are reported by ICU as using corresponding name generation
+    -- rules.  I have filed error report with the Unicode Consortium,
+    -- and ignore them for the time being.
+    excluded :: Char -> Bool
+    excluded c =
+      any
+        (\(lo, hi) -> lo <= c && c <= hi)
+        [ ('\xAC00', '\xD7A3') -- HANGUL SYLLABLE
+        , ('\x3400', '\x4DB5') -- CJK UNIFIED IDEOGRAPH
+        , ('\x4E00', '\x9FEA') -- ditto
+        , ('\x20000', '\x2A6D6') -- ditto
+        , ('\x2A700', '\x2B734') -- ditto
+        , ('\x2B740', '\x2B81D') -- ditto
+        , ('\x2B820', '\x2CEA1') -- ditto
+        , ('\x2CEB0', '\x2EBE0') -- ditto
+        , ('\x17000', '\x187EC') -- TANGUT IDEOGRAPH
+        , ('\x1B170', '\x1B2FB') -- NUSHU CHARACTER
+        , ('\xF900', '\xFA6D') -- CJK COMPATIBILITY IDEOGRAPH
+        , ('\xFA70', '\xFAD9') -- ditto
+        , ('\x2F800', '\x2FA1D') -- ditto
+        , ('\x9FEB', '\x9FEF') -- ???
+        , ('\x187ED', '\x187F7') -- ???
+        ]

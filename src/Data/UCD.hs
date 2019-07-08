@@ -2,13 +2,14 @@ module Data.UCD
   ( CodePoint
   , IsCodePoint(toCodePoint)
   , generalCategory
+  , GeneralCategory(..)
   , canonicalCombiningClass
   , name
   ) where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Unsafe (unsafePackAddressLen)
-import Data.Char (GeneralCategory, ord)
+import Data.Char (GeneralCategory(..), ord)
 import Data.Word (Word8)
 import GHC.Exts (Ptr(Ptr))
 import System.IO.Unsafe (unsafePerformIO)
