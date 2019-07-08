@@ -14,6 +14,7 @@ import System.Directory (createDirectoryIfMissing)
 
 import Driver (generateASCIITableSources, processTable)
 import qualified UCD.UnicodeData
+import ListM (generatePartitionings)
 
 main :: IO ()
 main = do
@@ -21,15 +22,16 @@ main = do
   createDirectoryIfMissing True "generated/cbits"
   createDirectoryIfMissing True "generated/hs/Data/UCD/Internal"
   createDirectoryIfMissing True "generated/test_data"
+  let fullPartitionings = generatePartitionings 4 0 16
   mapConcurrently_
     id
-    [ processTable "general_category" $
+    [ processTable fullPartitionings "general_category" $
       UCD.UnicodeData.tableToVector NotAssigned $
       fmap UCD.UnicodeData.propCategory records
-    , processTable "canonical_combining_class" $
+    , processTable fullPartitionings "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
-    , generateASCIITableSources "name" $
+    , generateASCIITableSources fullPartitionings "name" $
       UCD.UnicodeData.tableToNames records V.//
       map
         (, "")

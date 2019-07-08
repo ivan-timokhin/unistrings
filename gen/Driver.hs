@@ -31,8 +31,8 @@ import Gen
   )
 import Gen.Cost (SizedTy, pickBest, totalCost)
 import Gen.Type (IntegralType, typeEnum, typeLayers, word8, typeASCII)
-import ListM (generatePartitionings)
 import Trie (TrieDesc, mkTrieM, partitioning)
+import ListM(ListM)
 
 class (SizedTy (BottomType a), Ord (BottomVal a), Show a) =>
       TableValue a
@@ -85,22 +85,29 @@ instance TableValue ByteString where
 
 processTable ::
      forall a. TableValue a
-  => ByteString
+  => [ListM [] Int]
+  -> ByteString
   -> V.Vector a
   -> IO ()
 {-# INLINE processTable #-}
-processTable snakeName values = do
-  generateSources snakeName values
+processTable partitionings snakeName values = do
+  generateSources partitionings snakeName values
   generateTests snakeName values
 
-generateASCIITableSources :: ByteString -> V.Vector ByteString -> IO ()
-generateASCIITableSources snakeName values = do
-  generateSources (snakeName <> "_ptr") values
-  generateSources (snakeName <> "_len") (fmap B.length values)
+generateASCIITableSources ::
+     [ListM [] Int] -> ByteString -> V.Vector ByteString -> IO ()
+generateASCIITableSources partitionings snakeName values = do
+  generateSources partitionings (snakeName <> "_ptr") values
+  generateSources partitionings (snakeName <> "_len") (fmap B.length values)
 
-generateSources :: forall a. TableValue a => ByteString -> V.Vector a -> IO ()
+generateSources ::
+     forall a. TableValue a
+  => [ListM [] Int]
+  -> ByteString
+  -> V.Vector a
+  -> IO ()
 {-# INLINEABLE generateSources #-}
-generateSources snakeName values = do
+generateSources partitionings snakeName values = do
   print $ partitioning trie
   print $ totalCost trie
   let hsFile = "generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
@@ -118,7 +125,6 @@ generateSources snakeName values = do
     trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
     candidates =
       map (first (const bty) . typeLayers) $ partitionings >>= mkTrieM bvals
-    partitionings = generatePartitionings 4 0 16
     (bty, bvals) = typeVals values
 
 generateTests :: TableValue a => ByteString -> V.Vector a -> IO ()
