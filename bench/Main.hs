@@ -3,6 +3,7 @@ module Main where
 import Control.Exception (evaluate)
 import qualified Criterion.Main as C
 import qualified Data.Char as Ch
+import qualified Data.Text.ICU.Char as ICU
 import qualified Data.Vector.Unboxed as V
 import System.IO (IOMode(ReadMode), hGetContents, hSetEncoding, utf8, withFile)
 
@@ -18,10 +19,20 @@ main =
               "General category"
               [ C.bench "UCD" $ mkBenchmark udhr UCD.generalCategory
               , C.bench "Data.Char" $ mkBenchmark udhr Ch.generalCategory
+              , C.bench "ICU" $
+                mkBenchmark udhr (ICU.property ICU.GeneralCategory)
               ]
           , C.bgroup
               "Canonical combining class"
-              [C.bench "UCD" $ mkBenchmark udhr UCD.canonicalCombiningClass]
+              [ C.bench "UCD" $ mkBenchmark udhr UCD.canonicalCombiningClass
+              , C.bench "ICU" $
+                mkBenchmark udhr (ICU.property ICU.CanonicalCombiningClass)
+              ]
+          , C.bgroup
+              "Name"
+              [ C.bench "UCD" $ mkBenchmark udhr UCD.name
+              , C.bench "ICU" $ mkBenchmark udhr ICU.charName
+              ]
           , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]

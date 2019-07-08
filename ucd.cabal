@@ -75,6 +75,7 @@ benchmark ucd-bench
                      , criterion
                      , ucd
                      , vector
+                     , text-icu
   hs-source-dirs:      bench
   default-language:    Haskell2010
 
