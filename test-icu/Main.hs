@@ -79,29 +79,9 @@ charName =
     unless (excluded c) $
     assertEqual (showHex (ord c) "") (B.pack $ ICU.charName c) (UCD.name c)
   where
-    -- The ranges marked ??? are not present in the Table 4-8 (from
-    -- which these are otherwise taken), but seem to be present in
-    -- UnicodeData.txt (as extensions of immediately preceding ones)
-    -- and are reported by ICU as using corresponding name generation
-    -- rules.  I have filed error report with the Unicode Consortium,
-    -- and ignore them for the time being.
     excluded :: Char -> Bool
     excluded c =
       any
         (\(lo, hi) -> lo <= c && c <= hi)
         [ ('\xAC00', '\xD7A3') -- HANGUL SYLLABLE
-        , ('\x3400', '\x4DB5') -- CJK UNIFIED IDEOGRAPH
-        , ('\x4E00', '\x9FEA') -- ditto
-        , ('\x20000', '\x2A6D6') -- ditto
-        , ('\x2A700', '\x2B734') -- ditto
-        , ('\x2B740', '\x2B81D') -- ditto
-        , ('\x2B820', '\x2CEA1') -- ditto
-        , ('\x2CEB0', '\x2EBE0') -- ditto
-        , ('\x17000', '\x187EC') -- TANGUT IDEOGRAPH
-        , ('\x1B170', '\x1B2FB') -- NUSHU CHARACTER
-        , ('\xF900', '\xFA6D') -- CJK COMPATIBILITY IDEOGRAPH
-        , ('\xFA70', '\xFAD9') -- ditto
-        , ('\x2F800', '\x2FA1D') -- ditto
-        , ('\x9FEB', '\x9FEF') -- ???
-        , ('\x187ED', '\x187F7') -- ???
         ]
