@@ -1,13 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveFunctor #-}
 
 module UCD.UnicodeData
   ( tableToVector
   , tableToNames
-  , generalCategoryVector
   , unicodeTableSize
-  , Table
   , Properties(..)
   , Name(Name, Unnamed)
   , BidiClass(..)
@@ -40,14 +37,9 @@ import Data.UCD.Internal.Types
           RightToLeftEmbedding, RightToLeftIsolate, RightToLeftOverride,
           SegmentSeparator, WhiteSpace)
   )
+import UCD.Common (Table(Table, getTable), Range(Single, Range), tableToVector)
 
-newtype Table a =
-  Table
-    { getTable :: [Range a]
-    }
-  deriving (Functor)
-
-fetch :: IO (Table Properties)
+fetch :: IO (Table Name ByteString Properties)
 fetch = do
   txt <- B.readFile "data/latest/ucd/UnicodeData.txt"
   let parsed = A.parseOnly (parser <* A.endOfInput) txt
@@ -58,15 +50,7 @@ fetch = do
         Left err -> fail err
         Right ranges -> pure $ Table ranges
 
-tableToVector :: a -> Table a -> V.Vector a
-tableToVector def table = V.replicate unicodeTableSize def V.// assignments
-  where
-    assignments =
-      getTable table >>= \case
-        Single code _ udata -> [(fromIntegral code, udata)]
-        Range lo hi _ udata -> [(fromIntegral i, udata) | i <- [lo .. hi]]
-
-tableToNames :: Table a -> V.Vector ByteString
+tableToNames :: Table Name annR a -> V.Vector ByteString
 tableToNames table =
   V.replicate unicodeTableSize "" V.//
   mapMaybe
@@ -75,18 +59,10 @@ tableToNames table =
        _ -> Nothing)
     (getTable table)
 
-generalCategoryVector :: Table Properties -> V.Vector C.GeneralCategory
-generalCategoryVector = tableToVector C.NotAssigned . fmap propCategory
-
 unicodeTableSize :: Int
 unicodeTableSize = 0x110000
 
-data Range a
-  = Single Word32 Name a
-  | Range Word32 Word32 ByteString a
-  deriving (Eq, Show, Functor)
-
-rangeify :: [Record] -> Either String [Range Properties]
+rangeify :: [Record] -> Either String [Range Name ByteString Properties]
 rangeify [] = Right []
 rangeify (Record (Regular uname) code datum:rest) =
   (Single code uname datum :) <$> rangeify rest

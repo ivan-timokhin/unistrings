@@ -95,6 +95,7 @@ executable ucd-gen
                        -rtsopts
                        -with-rtsopts "-N -A256m"
   other-modules:       UCD.UnicodeData
+                     , UCD.Common
                      , Trie
                      , Gen
                      , Gen.Type
