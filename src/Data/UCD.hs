@@ -8,13 +8,11 @@ module Data.UCD
   ) where
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Unsafe (unsafePackAddressLen)
 import Data.Char (GeneralCategory(..), ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(Ptr))
-import System.IO.Unsafe (unsafePerformIO)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
+import Data.UCD.Internal.ByteString (mkByteString)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.NameLen as NameLen
@@ -42,9 +40,3 @@ name :: IsCodePoint cp => cp -> ByteString
 name cp = mkByteString (NameLen.retrieve icp) (NamePtr.retrieve icp)
   where
     icp = fromEnum $ toCodePoint cp
-
-mkByteString :: Int -> Ptr Word8 -> ByteString
--- Is it necessary to strengthen protections around unsafePerformIO
--- (add NOINLINE, maybe)?  Can I relax them (unsafeDupablePerformIO,
--- or even inline version)?
-mkByteString len (Ptr addr) = unsafePerformIO $ unsafePackAddressLen len addr

@@ -20,6 +20,7 @@ library
   exposed-modules:     Data.UCD
                      , Data.UCD.Internal
   other-modules:       Data.UCD.Internal.Ptr
+                     , Data.UCD.Internal.ByteString
                      , Data.UCD.Internal.GeneralCategory
                      , Data.UCD.Internal.CanonicalCombiningClass
                      , Data.UCD.Internal.NamePtr
