@@ -13,15 +13,15 @@ import qualified Data.Vector as V
 import Trie (TrieDesc(Bottom, Layer))
 
 class SizedTy ty where
-  sizeInBytes :: ty -> Int
+  sizeInBytes :: ty -> Int -> Int
 
 totalCost ::
      (SizedTy bottomAnnotation, SizedTy layerAnnotation, Foldable t)
   => TrieDesc t layerAnnotation bottomAnnotation a
   -> Int
-totalCost (Bottom ty xs) = sizeInBytes ty * nestedLength xs
+totalCost (Bottom ty xs) = sizeInBytes ty $ nestedLength xs
 totalCost (Layer ty _ ixs rest) =
-  sizeInBytes ty * nestedLength ixs + totalCost rest
+  sizeInBytes ty (nestedLength ixs) + totalCost rest
 
 nestedLength :: Foldable t => t (V.Vector a) -> Int
 nestedLength = foldl' (\n v -> n + V.length v) 0

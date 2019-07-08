@@ -42,10 +42,10 @@ data IntegralType =
     }
 
 instance SizedTy IntegralType where
-  sizeInBytes = itSize
+  sizeInBytes = (*) . itSize
 
 instance SizedTy (IntegralType, ByteString) where
-  sizeInBytes (it, _) = itSize it
+  sizeInBytes (it, str) n = itSize it * n + B.length str
 
 typeEnum :: Enum a => V.Vector a -> IntegralType
 typeEnum = findTypeForTable fromEnum
