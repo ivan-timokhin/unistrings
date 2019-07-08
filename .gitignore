@@ -26,7 +26,6 @@ data/latest/ucd/HangulSyllableType.txt
 data/latest/ucd/Index.txt
 data/latest/ucd/IndicPositionalCategory.txt
 data/latest/ucd/IndicSyllabicCategory.txt
-data/latest/ucd/Jamo.txt
 data/latest/ucd/LineBreak.txt
 data/latest/ucd/NameAliases.txt
 data/latest/ucd/NamedSequences.txt

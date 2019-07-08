@@ -76,12 +76,4 @@ charName =
   TestLabel "Name" $
   TestCase $
   for_ [minBound .. maxBound] $ \c ->
-    unless (excluded c) $
     assertEqual (showHex (ord c) "") (B.pack $ ICU.charName c) (UCD.name c)
-  where
-    excluded :: Char -> Bool
-    excluded c =
-      any
-        (\(lo, hi) -> lo <= c && c <= hi)
-        [ ('\xAC00', '\xD7A3') -- HANGUL SYLLABLE
-        ]

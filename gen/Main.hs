@@ -13,8 +13,9 @@ import qualified Data.Vector as V
 import System.Directory (createDirectoryIfMissing)
 
 import Driver (generateASCIITableSources, processTable)
+import ListM (ListM(Nil), generatePartitionings)
+import qualified UCD.Jamo
 import qualified UCD.UnicodeData
-import ListM (generatePartitionings)
 
 main :: IO ()
 main = do
@@ -45,6 +46,8 @@ main = do
          [0x2CEB0 .. 0x2EBE0] ++
          [0x17000 .. 0x187F7] ++
          [0xF900 .. 0xFA6D] ++ [0xFA70 .. 0xFAD9] ++ [0x2F800 .. 0x2FA1D])
+    , do shortNames <- UCD.Jamo.fetch
+         generateASCIITableSources [Nil] "jamo_short_name" shortNames
     ]
 
 printLong :: Show a => [a] -> IO ()

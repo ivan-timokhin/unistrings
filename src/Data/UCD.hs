@@ -17,6 +17,8 @@ import Data.UCD.Internal (CodePoint(CodePoint))
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
 import qualified Data.UCD.Internal.GeneralCategory as GC
+import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
+import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
 
@@ -35,17 +37,33 @@ generalCategory = GC.retrieve . fromEnum . toCodePoint
 canonicalCombiningClass :: IsCodePoint cp => cp -> Word8
 canonicalCombiningClass = CCC.retrieve . fromEnum . toCodePoint
 
--- NB: This function is incorrect!  It does not currently handle
--- hangul syllables
 name :: IsCodePoint cp => cp -> ByteString
 name cp
-  | 0xAC00 <= icp && icp <= 0xD7A3 = "Hangul syllable NYI"
+  | 0xAC00 <= icp && icp <= 0xD7A3 = "HANGUL SYLLABLE " <> hangulSyllableSuffix
   | otherwise =
     case prefix of
       Just nameP -> nameP <> renderUnicodeInt icp
       Nothing -> mkByteString (NameLen.retrieve icp) (NamePtr.retrieve icp)
   where
     icp = fromEnum $ toCodePoint cp
+    hangulSyllableSuffix
+      | tindex > 0 = ljsn <> vjsn <> tjsn
+      | otherwise = ljsn <> vjsn
+      where
+        ljsn = mkByteString (JSNLen.retrieve lindex) (JSNPtr.retrieve lindex)
+        vjsn = mkByteString (JSNLen.retrieve vpart) (JSNPtr.retrieve vpart)
+        tjsn = mkByteString (JSNLen.retrieve tpart) (JSNPtr.retrieve tpart)
+        vpart = vbase + vindex
+        tpart = tbase + tindex
+        (lindex, vtindex) = sindex `divMod` ncount
+        (vindex, tindex) = vtindex `divMod` tcount
+        sindex = icp - sbase
+        sbase = 0xAC00
+        vbase = 0x61
+        tbase = 0xA7
+        vcount = 21
+        tcount = 28
+        ncount = vcount * tcount
     prefix
       | (0x3400 <= icp && icp <= 0x4DB5) ||
           (0x4E00 <= icp && icp <= 0x9FEF) ||
