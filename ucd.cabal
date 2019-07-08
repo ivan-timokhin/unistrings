@@ -104,6 +104,7 @@ executable ucd-gen
                      , Trie
                      , Gen
                      , Gen.Type
+                     , Gen.Mono
                      , ListM
                      , Gen.Cost
                      , Data.UCD.Internal.Types

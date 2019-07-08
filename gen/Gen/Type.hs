@@ -1,10 +1,13 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Gen.Type
   ( IntegralType(..)
+  , FFIIntegralType(itypeOf)
   , typeEnum
   , typeASCII
   , typeLayers
@@ -16,11 +19,9 @@ module Gen.Type
   ) where
 
 import Control.Monad.Trans.State.Strict (evalState, get, put)
-import qualified Data.ByteString.Builder as BB
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
-import Data.ByteString.Lazy (toStrict)
-import Data.Foldable (foldl')
+import Data.Foldable (fold, foldl')
 import Data.Functor.Compose (Compose(Compose))
 import Data.Int (Int16, Int32, Int8)
 import Data.List (find)
@@ -30,6 +31,7 @@ import qualified Data.Vector as V
 import Data.Word (Word16, Word8)
 
 import Gen.Cost (SizedTy(sizeInBytes))
+import qualified Gen.Mono as Mono
 import Trie (TrieDesc(Bottom, Layer))
 
 data IntegralType =
@@ -47,21 +49,33 @@ instance SizedTy IntegralType where
 instance SizedTy (IntegralType, ByteString) where
   sizeInBytes (it, str) n = itSize it * n + B.length str
 
+class Show a =>
+      FFIIntegralType a
+  where
+  itypeOf :: IntegralType
+
+instance FFIIntegralType Word8 where
+  itypeOf = word8
+
 typeEnum :: Enum a => V.Vector a -> IntegralType
 typeEnum = findTypeForTable fromEnum
 
 typeASCII :: V.Vector ByteString -> ((IntegralType, ByteString), V.Vector Int)
-typeASCII strings = ((findTypeForTable id indices, collapsed), indices)
+typeASCII = typeContainer
+
+typeContainer ::
+     Mono.Container c => V.Vector c -> ((IntegralType, c), V.Vector Int)
+typeContainer cs = ((findTypeForTable id indices, collapsed), indices)
   where
-    collapsed = toStrict $ BB.toLazyByteString $ foldMap BB.byteString strings
+    collapsed = fold cs
     indices =
       flip evalState 0 $
-      for strings $ \string ->
-        if B.null string
+      for cs $ \c ->
+        if Mono.isNull c
           then pure 0
           else do
             currentLen <- get
-            put $! currentLen + B.length string
+            put $! currentLen + Mono.len c
             pure currentLen
 
 typeLayers ::

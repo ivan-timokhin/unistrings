@@ -1,6 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Gen
   ( Module(Module, moduleC, moduleHs)
@@ -13,7 +15,6 @@ module Gen
   ) where
 
 import Data.Bits (shiftL)
-import qualified Data.ByteString as BW8
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 import Data.Foldable (toList)
@@ -22,7 +23,8 @@ import Data.Functor.Identity (Identity(Identity))
 import qualified Data.Vector as V
 import Numeric (showHex)
 
-import Gen.Type (IntegralType(itC, itHaskell))
+import qualified Gen.Mono as Mono
+import Gen.Type (FFIIntegralType(itypeOf), IntegralType(itC, itHaskell))
 import Trie (TrieDesc(Bottom, Layer))
 
 data Module =
@@ -113,26 +115,30 @@ generateASCII ::
      ASCIISpec
   -> TrieDesc Identity IntegralType (IntegralType, ByteString) Int
   -> Module
-generateASCII = generateGeneric . aSpec2Generic
+generateASCII = generateMonoContainer . asCPrefix
+
+generateMonoContainer ::
+     forall c. (Mono.Container c, FFIIntegralType (Mono.Elem c))
+  => ByteString
+  -> TrieDesc Identity IntegralType (IntegralType, c) Int
+  -> Module
+generateMonoContainer = generateGeneric . mkGenericSpec
   where
-    aSpec2Generic spec =
+    mkGenericSpec prefix =
       GSpec
-        { gsCPrefix = asCPrefix spec
+        { gsCPrefix = prefix
         , gsCExtras =
-            \(_, vals) ->
-              renderCArray
-                "HsWord8"
-                (asCPrefix spec <> "_values")
-                (BW8.unpack vals)
-                []
-        , gsHsType = "Ptr Word8"
+            \(_, vals) -> renderCArray (itC itype) valName (Mono.toList vals) []
+        , gsHsType = "Ptr " <> itHaskell itype
         , gsHsImports = ["import Foreign.Ptr (plusPtr)"]
-        , gsHsFFI =
-            [renderHsCBinding (asCPrefix spec <> "_values") "values" "Word8"]
+        , gsHsFFI = [renderHsCBinding valName "values" (itHaskell itype)]
         , gsHsConvert = ("plusPtr values . fromEnum $ " <>)
         , gsHsIntegralType = fst
         , gsConvert = toInteger
         }
+      where
+        valName = prefix <> "_values"
+    itype = itypeOf @(Mono.Elem c)
 
 data GenericSpec ann a =
   GSpec
