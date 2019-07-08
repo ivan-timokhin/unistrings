@@ -2,12 +2,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Main where
 
 import Control.Concurrent.Async (mapConcurrently_)
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
+import qualified Data.Vector as V
 import System.Directory (createDirectoryIfMissing)
 
 import Driver (generateASCIITableSources, processTable)
@@ -27,7 +29,20 @@ main = do
     , processTable "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
-    , generateASCIITableSources "name" $ UCD.UnicodeData.tableToNames records
+    , generateASCIITableSources "name" $
+      UCD.UnicodeData.tableToNames records V.//
+      map
+        (, "")
+        ([0xAC00 .. 0xD7A3] ++
+         [0x3400 .. 0x4DB5] ++
+         [0x4E00 .. 0x9FEF] ++
+         [0x20000 .. 0x2A6D6] ++
+         [0x2A700 .. 0x2B734] ++
+         [0x2B740 .. 0x2B81D] ++
+         [0x2B820 .. 0x2CEA1] ++
+         [0x2CEB0 .. 0x2EBE0] ++
+         [0x17000 .. 0x187F7] ++
+         [0xF900 .. 0xFA6D] ++ [0xFA70 .. 0xFAD9] ++ [0x2F800 .. 0x2FA1D])
     ]
 
 printLong :: Show a => [a] -> IO ()
