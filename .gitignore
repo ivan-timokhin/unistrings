@@ -50,5 +50,10 @@ data/latest/ucd/Unihan.zip
 data/latest/ucd/VerticalOrientation.txt
 data/latest/ucd/auxiliary/
 data/latest/ucd/extracted/
-data/latest/ucdxml/
 generated/
+/data/latest/ucdxml/ucdxml.readme.txt
+/data/latest/ucdxml/ucd.unihan.grouped.zip
+/data/latest/ucdxml/ucd.unihan.flat.zip
+/data/latest/ucdxml/ucd.nounihan.flat.zip
+/data/latest/ucdxml/ucd.all.grouped.zip
+/data/latest/ucdxml/ucd.all.flat.zip

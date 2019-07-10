@@ -72,6 +72,22 @@ test-suite ucd-test-icu
   hs-source-dirs:      test-icu
   default-language:    Haskell2010
 
+test-suite ucd-test-xml
+  type:                exitcode-stdio-1.0
+  main-is:             Main.hs
+  ghc-options:         -Wall
+                       -Wcompat
+  build-depends:       base
+                     , HUnit
+                     , ucd
+                     , bytestring
+                     , text
+                     , xml-conduit
+                     , zip
+                     , containers
+  hs-source-dirs:      test-xml
+  default-language:    Haskell2010
+
 benchmark ucd-bench
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
