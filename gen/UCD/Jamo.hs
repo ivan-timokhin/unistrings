@@ -2,13 +2,14 @@
 
 module UCD.Jamo where
 
-import Control.Applicative (many, optional)
+import Control.Applicative (many)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
-import Data.Functor (void)
 import qualified Data.Vector as V
 import Data.Word (Word32)
+
+import UCD.Common (comment, comments)
 
 fetch :: IO (V.Vector ByteString)
 fetch = do
@@ -22,13 +23,10 @@ fetch = do
 
 parser :: A.Parser [(Word32, ByteString)]
 parser = do
-  _ <- many (optional comment <* A.char '\n')
+  comments
   rs <- records
-  _ <- many (optional comment <* A.char '\n')
+  comments
   pure rs
-
-comment :: A.Parser ()
-comment = void (A.char '#' *> A.takeWhile (/= '\n')) A.<?> "comment"
 
 record :: A.Parser (Word32, ByteString)
 record = do

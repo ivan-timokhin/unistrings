@@ -10,6 +10,7 @@ module Gen.Type
   , FFIIntegralType(itypeOf)
   , typeEnum
   , typeASCII
+  , typeContainer
   , typeLayers
   , int8
   , word8
@@ -48,6 +49,9 @@ instance SizedTy IntegralType where
 
 instance SizedTy (IntegralType, ByteString) where
   sizeInBytes (it, str) n = itSize it * n + B.length str
+
+instance SizedTy (IntegralType, V.Vector Word8) where
+  sizeInBytes (it, v) n = itSize it * n + V.length v
 
 class Show a =>
       FFIIntegralType a

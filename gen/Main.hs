@@ -6,15 +6,23 @@
 
 module Main where
 
-import Control.Concurrent.Async (mapConcurrently_)
+import Control.Concurrent.Async (concurrently_, mapConcurrently_)
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
 import qualified Data.Vector as V
+import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
-import Driver (generateASCIITableSources, processTable)
+import Driver
+  ( generateASCIITableSources
+  , generateASCIIVectorTableSources
+  , generateSources
+  , processTable
+  )
 import ListM (ListM(Nil), generatePartitionings)
+import UCD.Common (tableToVector)
 import qualified UCD.Jamo
+import qualified UCD.NameAliases
 import qualified UCD.UnicodeData
 
 main :: IO ()
@@ -48,6 +56,16 @@ main = do
          [0xF900 .. 0xFA6D] ++ [0xFA70 .. 0xFAD9] ++ [0x2F800 .. 0x2FA1D])
     , do shortNames <- UCD.Jamo.fetch
          generateASCIITableSources [Nil] "jamo_short_name" shortNames
+    , do aliases <- tableToVector V.empty <$> UCD.NameAliases.fetch
+         concurrently_
+           (generateASCIIVectorTableSources
+              fullPartitionings
+              "name_aliases_aliases" $
+            fmap (fmap snd) aliases)
+           (generateSources
+              fullPartitionings
+              "name_aliases_types"
+              (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
     ]
 
 printLong :: Show a => [a] -> IO ()

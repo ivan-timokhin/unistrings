@@ -12,6 +12,7 @@ module Gen
   , IntSpec(..)
   , generateASCII
   , ASCIISpec(..)
+  , generateMonoContainer
   ) where
 
 import Data.Bits (shiftL)

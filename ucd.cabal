@@ -27,6 +27,11 @@ library
                      , Data.UCD.Internal.NameLen
                      , Data.UCD.Internal.JamoShortNamePtr
                      , Data.UCD.Internal.JamoShortNameLen
+                     , Data.UCD.Internal.NameAliasesAliasesLen
+                     , Data.UCD.Internal.NameAliasesAliasesSublens
+                     , Data.UCD.Internal.NameAliasesAliasesPtr
+                     , Data.UCD.Internal.NameAliasesTypes
+                     , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
@@ -39,6 +44,10 @@ library
                      , generated/cbits/name_ptr.c
                      , generated/cbits/jamo_short_name_len.c
                      , generated/cbits/jamo_short_name_ptr.c
+                     , generated/cbits/name_aliases_aliases_len.c
+                     , generated/cbits/name_aliases_aliases_sublens.c
+                     , generated/cbits/name_aliases_aliases_ptr.c
+                     , generated/cbits/name_aliases_types.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -116,6 +125,7 @@ executable ucd-gen
                        -with-rtsopts "-N -A256m"
   other-modules:       UCD.UnicodeData
                      , UCD.Jamo
+                     , UCD.NameAliases
                      , UCD.Common
                      , Trie
                      , Gen

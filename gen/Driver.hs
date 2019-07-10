@@ -5,15 +5,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Driver where
 
 import Control.Arrow ((&&&))
+import Control.Concurrent.Async (concurrently_)
 import Data.Bifunctor (first)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory, toUpper)
-import Data.Foldable (for_)
+import Data.Foldable (fold, for_)
 import Data.Functor.Identity (Identity)
 import Data.Maybe (fromMaybe)
 import qualified Data.Vector as V
@@ -28,11 +30,19 @@ import Gen
   , generateASCII
   , generateEnum
   , generateIntegral
+  , generateMonoContainer
   )
 import Gen.Cost (SizedTy, pickBest, totalCost)
-import Gen.Type (IntegralType, typeEnum, typeLayers, word8, typeASCII)
+import Gen.Type
+  ( IntegralType
+  , typeASCII
+  , typeContainer
+  , typeEnum
+  , typeLayers
+  , word8
+  )
+import ListM (ListM)
 import Trie (TrieDesc, mkTrieM, partitioning)
-import ListM(ListM)
 
 class (SizedTy (BottomType a), Ord (BottomVal a), Show a) =>
       TableValue a
@@ -81,7 +91,13 @@ instance TableValue ByteString where
   type BottomType ByteString = (IntegralType, ByteString)
   type BottomVal ByteString = Int
   typeVals = typeASCII
-  generateModule prefix = generateASCII ASCIISpec { asCPrefix = prefix }
+  generateModule prefix = generateASCII ASCIISpec {asCPrefix = prefix}
+
+instance TableValue (V.Vector Word8) where
+  type BottomType (V.Vector Word8) = (IntegralType, V.Vector Word8)
+  type BottomVal (V.Vector Word8) = Int
+  typeVals = typeContainer
+  generateModule prefix = generateMonoContainer prefix
 
 processTable ::
      forall a. TableValue a
@@ -96,9 +112,30 @@ processTable partitionings snakeName values = do
 
 generateASCIITableSources ::
      [ListM [] Int] -> ByteString -> V.Vector ByteString -> IO ()
-generateASCIITableSources partitionings snakeName values = do
-  generateSources partitionings (snakeName <> "_ptr") values
-  generateSources partitionings (snakeName <> "_len") (fmap B.length values)
+generateASCIITableSources partitionings snakeName values =
+  concurrently_
+    (generateSources partitionings (snakeName <> "_ptr") values)
+    (generateSources partitionings (snakeName <> "_len") (fmap B.length values))
+
+-- This assumes that the total length of all strings in a single
+-- element is <= 255
+generateASCIIVectorTableSources ::
+     [ListM [] Int] -> ByteString -> V.Vector (V.Vector ByteString) -> IO ()
+generateASCIIVectorTableSources partitionings snakeName values =
+  concurrently_
+    (generateSources partitionings (snakeName <> "_len") (fmap V.length values)) $
+  concurrently_
+    (generateSources
+       partitionings
+       (snakeName <> "_sublens")
+       (fmap
+          (\v ->
+             if V.null v
+               then V.empty
+               else V.map (toEnum :: Int -> Word8) $
+                    V.scanl' (\n str -> n + B.length str) 0 v)
+          values))
+    (generateSources partitionings (snakeName <> "_ptr") (fmap fold values))
 
 generateSources ::
      forall a. TableValue a
@@ -108,8 +145,8 @@ generateSources ::
   -> IO ()
 {-# INLINEABLE generateSources #-}
 generateSources partitionings snakeName values = do
-  print $ partitioning trie
-  print $ totalCost trie
+  putStrLn $ show snakeName ++ " " ++ show (partitioning trie)
+  putStrLn $ show snakeName ++ " " ++ show (totalCost trie)
   let hsFile = "generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
   B.writeFile (B.unpack hsFile) $
     B.unlines $

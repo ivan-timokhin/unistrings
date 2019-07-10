@@ -1,5 +1,6 @@
 module Data.UCD.Internal.Types
   ( BidiClass(..)
+  , NameAliasType(..)
   ) where
 
 data BidiClass
@@ -26,4 +27,12 @@ data BidiClass
   | RightToLeftIsolate
   | FirstStrongIsolate
   | PopDirectionalIsolate
+  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+
+data NameAliasType
+  = Correction
+  | Control
+  | Alternate
+  | Figment
+  | Abbreviation
   deriving (Eq, Ord, Enum, Bounded, Show, Read)

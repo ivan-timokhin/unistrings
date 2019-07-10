@@ -20,9 +20,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Char as C
 import Data.Functor (void)
-import Data.List (sortOn)
 import Data.Maybe (mapMaybe)
-import Data.Ord (Down(Down))
 import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
@@ -37,7 +35,12 @@ import Data.UCD.Internal.Types
           RightToLeftEmbedding, RightToLeftIsolate, RightToLeftOverride,
           SegmentSeparator, WhiteSpace)
   )
-import UCD.Common (Table(Table, getTable), Range(Single, Range), tableToVector)
+import UCD.Common
+  ( Range(Range, Single)
+  , Table(Table, getTable)
+  , tableP
+  , tableToVector
+  )
 
 fetch :: IO (Table Name ByteString Properties)
 fetch = do
@@ -202,74 +205,69 @@ pType = (special <|> regular) A.<?> "unicode character name"
 
 pCategory :: A.Parser C.GeneralCategory
 pCategory =
-  A.choice
-    (map
-       (\(str, gc) -> gc <$ A.string str)
-       [ "Lu" ~> C.UppercaseLetter
-       , "Ll" ~> C.LowercaseLetter
-       , "Lt" ~> C.TitlecaseLetter
-       , "Lm" ~> C.ModifierLetter
-       , "Lo" ~> C.OtherLetter
-       , "Mn" ~> C.NonSpacingMark
-       , "Mc" ~> C.SpacingCombiningMark -- TODO: UAX #44 calls this Spacing_Mark
-       , "Me" ~> C.EnclosingMark
-       , "Nd" ~> C.DecimalNumber
-       , "Nl" ~> C.LetterNumber
-       , "No" ~> C.OtherNumber
-       , "Pc" ~> C.ConnectorPunctuation
-       , "Pd" ~> C.DashPunctuation
-       , "Ps" ~> C.OpenPunctuation
-       , "Pe" ~> C.ClosePunctuation
-       , "Pi" ~> C.InitialQuote -- TODO: UAX #44 calls this Initial_Punctuation
-       , "Pf" ~> C.FinalQuote -- TODO: UAX #44 calls this Final_Punctuation
-       , "Po" ~> C.OtherPunctuation
-       , "Sm" ~> C.MathSymbol
-       , "Sc" ~> C.CurrencySymbol
-       , "Sk" ~> C.ModifierSymbol
-       , "So" ~> C.OtherSymbol
-       , "Zs" ~> C.Space
-       , "Zl" ~> C.LineSeparator
-       , "Zp" ~> C.ParagraphSeparator
-       , "Cc" ~> C.Control
-       , "Cf" ~> C.Format
-       , "Cs" ~> C.Surrogate
-       , "Co" ~> C.PrivateUse
-       , "Cn" ~> C.NotAssigned -- TODO: UAX #44 calls this Unassigned
-       ]) A.<?>
+  tableP
+    [ "Lu" ~> C.UppercaseLetter
+    , "Ll" ~> C.LowercaseLetter
+    , "Lt" ~> C.TitlecaseLetter
+    , "Lm" ~> C.ModifierLetter
+    , "Lo" ~> C.OtherLetter
+    , "Mn" ~> C.NonSpacingMark
+    , "Mc" ~> C.SpacingCombiningMark -- TODO: UAX #44 calls this Spacing_Mark
+    , "Me" ~> C.EnclosingMark
+    , "Nd" ~> C.DecimalNumber
+    , "Nl" ~> C.LetterNumber
+    , "No" ~> C.OtherNumber
+    , "Pc" ~> C.ConnectorPunctuation
+    , "Pd" ~> C.DashPunctuation
+    , "Ps" ~> C.OpenPunctuation
+    , "Pe" ~> C.ClosePunctuation
+    , "Pi" ~> C.InitialQuote -- TODO: UAX #44 calls this Initial_Punctuation
+    , "Pf" ~> C.FinalQuote -- TODO: UAX #44 calls this Final_Punctuation
+    , "Po" ~> C.OtherPunctuation
+    , "Sm" ~> C.MathSymbol
+    , "Sc" ~> C.CurrencySymbol
+    , "Sk" ~> C.ModifierSymbol
+    , "So" ~> C.OtherSymbol
+    , "Zs" ~> C.Space
+    , "Zl" ~> C.LineSeparator
+    , "Zp" ~> C.ParagraphSeparator
+    , "Cc" ~> C.Control
+    , "Cf" ~> C.Format
+    , "Cs" ~> C.Surrogate
+    , "Co" ~> C.PrivateUse
+    , "Cn" ~> C.NotAssigned -- TODO: UAX #44 calls this Unassigned
+    ] A.<?>
   "general category"
   where
     (~>) = (,)
 
 pBidiClass :: A.Parser BidiClass
 pBidiClass =
-  A.choice
-    (map (\(str, bd) -> bd <$ A.string str) $
-     sortOn
-       (Down . B.length . fst)
-       [ "L" ~> LeftToRight
-       , "R" ~> RightToLeft
-       , "AL" ~> ArabicLetter
-       , "EN" ~> EuropeanNumber
-       , "ES" ~> EuropeanSeparator
-       , "ET" ~> EuropeanTerminator
-       , "AN" ~> ArabicNumber
-       , "CS" ~> CommonSeparator
-       , "NSM" ~> NonSpacingMark
-       , "BN" ~> BoundaryNeutral
-       , "B" ~> ParagraphSeparator
-       , "S" ~> SegmentSeparator
-       , "WS" ~> WhiteSpace
-       , "ON" ~> OtherNeutral
-       , "LRE" ~> LeftToRightEmbedding
-       , "LRO" ~> LeftToRightOverride
-       , "RLE" ~> RightToLeftEmbedding
-       , "RLO" ~> RightToLeftOverride
-       , "PDF" ~> PopDirectionalFormat
-       , "LRI" ~> LeftToRightIsolate
-       , "RLI" ~> RightToLeftIsolate
-       , "FSI" ~> FirstStrongIsolate
-       , "PDI" ~> PopDirectionalIsolate
-       ]) A.<?>
+  tableP
+    [ "L" ~> LeftToRight
+    , "R" ~> RightToLeft
+    , "AL" ~> ArabicLetter
+    , "EN" ~> EuropeanNumber
+    , "ES" ~> EuropeanSeparator
+    , "ET" ~> EuropeanTerminator
+    , "AN" ~> ArabicNumber
+    , "CS" ~> CommonSeparator
+    , "NSM" ~> NonSpacingMark
+    , "BN" ~> BoundaryNeutral
+    , "B" ~> ParagraphSeparator
+    , "S" ~> SegmentSeparator
+    , "WS" ~> WhiteSpace
+    , "ON" ~> OtherNeutral
+    , "LRE" ~> LeftToRightEmbedding
+    , "LRO" ~> LeftToRightOverride
+    , "RLE" ~> RightToLeftEmbedding
+    , "RLO" ~> RightToLeftOverride
+    , "PDF" ~> PopDirectionalFormat
+    , "LRI" ~> LeftToRightIsolate
+    , "RLI" ~> RightToLeftIsolate
+    , "FSI" ~> FirstStrongIsolate
+    , "PDI" ~> PopDirectionalIsolate
+    ] A.<?>
   "bidirectional class"
   where
     (~>) = (,)
@@ -279,27 +277,24 @@ pDecompositionMapping =
   (do tag <-
         optional $
         A.char '<' *>
-        A.choice
-          (map (\(str, t) -> t <$ A.string str) $
-           sortOn
-             (Down . B.length . fst)
-             [ "font" ~> Font
-             , "noBreak" ~> NoBreak
-             , "initial" ~> Initial
-             , "medial" ~> Medial
-             , "final" ~> Final
-             , "isolated" ~> Isolated
-             , "circle" ~> Circle
-             , "super" ~> Super
-             , "sub" ~> Sub
-             , "vertical" ~> Vertical
-             , "wide" ~> Wide
-             , "narrow" ~> Narrow
-             , "small" ~> Small
-             , "square" ~> Square
-             , "fraction" ~> Fraction
-             , "compat" ~> Compat
-             ]) <*
+        tableP
+          [ "font" ~> Font
+          , "noBreak" ~> NoBreak
+          , "initial" ~> Initial
+          , "medial" ~> Medial
+          , "final" ~> Final
+          , "isolated" ~> Isolated
+          , "circle" ~> Circle
+          , "super" ~> Super
+          , "sub" ~> Sub
+          , "vertical" ~> Vertical
+          , "wide" ~> Wide
+          , "narrow" ~> Narrow
+          , "small" ~> Small
+          , "square" ~> Square
+          , "fraction" ~> Fraction
+          , "compat" ~> Compat
+          ] <*
         A.string "> "
       decomposition <- A.hexadecimal `A.sepBy1` A.char ' '
       pure (tag, decomposition)) A.<?>

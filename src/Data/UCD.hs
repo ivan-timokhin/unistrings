@@ -7,11 +7,13 @@ module Data.UCD
   , GeneralCategory(..)
   , canonicalCombiningClass
   , name
+  , nameAliases
   ) where
 
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
 import Data.Word (Word8)
+import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
@@ -19,8 +21,14 @@ import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
+import qualified Data.UCD.Internal.NameAliasesAliasesLen as NAALen
+import qualified Data.UCD.Internal.NameAliasesAliasesPtr as NAAPtr
+import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
+import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
+import Data.UCD.Internal.Ptr (unsafeReadPtr)
+import Data.UCD.Internal.Types (NameAliasType)
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
@@ -77,3 +85,21 @@ name cp
           (0xFA70 <= icp && icp <= 0xFAD9) || (0x2F800 <= icp && icp <= 0x2FA1D) =
         Just "CJK COMPATIBILITY IDEOGRAPH-"
       | otherwise = Nothing
+
+nameAliases :: IsCodePoint cp => cp -> [(NameAliasType, ByteString)]
+{-# INLINE nameAliases #-} -- List fusion
+nameAliases cp =
+  map
+    (\i ->
+       let offset = fromEnum $ unsafeReadPtr sublBase i
+        in ( toEnum . fromEnum $ unsafeReadPtr tyBase i
+           , mkByteString
+               (fromEnum (unsafeReadPtr sublBase (i + 1)) - offset)
+               (valBase `plusPtr` offset)))
+    [0 .. (count - 1)]
+  where
+    valBase = NAAPtr.retrieve icp
+    sublBase = NAASublens.retrieve icp
+    tyBase = NAT.retrieve icp
+    count = NAALen.retrieve icp
+    icp = fromEnum $ toCodePoint cp
