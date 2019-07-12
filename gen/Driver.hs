@@ -97,7 +97,7 @@ instance TableValue (V.Vector Word8) where
   type BottomType (V.Vector Word8) = (IntegralType, V.Vector Word8)
   type BottomVal (V.Vector Word8) = Int
   typeVals = typeContainer
-  generateModule prefix = generateMonoContainer prefix
+  generateModule = generateMonoContainer
 
 processTable ::
      forall a. TableValue a
@@ -151,6 +151,7 @@ generateSources partitionings snakeName values = do
   B.writeFile (B.unpack hsFile) $
     B.unlines $
     "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
+    "{- HLINT ignore -}" :
     ("module Data.UCD.Internal." <> hsModuleName <> " (retrieve) where\n") :
     moduleHs modul
   B.writeFile (B.unpack $ "generated/cbits/" <> snakeName <> ".c") $
