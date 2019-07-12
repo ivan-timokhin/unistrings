@@ -11,8 +11,8 @@ import Data.List (sort)
 import qualified Data.Vector as V
 
 import Data.UCD.Internal.Types
-  ( NameAliasType(Abbreviation, Alternate, Control, Correction,
-              Figment)
+  ( NameAliasType(AbbreviationAlias, AlternateAlias, ControlAlias,
+              CorrectionAlias, FigmentAlias)
   )
 import UCD.Common (Range(Single), Table(Table), comments, tableP)
 
@@ -45,11 +45,11 @@ record = do
 naType :: A.Parser NameAliasType
 naType =
   tableP
-    [ "correction" ~> Correction
-    , "control" ~> Control
-    , "alternate" ~> Alternate
-    , "figment" ~> Figment
-    , "abbreviation" ~> Abbreviation
+    [ "correction" ~> CorrectionAlias
+    , "control" ~> ControlAlias
+    , "alternate" ~> AlternateAlias
+    , "figment" ~> FigmentAlias
+    , "abbreviation" ~> AbbreviationAlias
     ]
   where
     (~>) = (,)

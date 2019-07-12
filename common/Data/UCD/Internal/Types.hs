@@ -30,9 +30,9 @@ data BidiClass
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
 
 data NameAliasType
-  = Correction
-  | Control
-  | Alternate
-  | Figment
-  | Abbreviation
+  = CorrectionAlias
+  | ControlAlias
+  | AlternateAlias
+  | FigmentAlias
+  | AbbreviationAlias
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
