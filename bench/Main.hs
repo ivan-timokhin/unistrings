@@ -33,6 +33,11 @@ main =
               [ C.bench "UCD" $ mkBenchmark udhr UCD.name
               , C.bench "ICU" $ mkBenchmark udhr ICU.charName
               ]
+          , C.bgroup
+              "Name aliases"
+              [ C.bench "UCD" $
+                mkBenchmark udhr (evalPairsList . UCD.nameAliases)
+              ]
           , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]
@@ -40,6 +45,13 @@ main =
 mkBenchmark :: V.Vector Char -> (Char -> a) -> C.Benchmarkable
 {-# INLINE mkBenchmark #-}
 mkBenchmark vals f = C.nf (V.foldl' (\() c -> f c `seq` ()) ()) vals
+
+evalPairsList :: [(a, b)] -> [(a, b)]
+{-# INLINE evalPairsList #-}
+evalPairsList xs = go xs `seq` xs
+  where
+    go ((a, b):rest) = a `seq` b `seq` go rest
+    go [] = ()
 
 readUDHR :: IO (V.Vector Char)
 readUDHR =
