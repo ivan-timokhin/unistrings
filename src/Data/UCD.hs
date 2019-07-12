@@ -8,6 +8,7 @@ module Data.UCD
   , canonicalCombiningClass
   , name
   , nameAliases
+  , NameAliasType(..)
   ) where
 
 import Data.ByteString (ByteString)
@@ -28,7 +29,7 @@ import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
-import Data.UCD.Internal.Types (NameAliasType)
+import Data.UCD.Internal.Types (NameAliasType(..))
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
