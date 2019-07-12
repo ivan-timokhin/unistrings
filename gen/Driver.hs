@@ -164,7 +164,7 @@ generateSources partitionings snakeName values = do
       map (first (const bty) . typeLayers) $ partitionings >>= mkTrieM bvals
     (bty, bvals) = typeVals values
 
-generateTests :: TableValue a => ByteString -> V.Vector a -> IO ()
+generateTests :: Show a => ByteString -> V.Vector a -> IO ()
 {-# INLINEABLE generateTests #-}
 generateTests snakeName values =
   withFile (B.unpack $ "generated/test_data/" <> snakeName <> ".txt") WriteMode $ \h ->

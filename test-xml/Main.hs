@@ -4,11 +4,11 @@
 module Main where
 
 import Codec.Archive.Zip (mkEntrySelector, sourceEntry, withArchive)
-import Control.Applicative ((<|>))
+import Control.Applicative ((<|>), liftA2)
 import Control.Monad (when)
 import Data.Char (toUpper)
 import Data.Foldable (for_)
-import Data.List (find)
+import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
 import Data.Maybe (fromJust, mapMaybe)
 import qualified Data.Text as T
@@ -73,6 +73,7 @@ testGroup n group =
             Just cpStr -> do
               cp <- readHex cpStr
               testCP' $ toEnum cp
+              testCPAliases (elementChildren el) $ toEnum cp
             Nothing -> assertFailure $ "Unrecognized record type: " ++ show el
 
 testCP :: (Name -> Maybe T.Text) -> UCD.CodePoint -> IO ()
@@ -136,6 +137,31 @@ testCP getAttr cp = do
        in if length raw < 4
             then replicate (4 - length raw) ' ' ++ raw
             else raw
+
+testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
+testCPAliases children cp = do
+  aliases <-
+    sort <$> traverse (\elt -> liftA2 (,) (aliasType elt) (alias elt)) aliasElts
+  assertEqual "Name aliases" aliases $ UCD.nameAliases cp
+  where
+    aliasElts =
+      filter
+        (\child -> nameLocalName (elementName child) == "name-alias")
+        children
+    aliasType elt =
+      case M.lookup "type" (elementAttributes elt) of
+        Just "correction" -> pure UCD.CorrectionAlias
+        Just "control" -> pure UCD.ControlAlias
+        Just "alternate" -> pure UCD.AlternateAlias
+        Just "figment" -> pure UCD.FigmentAlias
+        Just "abbreviation" -> pure UCD.AbbreviationAlias
+        Just otherStr ->
+          assertFailure $ "Unrecognised name alias type" ++ show otherStr
+        Nothing -> assertFailure "Can't locate alias type"
+    alias elt =
+      case M.lookup "alias" (elementAttributes elt) of
+        Just str -> pure $ TE.encodeUtf8 str
+        Nothing -> assertFailure "Can't locate alias"
 
 readHex :: T.Text -> IO Int
 readHex t =

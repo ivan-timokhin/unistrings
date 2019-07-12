@@ -17,6 +17,7 @@ import Driver
   ( generateASCIITableSources
   , generateASCIIVectorTableSources
   , generateSources
+  , generateTests
   , processTable
   )
 import ListM (ListM(Nil), generatePartitionings)
@@ -57,15 +58,16 @@ main = do
     , do shortNames <- UCD.Jamo.fetch
          generateASCIITableSources [Nil] "jamo_short_name" shortNames
     , do aliases <- tableToVector V.empty <$> UCD.NameAliases.fetch
-         concurrently_
-           (generateASCIIVectorTableSources
-              fullPartitionings
-              "name_aliases_aliases" $
-            fmap (fmap snd) aliases)
-           (generateSources
-              fullPartitionings
-              "name_aliases_types"
-              (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
+         concurrently_ (generateTests "name_aliases" aliases) $
+           concurrently_
+             (generateASCIIVectorTableSources
+                fullPartitionings
+                "name_aliases_aliases" $
+              fmap (fmap snd) aliases)
+             (generateSources
+                fullPartitionings
+                "name_aliases_types"
+                (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
     ]
 
 printLong :: Show a => [a] -> IO ()

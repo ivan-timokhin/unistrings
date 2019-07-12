@@ -1,10 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Control.Monad (replicateM, when)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
 import Data.Foldable (for_)
-import Data.List (sortOn)
+import Data.List (sort, sortOn)
 import Data.Ord (Down(Down))
 import System.Exit (exitFailure)
 import Test.HUnit
@@ -13,7 +15,7 @@ import qualified Data.UCD as UCD
 
 main :: IO ()
 main = do
-  let tests = TestList [generalCategory, canonicalCombiningClass]
+  let tests = TestList [generalCategory, canonicalCombiningClass, nameAliases]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
 
@@ -40,6 +42,23 @@ canonicalCombiningClass =
     for_ (zip [minCp .. maxCp] reference) $ \(cp, refCCC) ->
       assertEqual (show cp) refCCC $ UCD.canonicalCombiningClass cp
 
+nameAliases :: Test
+nameAliases =
+  TestLabel "Name aliases" $
+  TestCase $ do
+    reference <- readFullTable parser "generated/test_data/name_aliases.txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, refNA) ->
+      assertEqual (show cp) (sort refNA) $ UCD.nameAliases cp
+  where
+    parser :: A.Parser [(UCD.NameAliasType, B.ByteString)]
+    parser =
+      enclosedP "[" "]" $
+      enclosedP
+        "("
+        ")"
+        ((,) <$> enumP <* "," <*> enclosedP "\"" "\"" (A.takeWhile (/= '"'))) `A.sepBy`
+      ","
+
 maxCp :: UCD.CodePoint
 maxCp = maxBound
 
@@ -60,3 +79,6 @@ enumP =
   map (\(e, str) -> e <$ A.string str) $
   sortOn (Down . B.length . snd) $
   map (\e -> (e, B.pack (show e))) [minBound .. maxBound]
+
+enclosedP :: A.Parser a -> A.Parser b -> A.Parser c -> A.Parser c
+enclosedP start end p = start *> p <* end
