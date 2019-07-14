@@ -1,13 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module UCD.Age where
 
-import Control.Applicative ((<|>), many)
+import Control.Applicative (many)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
 import Data.Word (Word8)
 
-import UCD.Common (Range(Range, Single), Table(Table), comment, comments)
+import UCD.Common (Range, Table(Table), comment, comments, range)
 
 data Age =
   Age
@@ -38,16 +36,3 @@ record = do
   A.skipSpace
   comment
   pure $ Age major minor <$ rng
-
-range :: A.Parser (Range () () ())
-range = do
-  start <- A.hexadecimal
-  rng <- fullRange start <|> pure (Single start () ())
-  A.skipSpace
-  _ <- A.char ';'
-  pure rng
-  where
-    fullRange start = do
-      _ <- A.string ".."
-      end <- A.hexadecimal
-      pure $ Range start end () ()

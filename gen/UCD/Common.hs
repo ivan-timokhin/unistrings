@@ -1,9 +1,10 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module UCD.Common where
 
-import Control.Applicative (many, optional)
+import Control.Applicative ((<|>), many, optional)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -45,3 +46,16 @@ tableP :: [(ByteString, a)] -> A.Parser a
 tableP =
   A.choice .
   map (\(str, a) -> a <$ A.string str) . sortOn (Down . B.length . fst)
+
+range :: A.Parser (Range () () ())
+range = do
+  start <- A.hexadecimal
+  rng <- fullRange start <|> pure (Single start () ())
+  A.skipSpace
+  _ <- A.char ';'
+  pure rng
+  where
+    fullRange start = do
+      _ <- A.string ".."
+      end <- A.hexadecimal
+      pure $ Range start end () ()
