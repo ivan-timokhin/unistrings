@@ -134,6 +134,7 @@ executable ucd-gen
                      , UCD.NameAliases
                      , UCD.Blocks
                      , UCD.Age
+                     , UCD.Scripts
                      , UCD.Common
                      , Trie
                      , Gen
