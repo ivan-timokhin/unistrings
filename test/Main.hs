@@ -8,6 +8,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Foldable (for_)
 import Data.List (sort, sortOn)
 import Data.Ord (Down(Down))
+import Data.Version (makeVersion)
 import System.Exit (exitFailure)
 import Test.HUnit
 
@@ -15,7 +16,8 @@ import qualified Data.UCD as UCD
 
 main :: IO ()
 main = do
-  let tests = TestList [generalCategory, canonicalCombiningClass, nameAliases]
+  let tests =
+        TestList [generalCategory, canonicalCombiningClass, nameAliases, ages]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
 
@@ -58,6 +60,20 @@ nameAliases =
         ")"
         ((,) <$> enumP <* "," <*> enclosedP "\"" "\"" (A.takeWhile (/= '"'))) `A.sepBy`
       ","
+
+ages :: Test
+ages =
+  TestLabel "Ages" $
+  TestCase $ do
+    referenceMinor <-
+      readFullTable A.decimal "generated/test_data/age_minor.txt"
+    referenceMajor <-
+      readFullTable A.decimal "generated/test_data/age_major.txt"
+    for_ (zip3 [minCp .. maxCp] referenceMajor referenceMinor) $ \(cp, refMaj, refMin) ->
+      if refMaj == 0
+        then assertEqual (show cp) Nothing $ UCD.age cp
+        else assertEqual (show cp) (Just $ makeVersion [refMaj, refMin]) $
+             UCD.age cp
 
 maxCp :: UCD.CodePoint
 maxCp = maxBound

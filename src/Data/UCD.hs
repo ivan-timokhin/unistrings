@@ -11,15 +11,19 @@ module Data.UCD
   , NameAliasType(..)
   , block
   , Block(..)
+  , age
   ) where
 
 import Data.Bits (shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
+import Data.Version (Version, makeVersion)
 import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
+import qualified Data.UCD.Internal.AgeMajor as AgeMajor
+import qualified Data.UCD.Internal.AgeMinor as AgeMinor
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
@@ -111,3 +115,12 @@ nameAliases cp =
 
 block :: IsCodePoint cp => cp -> Block
 block = Blocks.retrieve . (`shiftR` 4) . fromEnum . toCodePoint
+
+age :: IsCodePoint cp => cp -> Maybe Version
+age cp
+  | major == 0 = Nothing
+  | otherwise = Just $ makeVersion [major, minor]
+  where
+    icp = fromEnum $ toCodePoint cp
+    major = fromEnum $ AgeMajor.retrieve icp
+    minor = fromEnum $ AgeMinor.retrieve icp

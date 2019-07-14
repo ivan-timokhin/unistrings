@@ -14,9 +14,11 @@ import Data.Maybe (fromJust, mapMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
+import Data.Version (parseVersion)
 import Numeric (showHex)
 import System.Exit (exitFailure)
 import Test.HUnit
+import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.XML
   ( Document
   , Element(..)
@@ -95,6 +97,8 @@ testCP getAttr cp = do
     UCD.canonicalCombiningClass cp
   xmlName <- name
   assertEqual "Name" xmlName $ UCD.name cp
+  xmlAge <- age
+  assertEqual "Age" xmlAge $ UCD.age cp
   where
     generalCategory =
       case getAttr "gc" of
@@ -147,6 +151,15 @@ testCP getAttr cp = do
        in if length raw < 4
             then replicate (4 - length raw) ' ' ++ raw
             else raw
+    age =
+      case getAttr "age" of
+        Nothing -> assertFailure "Can't locate age"
+        Just "unassigned" -> pure Nothing
+        Just rawAge ->
+          case filter ((== "") . snd) $
+               readP_to_S parseVersion (T.unpack rawAge) of
+            [(ageV, _)] -> pure $ Just ageV
+            _ -> assertFailure $ "Can't parse age: " ++ show rawAge
 
 testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
 testCPAliases children cp = do
