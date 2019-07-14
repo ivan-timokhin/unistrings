@@ -21,6 +21,7 @@ import Driver
   , processTable
   )
 import ListM (ListM(Nil), generatePartitionings)
+import qualified UCD.Blocks
 import UCD.Common (tableToVector)
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
@@ -68,6 +69,8 @@ main = do
                 fullPartitionings
                 "name_aliases_types"
                 (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
+    , do blocks <- UCD.Blocks.fetch
+         generateSources (generatePartitionings 4 0 12) "blocks" blocks
     ]
 
 printLong :: Show a => [a] -> IO ()

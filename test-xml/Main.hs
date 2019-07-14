@@ -37,7 +37,17 @@ main = do
         find ((== "repertoire") . nameLocalName . elementName) $
         elementChildren $ documentRoot ucd
       groups = elementChildren repertoire
-  let tests = TestList $ groupsOnly groups : zipWith testGroup [0 ..] groups
+      blocks =
+        elementChildren $
+        fromJust $
+        find ((== "blocks") . nameLocalName . elementName) $
+        elementChildren $ documentRoot ucd
+  let tests =
+        TestList
+          [ TestLabel "groups" $
+            TestList $ groupsOnly groups : zipWith testGroup [0 ..] groups
+          , TestLabel "blocks" $ TestList $ map testBlock blocks
+          ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
 
@@ -162,6 +172,33 @@ testCPAliases children cp = do
       case M.lookup "alias" (elementAttributes elt) of
         Just str -> pure $ TE.encodeUtf8 str
         Nothing -> assertFailure "Can't locate alias"
+
+testBlock :: Element -> Test
+testBlock blockDescr =
+  TestLabel (T.unpack blockName) $
+  TestCase $ do
+    start <- (toEnum :: Int -> UCD.CodePoint) <$> blockStart
+    end <- toEnum <$> blockEnd
+    for_ [start .. end] $ \cp ->
+      assertEqual (show cp) block $ Just $ UCD.block cp
+  where
+    blockName = fromJust $ M.lookup "name" $ elementAttributes blockDescr
+    blockStart =
+      case M.lookup "first-cp" $ elementAttributes blockDescr of
+        Just str -> readHex str
+        Nothing -> assertFailure "Can't locate block start"
+    blockEnd =
+      case M.lookup "last-cp" $ elementAttributes blockDescr of
+        Just str -> readHex str
+        Nothing -> assertFailure "Can't locate block end"
+    block
+      | blockName == "No_Block" = Just UCD.NoBlock
+      | otherwise =
+        flip find [succ minBound .. maxBound] $ \b ->
+          let prepare =
+                T.toLower . T.filter (\c -> c /= ' ' && c /= '-' && c /= '\'')
+              bname = prepare $ T.dropEnd 5 $ T.pack $ show b
+           in bname == prepare blockName
 
 readHex :: T.Text -> IO Int
 readHex t =

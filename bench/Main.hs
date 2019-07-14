@@ -38,6 +38,12 @@ main =
               [ C.bench "UCD" $
                 mkBenchmark udhr (evalPairsList . UCD.nameAliases)
               ]
+          , C.bgroup
+              "Block"
+              [ C.bench "UCD" $ mkBenchmark udhr UCD.block
+              -- https://github.com/bos/text-icu/pull/37
+              -- , C.bench "ICU" $ mkBenchmark udhr ICU.blockCode
+              ]
           , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]

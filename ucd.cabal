@@ -31,6 +31,7 @@ library
                      , Data.UCD.Internal.NameAliasesAliasesSublens
                      , Data.UCD.Internal.NameAliasesAliasesPtr
                      , Data.UCD.Internal.NameAliasesTypes
+                     , Data.UCD.Internal.Blocks
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -48,6 +49,7 @@ library
                      , generated/cbits/name_aliases_aliases_sublens.c
                      , generated/cbits/name_aliases_aliases_ptr.c
                      , generated/cbits/name_aliases_types.c
+                     , generated/cbits/blocks.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -126,6 +128,7 @@ executable ucd-gen
   other-modules:       UCD.UnicodeData
                      , UCD.Jamo
                      , UCD.NameAliases
+                     , UCD.Blocks
                      , UCD.Common
                      , Trie
                      , Gen

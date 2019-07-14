@@ -9,14 +9,18 @@ module Data.UCD
   , name
   , nameAliases
   , NameAliasType(..)
+  , block
+  , Block(..)
   ) where
 
+import Data.Bits (shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
 import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
+import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
 import qualified Data.UCD.Internal.GeneralCategory as GC
@@ -29,7 +33,7 @@ import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
-import Data.UCD.Internal.Types (NameAliasType(..))
+import Data.UCD.Internal.Types (Block(..), NameAliasType(..))
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
@@ -104,3 +108,6 @@ nameAliases cp =
     tyBase = NAT.retrieve icp
     count = NAALen.retrieve icp
     icp = fromEnum $ toCodePoint cp
+
+block :: IsCodePoint cp => cp -> Block
+block = Blocks.retrieve . (`shiftR` 4) . fromEnum . toCodePoint

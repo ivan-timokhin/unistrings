@@ -22,6 +22,7 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
+import Data.UCD.Internal.Types (Block)
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
   , EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
@@ -71,6 +72,17 @@ instance TableValue GeneralCategory where
         { esCPrefix = prefix
         , esHsType = "GeneralCategory"
         , esHsTypeModule = "Data.Char"
+        }
+
+instance TableValue Block where
+  type BottomType Block = IntegralType
+  typeVals_ = typeEnum
+  generateModule prefix =
+    generateEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "Block"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 
 instance TableValue Word8 where
