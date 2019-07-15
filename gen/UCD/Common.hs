@@ -14,6 +14,11 @@ import Data.Ord (Down(Down))
 import qualified Data.Vector as V
 import Data.Word (Word32)
 
+import Data.UCD.Internal.Types
+  ( EnumeratedProperty(abbreviatedPropertyValueName,
+                   fullPropertyValueName)
+  )
+
 newtype Table annS annR a =
   Table
     { getTable :: [Range annS annR a]
@@ -53,9 +58,35 @@ range = do
   rng <- fullRange start <|> pure (Single start () ())
   A.skipSpace
   _ <- A.char ';'
+  A.skipSpace
   pure rng
   where
     fullRange start = do
       _ <- A.string ".."
       end <- A.hexadecimal
       pure $ Range start end () ()
+
+enumeratedFullP :: EnumeratedProperty p => A.Parser p
+enumeratedFullP = enumeratedP fullPropertyValueName
+
+enumeratedAbbrP :: EnumeratedProperty p => A.Parser p
+enumeratedAbbrP = enumeratedP abbreviatedPropertyValueName
+
+enumeratedP :: (Enum a, Bounded a) => (a -> ByteString) -> A.Parser a
+enumeratedP f = tableP $ flip map [minBound .. maxBound] $ \p -> (f p, p)
+
+fetchSimple :: FilePath -> A.Parser a -> IO (Table () () a)
+fetchSimple file p = do
+  txt <- B.readFile file
+  case A.parseOnly (parser <* A.endOfInput) txt of
+    Left err -> fail err
+    Right rngs -> pure $ Table rngs
+  where
+    parser = do
+      comments
+      many record
+    record = do
+      rng <- range
+      v <- p
+      comments
+      pure $ v <$ rng

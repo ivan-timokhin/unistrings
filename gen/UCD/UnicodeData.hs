@@ -7,7 +7,6 @@ module UCD.UnicodeData
   , unicodeTableSize
   , Properties(..)
   , Name(Name, Unnamed)
-  , BidiClass(..)
   , CompatibilityMappingTag(..)
   , NumericProperties(..)
   , fetch
@@ -25,19 +24,11 @@ import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 
-import Data.UCD.Internal.Types
-  ( BidiClass(ArabicLetter, ArabicNumber, BoundaryNeutral,
-          CommonSeparator, EuropeanNumber, EuropeanSeparator,
-          EuropeanTerminator, FirstStrongIsolate, LeftToRight,
-          LeftToRightEmbedding, LeftToRightIsolate, LeftToRightOverride,
-          NonSpacingMark, OtherNeutral, ParagraphSeparator,
-          PopDirectionalFormat, PopDirectionalIsolate, RightToLeft,
-          RightToLeftEmbedding, RightToLeftIsolate, RightToLeftOverride,
-          SegmentSeparator, WhiteSpace)
-  )
+import Data.UCD.Internal.Types (BidiClass)
 import UCD.Common
   ( Range(Range, Single)
   , Table(Table, getTable)
+  , enumeratedAbbrP
   , tableP
   , tableToVector
   )
@@ -204,73 +195,10 @@ pType = (special <|> regular) A.<?> "unicode character name"
     regular = Regular . Name <$> A.takeWhile1 (/= ';')
 
 pCategory :: A.Parser C.GeneralCategory
-pCategory =
-  tableP
-    [ "Lu" ~> C.UppercaseLetter
-    , "Ll" ~> C.LowercaseLetter
-    , "Lt" ~> C.TitlecaseLetter
-    , "Lm" ~> C.ModifierLetter
-    , "Lo" ~> C.OtherLetter
-    , "Mn" ~> C.NonSpacingMark
-    , "Mc" ~> C.SpacingCombiningMark -- TODO: UAX #44 calls this Spacing_Mark
-    , "Me" ~> C.EnclosingMark
-    , "Nd" ~> C.DecimalNumber
-    , "Nl" ~> C.LetterNumber
-    , "No" ~> C.OtherNumber
-    , "Pc" ~> C.ConnectorPunctuation
-    , "Pd" ~> C.DashPunctuation
-    , "Ps" ~> C.OpenPunctuation
-    , "Pe" ~> C.ClosePunctuation
-    , "Pi" ~> C.InitialQuote -- TODO: UAX #44 calls this Initial_Punctuation
-    , "Pf" ~> C.FinalQuote -- TODO: UAX #44 calls this Final_Punctuation
-    , "Po" ~> C.OtherPunctuation
-    , "Sm" ~> C.MathSymbol
-    , "Sc" ~> C.CurrencySymbol
-    , "Sk" ~> C.ModifierSymbol
-    , "So" ~> C.OtherSymbol
-    , "Zs" ~> C.Space
-    , "Zl" ~> C.LineSeparator
-    , "Zp" ~> C.ParagraphSeparator
-    , "Cc" ~> C.Control
-    , "Cf" ~> C.Format
-    , "Cs" ~> C.Surrogate
-    , "Co" ~> C.PrivateUse
-    , "Cn" ~> C.NotAssigned -- TODO: UAX #44 calls this Unassigned
-    ] A.<?>
-  "general category"
-  where
-    (~>) = (,)
+pCategory = enumeratedAbbrP A.<?> "general category"
 
 pBidiClass :: A.Parser BidiClass
-pBidiClass =
-  tableP
-    [ "L" ~> LeftToRight
-    , "R" ~> RightToLeft
-    , "AL" ~> ArabicLetter
-    , "EN" ~> EuropeanNumber
-    , "ES" ~> EuropeanSeparator
-    , "ET" ~> EuropeanTerminator
-    , "AN" ~> ArabicNumber
-    , "CS" ~> CommonSeparator
-    , "NSM" ~> NonSpacingMark
-    , "BN" ~> BoundaryNeutral
-    , "B" ~> ParagraphSeparator
-    , "S" ~> SegmentSeparator
-    , "WS" ~> WhiteSpace
-    , "ON" ~> OtherNeutral
-    , "LRE" ~> LeftToRightEmbedding
-    , "LRO" ~> LeftToRightOverride
-    , "RLE" ~> RightToLeftEmbedding
-    , "RLO" ~> RightToLeftOverride
-    , "PDF" ~> PopDirectionalFormat
-    , "LRI" ~> LeftToRightIsolate
-    , "RLI" ~> RightToLeftIsolate
-    , "FSI" ~> FirstStrongIsolate
-    , "PDI" ~> PopDirectionalIsolate
-    ] A.<?>
-  "bidirectional class"
-  where
-    (~>) = (,)
+pBidiClass = enumeratedAbbrP A.<?> "bidirectional class"
 
 pDecompositionMapping :: A.Parser (Maybe CompatibilityMappingTag, [Word32])
 pDecompositionMapping =
