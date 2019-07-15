@@ -99,6 +99,8 @@ testCP getAttr cp = do
   assertEqual "Name" xmlName $ UCD.name cp
   xmlAge <- age
   assertEqual "Age" xmlAge $ UCD.age cp
+  xmlScript <- script
+  assertEqual "Script" xmlScript $ UCD.script cp
   where
     generalCategory =
       case getAttr "gc" of
@@ -160,6 +162,16 @@ testCP getAttr cp = do
                readP_to_S parseVersion (T.unpack rawAge) of
             [(ageV, _)] -> pure $ Just ageV
             _ -> assertFailure $ "Can't parse age: " ++ show rawAge
+    script =
+      case getAttr "sc" of
+        Nothing -> assertFailure "Can't locate script"
+        Just scStr ->
+          case find
+                 (\p ->
+                    scStr == TE.decodeUtf8 (UCD.abbreviatedPropertyValueName p))
+                 [minBound .. maxBound] of
+            Nothing -> assertFailure $ "Can't parse script: " ++ show scStr
+            Just sc -> pure sc
 
 testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
 testCPAliases children cp = do

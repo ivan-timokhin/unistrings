@@ -12,6 +12,9 @@ module Data.UCD
   , block
   , Block(..)
   , age
+  , script
+  , Script(..)
+  , EnumeratedProperty(..)
   ) where
 
 import Data.Bits (shiftR)
@@ -36,8 +39,14 @@ import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
 import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
+import qualified Data.UCD.Internal.Script as Script
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
-import Data.UCD.Internal.Types (Block(..), NameAliasType(..))
+import Data.UCD.Internal.Types
+  ( Block(..)
+  , EnumeratedProperty(..)
+  , NameAliasType(..)
+  , Script(..)
+  )
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
@@ -124,3 +133,6 @@ age cp
     icp = fromEnum $ toCodePoint cp
     major = fromEnum $ AgeMajor.retrieve icp
     minor = fromEnum $ AgeMinor.retrieve icp
+
+script :: IsCodePoint cp => cp -> Script
+script = Script.retrieve . fromEnum . toCodePoint

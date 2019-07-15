@@ -75,7 +75,7 @@ enumeratedAbbrP = enumeratedP abbreviatedPropertyValueName
 enumeratedP :: (Enum a, Bounded a) => (a -> ByteString) -> A.Parser a
 enumeratedP f = tableP $ flip map [minBound .. maxBound] $ \p -> (f p, p)
 
-fetchSimple :: FilePath -> A.Parser a -> IO (Table () () a)
+fetchSimple :: Show a => FilePath -> A.Parser a -> IO (Table () () a)
 fetchSimple file p = do
   txt <- B.readFile file
   case A.parseOnly (parser <* A.endOfInput) txt of
@@ -88,5 +88,6 @@ fetchSimple file p = do
     record = do
       rng <- range
       v <- p
+      A.skipSpace
       comments
       pure $ v <$ rng

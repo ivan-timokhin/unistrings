@@ -22,7 +22,7 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
-import Data.UCD.Internal.Types (Block)
+import Data.UCD.Internal.Types (Block, Script)
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
   , EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
@@ -82,6 +82,17 @@ instance TableValue Block where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "Block"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue Script where
+  type BottomType Script = IntegralType
+  typeVals_ = typeEnum
+  generateModule prefix =
+    generateEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "Script"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

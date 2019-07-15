@@ -243,7 +243,7 @@ data Block
   | GeneralPunctuationBlock
   | SuperscriptsAndSubscriptsBlock
   | CurrencySymbolsBlock
-  | CombiningDiacriticalMarksforSymbolsBlock
+  | CombiningDiacriticalMarksForSymbolsBlock
   | LetterlikeSymbolsBlock
   | NumberFormsBlock
   | ArrowsBlock
@@ -542,9 +542,9 @@ instance EnumeratedProperty Block where
       CombiningDiacriticalMarksExtendedBlock ->
         "Combining_Diacritical_Marks_Extended"
       CombiningDiacriticalMarksSupplementBlock ->
-        "Combining_Diacritical_Marks_For_Symbols"
-      CombiningDiacriticalMarksforSymbolsBlock ->
         "Combining_Diacritical_Marks_Supplement"
+      CombiningDiacriticalMarksForSymbolsBlock ->
+        "Combining_Diacritical_Marks_For_Symbols"
       CombiningHalfMarksBlock -> "Combining_Half_Marks"
       CommonIndicNumberFormsBlock -> "Common_Indic_Number_Forms"
       ControlPicturesBlock -> "Control_Pictures"
@@ -579,8 +579,8 @@ instance EnumeratedProperty Block where
       EnclosedCJKLettersAndMonthsBlock -> "Enclosed_CJK_Letters_And_Months"
       EnclosedIdeographicSupplementBlock -> "Enclosed_Ideographic_Supplement"
       EthiopicBlock -> "Ethiopic"
-      EthiopicExtendedABlock -> "Ethiopic_Extended"
-      EthiopicExtendedBlock -> "Ethiopic_Extended_A"
+      EthiopicExtendedBlock -> "Ethiopic_Extended"
+      EthiopicExtendedABlock -> "Ethiopic_Extended_A"
       EthiopicSupplementBlock -> "Ethiopic_Supplement"
       GeneralPunctuationBlock -> "General_Punctuation"
       GeometricShapesBlock -> "Geometric_Shapes"
@@ -675,10 +675,10 @@ instance EnumeratedProperty Block where
         "Miscellaneous_Mathematical_Symbols_A"
       MiscellaneousMathematicalSymbolsBBlock ->
         "Miscellaneous_Mathematical_Symbols_B"
-      MiscellaneousSymbolsAndArrowsBlock -> "Miscellaneous_Symbols"
+      MiscellaneousSymbolsAndArrowsBlock -> "Miscellaneous_Symbols_And_Arrows"
       MiscellaneousSymbolsAndPictographsBlock ->
-        "Miscellaneous_Symbols_And_Arrows"
-      MiscellaneousSymbolsBlock -> "Miscellaneous_Symbols_And_Pictographs"
+        "Miscellaneous_Symbols_And_Pictographs"
+      MiscellaneousSymbolsBlock -> "Miscellaneous_Symbols"
       MiscellaneousTechnicalBlock -> "Miscellaneous_Technical"
       ModiBlock -> "Modi"
       ModifierToneLettersBlock -> "Modifier_Tone_Letters"
@@ -735,8 +735,8 @@ instance EnumeratedProperty Block where
       ShavianBlock -> "Shavian"
       ShorthandFormatControlsBlock -> "Shorthand_Format_Controls"
       SiddhamBlock -> "Siddham"
-      SinhalaArchaicNumbersBlock -> "Sinhala"
-      SinhalaBlock -> "Sinhala_Archaic_Numbers"
+      SinhalaArchaicNumbersBlock -> "Sinhala_Archaic_Numbers"
+      SinhalaBlock -> "Sinhala"
       SmallFormVariantsBlock -> "Small_Form_Variants"
       SmallKanaExtensionBlock -> "Small_Kana_Extension"
       SogdianBlock -> "Sogdian"
@@ -858,8 +858,8 @@ instance EnumeratedProperty Block where
       ChessSymbolsBlock -> "Chess_Symbols"
       CombiningDiacriticalMarksBlock -> "Diacriticals"
       CombiningDiacriticalMarksExtendedBlock -> "Diacriticals_Ext"
-      CombiningDiacriticalMarksSupplementBlock -> "Diacriticals_For_Symbols"
-      CombiningDiacriticalMarksforSymbolsBlock -> "Diacriticals_Sup"
+      CombiningDiacriticalMarksSupplementBlock -> "Diacriticals_Sup"
+      CombiningDiacriticalMarksForSymbolsBlock -> "Diacriticals_For_Symbols"
       CombiningHalfMarksBlock -> "Half_Marks"
       CommonIndicNumberFormsBlock -> "Indic_Number_Forms"
       ControlPicturesBlock -> "Control_Pictures"
@@ -894,8 +894,8 @@ instance EnumeratedProperty Block where
       EnclosedCJKLettersAndMonthsBlock -> "Enclosed_CJK"
       EnclosedIdeographicSupplementBlock -> "Enclosed_Ideographic_Sup"
       EthiopicBlock -> "Ethiopic"
-      EthiopicExtendedABlock -> "Ethiopic_Ext"
-      EthiopicExtendedBlock -> "Ethiopic_Ext_A"
+      EthiopicExtendedABlock -> "Ethiopic_Ext_A"
+      EthiopicExtendedBlock -> "Ethiopic_Ext"
       EthiopicSupplementBlock -> "Ethiopic_Sup"
       GeneralPunctuationBlock -> "Punctuation"
       GeometricShapesBlock -> "Geometric_Shapes"
@@ -985,9 +985,9 @@ instance EnumeratedProperty Block where
       MiaoBlock -> "Miao"
       MiscellaneousMathematicalSymbolsABlock -> "Misc_Math_Symbols_A"
       MiscellaneousMathematicalSymbolsBBlock -> "Misc_Math_Symbols_B"
-      MiscellaneousSymbolsAndArrowsBlock -> "Misc_Symbols"
-      MiscellaneousSymbolsAndPictographsBlock -> "Misc_Arrows"
-      MiscellaneousSymbolsBlock -> "Misc_Pictographs"
+      MiscellaneousSymbolsAndArrowsBlock -> "Misc_Arrows"
+      MiscellaneousSymbolsAndPictographsBlock -> "Misc_Pictographs"
+      MiscellaneousSymbolsBlock -> "Misc_Symbols"
       MiscellaneousTechnicalBlock -> "Misc_Technical"
       ModiBlock -> "Modi"
       ModifierToneLettersBlock -> "Modifier_Tone_Letters"
@@ -1044,8 +1044,8 @@ instance EnumeratedProperty Block where
       ShavianBlock -> "Shavian"
       ShorthandFormatControlsBlock -> "Shorthand_Format_Controls"
       SiddhamBlock -> "Siddham"
-      SinhalaArchaicNumbersBlock -> "Sinhala"
-      SinhalaBlock -> "Sinhala_Archaic_Numbers"
+      SinhalaArchaicNumbersBlock -> "Sinhala_Archaic_Numbers"
+      SinhalaBlock -> "Sinhala"
       SmallFormVariantsBlock -> "Small_Forms"
       SmallKanaExtensionBlock -> "Small_Kana_Ext"
       SogdianBlock -> "Sogdian"
@@ -1510,8 +1510,8 @@ instance EnumeratedProperty Script where
       MyanmarScript -> "Mymr"
       NabataeanScript -> "Nbat"
       NandinagariScript -> "Nand"
-      NewaScript -> "Talu"
-      NewTaiLueScript -> "Newa"
+      NewaScript -> "Newa"
+      NewTaiLueScript -> "Talu"
       NkoScript -> "Nkoo"
       NushuScript -> "Nshu"
       NyiakengPuachueHmongScript -> "Hmnp"

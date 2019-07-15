@@ -34,6 +34,7 @@ library
                      , Data.UCD.Internal.Blocks
                      , Data.UCD.Internal.AgeMajor
                      , Data.UCD.Internal.AgeMinor
+                     , Data.UCD.Internal.Script
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -54,6 +55,7 @@ library
                      , generated/cbits/blocks.c
                      , generated/cbits/age_major.c
                      , generated/cbits/age_minor.c
+                     , generated/cbits/script.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src

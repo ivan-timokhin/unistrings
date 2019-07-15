@@ -13,6 +13,7 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
+import Data.UCD.Internal.Types (Script(UnknownScript))
 import Driver
   ( generateASCIITableSources
   , generateASCIIVectorTableSources
@@ -26,6 +27,7 @@ import qualified UCD.Blocks
 import UCD.Common (tableToVector)
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
+import qualified UCD.Scripts
 import qualified UCD.UnicodeData
 
 main :: IO ()
@@ -82,6 +84,8 @@ main = do
               fullPartitionings
               "age_minor"
               (fmap UCD.Age.ageMinor ages))
+    , do scripts <- UCD.Common.tableToVector UnknownScript <$> UCD.Scripts.fetch
+         processTable fullPartitionings "script" scripts
     ]
 
 printLong :: Show a => [a] -> IO ()

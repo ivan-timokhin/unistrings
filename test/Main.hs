@@ -1,3 +1,6 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -5,6 +8,7 @@ module Main where
 import Control.Monad (replicateM, when)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
+import Data.Char (toLower)
 import Data.Foldable (for_)
 import Data.List (sort, sortOn)
 import Data.Ord (Down(Down))
@@ -17,7 +21,21 @@ import qualified Data.UCD as UCD
 main :: IO ()
 main = do
   let tests =
-        TestList [generalCategory, canonicalCombiningClass, nameAliases, ages]
+        TestList
+          [ TestLabel "Properties" $
+            TestList
+              [ generalCategory
+              , canonicalCombiningClass
+              , nameAliases
+              , ages
+              , script
+              ]
+          , TestLabel "Names" $
+            TestList
+              [ testFullNames @UCD.Block "Block"
+              , testFullNames @UCD.Script "Script"
+              ]
+          ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
 
@@ -74,6 +92,28 @@ ages =
         then assertEqual (show cp) Nothing $ UCD.age cp
         else assertEqual (show cp) (Just $ makeVersion [refMaj, refMin]) $
              UCD.age cp
+
+script :: Test
+script =
+  TestLabel "Script" $
+  TestCase $ do
+    reference <- readFullTable enumP "generated/test_data/script.txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, refScr) ->
+      assertEqual (show cp) refScr $ UCD.script cp
+
+testFullNames ::
+     forall p. (Show p, UCD.EnumeratedProperty p)
+  => String
+  -> Test
+testFullNames name =
+  TestLabel name $
+  TestCase $
+  for_ [minBound @p .. maxBound @p] $ \pval ->
+    let pstr =
+          map toLower . filter (\c -> c /= '_' && c /= '-') . B.unpack $
+          UCD.fullPropertyValueName pval
+        sstr = map toLower $ show pval
+     in assertEqual (show pval) (take (length pstr) sstr) pstr
 
 maxCp :: UCD.CodePoint
 maxCp = maxBound
