@@ -101,6 +101,8 @@ testCP getAttr cp = do
   assertEqual "Age" xmlAge $ UCD.age cp
   xmlScript <- script
   assertEqual "Script" xmlScript $ UCD.script cp
+  xmlBlock <- block
+  assertEqual "Block" xmlBlock $ UCD.block cp
   where
     generalCategory =
       case getAttr "gc" of
@@ -172,6 +174,16 @@ testCP getAttr cp = do
                  [minBound .. maxBound] of
             Nothing -> assertFailure $ "Can't parse script: " ++ show scStr
             Just sc -> pure sc
+    block =
+      case getAttr "blk" of
+        Nothing -> assertFailure "Can't locate block"
+        Just blkStr ->
+          let blkStr8 = TE.encodeUtf8 blkStr
+           in case find
+                     ((== blkStr8) . UCD.abbreviatedPropertyValueName)
+                     [minBound .. maxBound] of
+                Nothing -> assertFailure $ "Can't parse block: " ++ show blkStr
+                Just blk -> pure blk
 
 testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
 testCPAliases children cp = do

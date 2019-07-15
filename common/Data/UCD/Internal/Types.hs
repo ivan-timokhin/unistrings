@@ -884,7 +884,7 @@ instance EnumeratedProperty Block where
       DuployanBlock -> "Duployan"
       EarlyDynasticCuneiformBlock -> "Early_Dynastic_Cuneiform"
       EgyptianHieroglyphFormatControlsBlock ->
-        "Egyptian_Hieroglyph_Format_Contros;"
+        "Egyptian_Hieroglyph_Format_Controls"
       EgyptianHieroglyphsBlock -> "Egyptian_Hieroglyphs"
       ElbasanBlock -> "Elbasan"
       ElymaicBlock -> "Elymaic"
