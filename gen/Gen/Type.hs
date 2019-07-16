@@ -11,6 +11,7 @@ module Gen.Type
   , typeEnum
   , typeASCII
   , typeContainer
+  , typeContainerDedup
   , typeLayers
   , int8
   , word8
@@ -33,7 +34,7 @@ import Data.Word (Word16, Word8)
 
 import Gen.Cost (SizedTy(sizeInBytes))
 import qualified Gen.Mono as Mono
-import Trie (TrieDesc(Bottom, Layer))
+import Trie (TrieDesc(Bottom, Layer), deduplicate)
 
 data IntegralType =
   IntegralType
@@ -81,6 +82,25 @@ typeContainer cs = ((findTypeForTable id indices, collapsed), indices)
             currentLen <- get
             put $! currentLen + Mono.len c
             pure currentLen
+
+typeContainerDedup ::
+     (Ord (t a), Traversable t, Monoid (t a), Mono.Container (t a))
+  => V.Vector (t a)
+  -> ((IntegralType, t a), V.Vector Int)
+typeContainerDedup cs = ((findTypeForTable id indices, collapsed), csIndices)
+  where
+    (csDedup, values) = deduplicate cs
+    collapsed = fold values
+    indices =
+      flip evalState 0 $
+      for values $ \v ->
+        if Mono.isNull v
+          then pure 0
+          else do
+            currentLen <- get
+            put $! currentLen + Mono.len v
+            pure currentLen
+    csIndices = V.backpermute indices csDedup
 
 typeLayers ::
      Foldable f

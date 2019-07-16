@@ -11,7 +11,7 @@ module Driver where
 
 import Control.Arrow ((&&&))
 import Control.Concurrent.Async (concurrently_)
-import Data.Bifunctor (first)
+import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory, toUpper)
@@ -38,6 +38,7 @@ import Gen.Type
   ( IntegralType
   , typeASCII
   , typeContainer
+  , typeContainerDedup
   , typeEnum
   , typeLayers
   , word8
@@ -95,6 +96,12 @@ instance TableValue Script where
         , esHsType = "Script"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
+
+instance TableValue (V.Vector Script) where
+  type BottomType (V.Vector Script) = (IntegralType, V.Vector Word8)
+  type BottomVal (V.Vector Script) = Int
+  typeVals = first (second $ V.map $ toEnum . fromEnum) . typeContainerDedup
+  generateModule = generateMonoContainer
 
 instance TableValue Word8 where
   type BottomType Word8 = IntegralType

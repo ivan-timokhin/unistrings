@@ -29,6 +29,7 @@ main = do
               , nameAliases
               , ages
               , script
+              , scriptExts
               ]
           , TestLabel "Names" $
             TestList
@@ -100,6 +101,16 @@ script =
     reference <- readFullTable enumP "generated/test_data/script.txt"
     for_ (zip [minCp .. maxCp] reference) $ \(cp, refScr) ->
       assertEqual (show cp) refScr $ UCD.script cp
+
+scriptExts :: Test
+scriptExts =
+  TestLabel "Script extensions (raw)" $
+  TestCase $ do
+    reference <- readFullTable parser "generated/test_data/script_exts.txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, refSE) ->
+      assertEqual (show cp) (sort refSE) $ sort $ UCD.scriptExtensionsRaw cp
+  where
+    parser = enclosedP "[" "]" $ enumP `A.sepBy` ","
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

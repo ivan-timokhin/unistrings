@@ -27,6 +27,7 @@ import qualified UCD.Blocks
 import UCD.Common (tableToVector)
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
+import qualified UCD.ScriptExtensions
 import qualified UCD.Scripts
 import qualified UCD.UnicodeData
 
@@ -86,6 +87,14 @@ main = do
               (fmap UCD.Age.ageMinor ages))
     , do scripts <- UCD.Common.tableToVector UnknownScript <$> UCD.Scripts.fetch
          processTable fullPartitionings "script" scripts
+    , do scriptExts <-
+           UCD.Common.tableToVector V.empty <$> UCD.ScriptExtensions.fetch
+         concurrently_
+           (concurrently_
+              (generateSources fullPartitionings "script_exts_ptr" scriptExts)
+              (generateSources fullPartitionings "script_exts_len" $
+               fmap V.length scriptExts))
+           (generateTests "script_exts" scriptExts)
     ]
 
 printLong :: Show a => [a] -> IO ()

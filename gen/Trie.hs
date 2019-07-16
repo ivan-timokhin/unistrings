@@ -9,10 +9,12 @@ module Trie
   , mkTrie
   , mkTrieM
   , partitioning
+  , deduplicate
   ) where
 
 import Control.Arrow (first, second)
 import qualified Control.Monad.Trans.State.Strict as S
+import Data.Bifunctor (Bifunctor(bimap))
 import Data.Bits (shiftL)
 import Data.Functor.Compose (Compose(Compose))
 import Data.Functor.Identity (Identity(Identity, runIdentity))
@@ -21,7 +23,6 @@ import Data.Maybe (fromMaybe)
 import Data.Traversable (for)
 import Data.Tuple (swap)
 import qualified Data.Vector as V
-import Data.Bifunctor (Bifunctor(bimap))
 
 import ListM (ListM(Cons, Nil), fromList)
 

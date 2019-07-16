@@ -35,6 +35,8 @@ library
                      , Data.UCD.Internal.AgeMajor
                      , Data.UCD.Internal.AgeMinor
                      , Data.UCD.Internal.Script
+                     , Data.UCD.Internal.ScriptExtsPtr
+                     , Data.UCD.Internal.ScriptExtsLen
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -56,6 +58,8 @@ library
                      , generated/cbits/age_major.c
                      , generated/cbits/age_minor.c
                      , generated/cbits/script.c
+                     , generated/cbits/script_exts_ptr.c
+                     , generated/cbits/script_exts_len.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -137,6 +141,7 @@ executable ucd-gen
                      , UCD.Blocks
                      , UCD.Age
                      , UCD.Scripts
+                     , UCD.ScriptExtensions
                      , UCD.Common
                      , Trie
                      , Gen

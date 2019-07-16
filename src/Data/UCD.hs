@@ -14,6 +14,8 @@ module Data.UCD
   , age
   , script
   , Script(..)
+  , scriptExtensions
+  , scriptExtensionsRaw
   , EnumeratedProperty(..)
   ) where
 
@@ -39,8 +41,10 @@ import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
 import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
-import qualified Data.UCD.Internal.Script as Script
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
+import qualified Data.UCD.Internal.Script as Script
+import qualified Data.UCD.Internal.ScriptExtsLen as SELen
+import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
 import Data.UCD.Internal.Types
   ( Block(..)
   , EnumeratedProperty(..)
@@ -136,3 +140,21 @@ age cp
 
 script :: IsCodePoint cp => cp -> Script
 script = Script.retrieve . fromEnum . toCodePoint
+
+scriptExtensions :: IsCodePoint cp => cp -> [Script]
+scriptExtensions cp =
+  if count == 0
+    then [script cp]
+    else scriptExtensionsRaw cp
+  where
+    count = SELen.retrieve icp
+    icp = fromEnum $ toCodePoint cp
+
+scriptExtensionsRaw :: IsCodePoint cp => cp -> [Script]
+{-# INLINE scriptExtensionsRaw #-} -- List fusion
+scriptExtensionsRaw cp =
+  map (toEnum . fromEnum . unsafeReadPtr ptr) [0 .. count - 1]
+  where
+    ptr = SEPtr.retrieve icp
+    count = SELen.retrieve icp
+    icp = fromEnum $ toCodePoint cp

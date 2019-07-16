@@ -14,6 +14,7 @@ import Data.Maybe (fromJust, mapMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
+import Data.Traversable (for)
 import Data.Version (parseVersion)
 import Numeric (showHex)
 import System.Exit (exitFailure)
@@ -103,6 +104,9 @@ testCP getAttr cp = do
   assertEqual "Script" xmlScript $ UCD.script cp
   xmlBlock <- block
   assertEqual "Block" xmlBlock $ UCD.block cp
+  xmlScriptExts <- scriptExts
+  assertEqual "Script extensions" (sort xmlScriptExts) $
+    sort $ UCD.scriptExtensions cp
   where
     generalCategory =
       case getAttr "gc" of
@@ -184,6 +188,17 @@ testCP getAttr cp = do
                      [minBound .. maxBound] of
                 Nothing -> assertFailure $ "Can't parse block: " ++ show blkStr
                 Just blk -> pure blk
+    scriptExts =
+      case getAttr "scx" of
+        Nothing -> assertFailure "Can't locate script extensions"
+        Just scxStr ->
+          for (map TE.encodeUtf8 $ T.words scxStr) $ \bstr ->
+            case find
+                   ((== bstr) . UCD.abbreviatedPropertyValueName)
+                   [minBound .. maxBound] of
+              Nothing ->
+                assertFailure $ "Can't parse script extension: " ++ show bstr
+              Just sc -> pure sc
 
 testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
 testCPAliases children cp = do
