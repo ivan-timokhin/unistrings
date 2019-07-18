@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.UCD.Internal.Types
-  ( BidiClass(..)
+  ( Age(..)
+  , BidiClass(..)
   , NameAliasType(..)
   , Block(..)
   , Script(..)
@@ -11,7 +12,9 @@ module Data.UCD.Internal.Types
 import Data.ByteString.Char8 (ByteString)
 import Data.Char (GeneralCategory(..))
 
-class (Enum p, Bounded p) => EnumeratedProperty p where
+class (Enum p, Bounded p) =>
+      EnumeratedProperty p
+  where
   fullPropertyValueName :: p -> ByteString
   abbreviatedPropertyValueName :: p -> ByteString
 
@@ -80,6 +83,81 @@ instance EnumeratedProperty GeneralCategory where
       Surrogate -> "Cs"
       PrivateUse -> "Co"
       NotAssigned -> "Cn"
+
+data Age
+  = V1_1
+  | V2_0
+  | V2_1
+  | V3_0
+  | V3_1
+  | V3_2
+  | V4_0
+  | V4_1
+  | V5_0
+  | V5_1
+  | V5_2
+  | V6_0
+  | V6_1
+  | V6_2
+  | V6_3
+  | V7_0
+  | V8_0
+  | V9_0
+  | V10_0
+  | V11_0
+  | V12_0
+  | V12_1
+  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+
+instance EnumeratedProperty Age where
+  fullPropertyValueName a =
+    case a of
+      V1_1 -> "V1_1"
+      V2_0 -> "V2_0"
+      V2_1 -> "V2_1"
+      V3_0 -> "V3_0"
+      V3_1 -> "V3_1"
+      V3_2 -> "V3_2"
+      V4_0 -> "V4_0"
+      V4_1 -> "V4_1"
+      V5_0 -> "V5_0"
+      V5_1 -> "V5_1"
+      V5_2 -> "V5_2"
+      V6_0 -> "V6_0"
+      V6_1 -> "V6_1"
+      V6_2 -> "V6_2"
+      V6_3 -> "V6_3"
+      V7_0 -> "V7_0"
+      V8_0 -> "V8_0"
+      V9_0 -> "V9_0"
+      V10_0 -> "V10_0"
+      V11_0 -> "V11_0"
+      V12_0 -> "V12_0"
+      V12_1 -> "V12_1"
+  abbreviatedPropertyValueName a =
+    case a of
+      V1_1 -> "1.1"
+      V2_0 -> "2.0"
+      V2_1 -> "2.1"
+      V3_0 -> "3.0"
+      V3_1 -> "3.1"
+      V3_2 -> "3.2"
+      V4_0 -> "4.0"
+      V4_1 -> "4.1"
+      V5_0 -> "5.0"
+      V5_1 -> "5.1"
+      V5_2 -> "5.2"
+      V6_0 -> "6.0"
+      V6_1 -> "6.1"
+      V6_2 -> "6.2"
+      V6_3 -> "6.3"
+      V7_0 -> "7.0"
+      V8_0 -> "8.0"
+      V9_0 -> "9.0"
+      V10_0 -> "10.0"
+      V11_0 -> "11.0"
+      V12_0 -> "12.0"
+      V12_1 -> "12.1"
 
 data BidiClass
   = LeftToRightBC

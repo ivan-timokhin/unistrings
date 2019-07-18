@@ -15,11 +15,9 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
 import Data.Traversable (for)
-import Data.Version (parseVersion)
 import Numeric (showHex)
 import System.Exit (exitFailure)
 import Test.HUnit
-import Text.ParserCombinators.ReadP (readP_to_S)
 import Text.XML
   ( Document
   , Element(..)
@@ -164,10 +162,12 @@ testCP getAttr cp = do
         Nothing -> assertFailure "Can't locate age"
         Just "unassigned" -> pure Nothing
         Just rawAge ->
-          case filter ((== "") . snd) $
-               readP_to_S parseVersion (T.unpack rawAge) of
-            [(ageV, _)] -> pure $ Just ageV
-            _ -> assertFailure $ "Can't parse age: " ++ show rawAge
+          let rawAge8 = TE.encodeUtf8 rawAge
+           in case find
+                     ((== rawAge8) . UCD.abbreviatedPropertyValueName)
+                     [minBound .. maxBound] of
+                Nothing -> assertFailure $ "Can't parse age: " ++ show rawAge
+                Just a -> pure $ Just a
     script =
       case getAttr "sc" of
         Nothing -> assertFailure "Can't locate script"

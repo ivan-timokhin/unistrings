@@ -12,6 +12,7 @@ module Data.UCD
   , block
   , Block(..)
   , age
+  , Age(..)
   , script
   , Script(..)
   , scriptExtensions
@@ -22,13 +23,11 @@ module Data.UCD
 import Data.Bits (shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
-import Data.Version (Version, makeVersion)
 import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
-import qualified Data.UCD.Internal.AgeMajor as AgeMajor
-import qualified Data.UCD.Internal.AgeMinor as AgeMinor
+import qualified Data.UCD.Internal.Age as Age
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
@@ -46,7 +45,8 @@ import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
 import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
 import Data.UCD.Internal.Types
-  ( Block(..)
+  ( Age(..)
+  , Block(..)
   , EnumeratedProperty(..)
   , NameAliasType(..)
   , Script(..)
@@ -129,14 +129,13 @@ nameAliases cp =
 block :: IsCodePoint cp => cp -> Block
 block = Blocks.retrieve . (`shiftR` 4) . fromEnum . toCodePoint
 
-age :: IsCodePoint cp => cp -> Maybe Version
+age :: IsCodePoint cp => cp -> Maybe Age
 age cp
-  | major == 0 = Nothing
-  | otherwise = Just $ makeVersion [major, minor]
+  | iage == 0 = Nothing
+  | otherwise = Just $ toEnum (iage - 1)
   where
     icp = fromEnum $ toCodePoint cp
-    major = fromEnum $ AgeMajor.retrieve icp
-    minor = fromEnum $ AgeMinor.retrieve icp
+    iage = Age.retrieve icp
 
 script :: IsCodePoint cp => cp -> Script
 script = Script.retrieve . fromEnum . toCodePoint

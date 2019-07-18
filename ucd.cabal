@@ -32,8 +32,7 @@ library
                      , Data.UCD.Internal.NameAliasesAliasesPtr
                      , Data.UCD.Internal.NameAliasesTypes
                      , Data.UCD.Internal.Blocks
-                     , Data.UCD.Internal.AgeMajor
-                     , Data.UCD.Internal.AgeMinor
+                     , Data.UCD.Internal.Age
                      , Data.UCD.Internal.Script
                      , Data.UCD.Internal.ScriptExtsPtr
                      , Data.UCD.Internal.ScriptExtsLen
@@ -55,8 +54,7 @@ library
                      , generated/cbits/name_aliases_aliases_ptr.c
                      , generated/cbits/name_aliases_types.c
                      , generated/cbits/blocks.c
-                     , generated/cbits/age_major.c
-                     , generated/cbits/age_minor.c
+                     , generated/cbits/age.c
                      , generated/cbits/script.c
                      , generated/cbits/script_exts_ptr.c
                      , generated/cbits/script_exts_len.c

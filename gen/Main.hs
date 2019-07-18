@@ -75,16 +75,10 @@ main = do
                 (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
     , do blocks <- UCD.Blocks.fetch
          generateSources (generatePartitionings 4 0 12) "blocks" blocks
-    , do ages <- UCD.Common.tableToVector (UCD.Age.Age 0 0) <$> UCD.Age.fetch
-         concurrently_
-           (processTable
-              fullPartitionings
-              "age_major"
-              (fmap UCD.Age.ageMajor ages))
-           (processTable
-              fullPartitionings
-              "age_minor"
-              (fmap UCD.Age.ageMinor ages))
+    , do ages <- UCD.Common.tableToVector Nothing . fmap Just <$> UCD.Age.fetch
+         generateTests "age" ages
+         generateSources fullPartitionings "age" $
+           fmap (maybe 0 (succ . fromEnum)) ages
     , do scripts <- UCD.Common.tableToVector UnknownScript <$> UCD.Scripts.fetch
          processTable fullPartitionings "script" scripts
     , do scriptExts <-
