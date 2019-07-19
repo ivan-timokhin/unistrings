@@ -30,6 +30,7 @@ main = do
               , ages
               , script
               , scriptExts
+              , propList
               ]
           , TestLabel "Names" $
             TestList
@@ -108,6 +109,52 @@ scriptExts =
   where
     parser = enclosedP "[" "]" $ enumP `A.sepBy` ","
 
+propList :: Test
+propList =
+  TestList
+    [ testEnum "White space" "white_space" UCD.whiteSpace
+    , testEnum "Bidi control" "bidi_control" UCD.bidiControl
+    , testEnum "Join control" "join_control" UCD.joinControl
+    , testEnum "Dash" "dash" UCD.dash
+    , testEnum "Hyphen" "hyphen" UCD.hyphen
+    , testEnum "Quotation mark" "quotation_mark" UCD.quotationMark
+    , testEnum
+        "Terminal punctuation"
+        "terminal_punctuation"
+        UCD.terminalPunctuation
+    , testEnum "Hex digit" "hex_digit" UCD.hexDigit
+    , testEnum "ASCII hex digit" "ascii_hex_digit" UCD.asciiHexDigit
+    , testEnum "Ideographic" "ideographic" UCD.ideographic
+    , testEnum "Diacritic" "diacritic" UCD.diacritic
+    , testEnum "Extender" "extender" UCD.extender
+    , testEnum
+        "Noncharacter code point"
+        "noncharacter_code_point"
+        UCD.noncharacterCodePoint
+    , testEnum "IDS binary operator" "ids_binary_operator" UCD.idsBinaryOperator
+    , testEnum
+        "IDS trinary operator"
+        "ids_trinary_operator"
+        UCD.idsTrinaryOperator
+    , testEnum "Radical" "radical" UCD.radical
+    , testEnum "Unified ideograph" "unified_ideograph" UCD.unifiedIdeograph
+    , testEnum "Deprecated" "deprecated" UCD.deprecated
+    , testEnum "Soft dotted" "soft_dotted" UCD.softDotted
+    , testEnum
+        "Logical order exception"
+        "logical_order_exception"
+        UCD.logicalOrderException
+    , testEnum "Sentence terminal" "sentence_terminal" UCD.sentenceTerminal
+    , testEnum "Variation selector" "variation_selector" UCD.variationSelector
+    , testEnum "Pattern white space" "pattern_white_space" UCD.patternWhiteSpace
+    , testEnum "Pattern syntax" "pattern_syntax" UCD.patternSyntax
+    , testEnum
+        "Prepended concatenation mark"
+        "prepended_concatenation_mark"
+        UCD.prependedConcatenationMark
+    , testEnum "Regional indicator" "regional_indicator" UCD.regionalIndicator
+    ]
+
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)
   => String
@@ -121,6 +168,19 @@ testFullNames name =
           UCD.fullPropertyValueName pval
         sstr = map toLower $ show pval
      in assertEqual (show pval) (take (length pstr) sstr) pstr
+
+testEnum ::
+     (Enum e, Show e, Bounded e, Eq e)
+  => String
+  -> FilePath
+  -> (UCD.CodePoint -> e)
+  -> Test
+testEnum name file f =
+  TestLabel name $
+  TestCase $ do
+    reference <- readFullTable enumP $ "generated/test_data/" ++ file ++ ".txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
+      assertEqual (show cp) ref $ f cp
 
 maxCp :: UCD.CodePoint
 maxCp = maxBound

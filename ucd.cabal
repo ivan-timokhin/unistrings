@@ -36,6 +36,32 @@ library
                      , Data.UCD.Internal.Script
                      , Data.UCD.Internal.ScriptExtsPtr
                      , Data.UCD.Internal.ScriptExtsLen
+                     , Data.UCD.Internal.AsciiHexDigit
+                     , Data.UCD.Internal.BidiControl
+                     , Data.UCD.Internal.Dash
+                     , Data.UCD.Internal.Deprecated
+                     , Data.UCD.Internal.Diacritic
+                     , Data.UCD.Internal.Extender
+                     , Data.UCD.Internal.HexDigit
+                     , Data.UCD.Internal.Hyphen
+                     , Data.UCD.Internal.Ideographic
+                     , Data.UCD.Internal.IdsBinaryOperator
+                     , Data.UCD.Internal.IdsTrinaryOperator
+                     , Data.UCD.Internal.JoinControl
+                     , Data.UCD.Internal.LogicalOrderException
+                     , Data.UCD.Internal.NoncharacterCodePoint
+                     , Data.UCD.Internal.PatternSyntax
+                     , Data.UCD.Internal.PatternWhiteSpace
+                     , Data.UCD.Internal.PrependedConcatenationMark
+                     , Data.UCD.Internal.QuotationMark
+                     , Data.UCD.Internal.Radical
+                     , Data.UCD.Internal.RegionalIndicator
+                     , Data.UCD.Internal.SentenceTerminal
+                     , Data.UCD.Internal.SoftDotted
+                     , Data.UCD.Internal.TerminalPunctuation
+                     , Data.UCD.Internal.UnifiedIdeograph
+                     , Data.UCD.Internal.VariationSelector
+                     , Data.UCD.Internal.WhiteSpace
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -58,6 +84,32 @@ library
                      , generated/cbits/script.c
                      , generated/cbits/script_exts_ptr.c
                      , generated/cbits/script_exts_len.c
+                     , generated/cbits/ascii_hex_digit.c
+                     , generated/cbits/bidi_control.c
+                     , generated/cbits/dash.c
+                     , generated/cbits/deprecated.c
+                     , generated/cbits/diacritic.c
+                     , generated/cbits/extender.c
+                     , generated/cbits/hex_digit.c
+                     , generated/cbits/hyphen.c
+                     , generated/cbits/ideographic.c
+                     , generated/cbits/ids_binary_operator.c
+                     , generated/cbits/ids_trinary_operator.c
+                     , generated/cbits/join_control.c
+                     , generated/cbits/logical_order_exception.c
+                     , generated/cbits/noncharacter_code_point.c
+                     , generated/cbits/pattern_syntax.c
+                     , generated/cbits/pattern_white_space.c
+                     , generated/cbits/prepended_concatenation_mark.c
+                     , generated/cbits/quotation_mark.c
+                     , generated/cbits/radical.c
+                     , generated/cbits/regional_indicator.c
+                     , generated/cbits/sentence_terminal.c
+                     , generated/cbits/soft_dotted.c
+                     , generated/cbits/terminal_punctuation.c
+                     , generated/cbits/unified_ideograph.c
+                     , generated/cbits/variation_selector.c
+                     , generated/cbits/white_space.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -140,6 +192,7 @@ executable ucd-gen
                      , UCD.Age
                      , UCD.Scripts
                      , UCD.ScriptExtensions
+                     , UCD.PropList
                      , UCD.Common
                      , Trie
                      , Gen

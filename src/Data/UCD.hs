@@ -17,6 +17,32 @@ module Data.UCD
   , Script(..)
   , scriptExtensions
   , scriptExtensionsRaw
+  , whiteSpace
+  , bidiControl
+  , joinControl
+  , dash
+  , hyphen
+  , quotationMark
+  , terminalPunctuation
+  , hexDigit
+  , asciiHexDigit
+  , ideographic
+  , diacritic
+  , extender
+  , noncharacterCodePoint
+  , idsBinaryOperator
+  , idsTrinaryOperator
+  , radical
+  , unifiedIdeograph
+  , deprecated
+  , softDotted
+  , logicalOrderException
+  , sentenceTerminal
+  , variationSelector
+  , patternWhiteSpace
+  , patternSyntax
+  , prependedConcatenationMark
+  , regionalIndicator
   , EnumeratedProperty(..)
   ) where
 
@@ -28,22 +54,45 @@ import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.Age as Age
+import qualified Data.UCD.Internal.AsciiHexDigit as AHD
+import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
+import qualified Data.UCD.Internal.Dash as Da
+import qualified Data.UCD.Internal.Deprecated as De
+import qualified Data.UCD.Internal.Diacritic as Di
+import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.GeneralCategory as GC
+import qualified Data.UCD.Internal.HexDigit as HD
+import qualified Data.UCD.Internal.Hyphen as Hy
+import qualified Data.UCD.Internal.Ideographic as Ide
+import qualified Data.UCD.Internal.IdsBinaryOperator as IBO
+import qualified Data.UCD.Internal.IdsTrinaryOperator as ITO
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
+import qualified Data.UCD.Internal.JoinControl as JC
+import qualified Data.UCD.Internal.LogicalOrderException as LOE
 import qualified Data.UCD.Internal.NameAliasesAliasesLen as NAALen
 import qualified Data.UCD.Internal.NameAliasesAliasesPtr as NAAPtr
 import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
 import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
+import qualified Data.UCD.Internal.NoncharacterCodePoint as NCP
+import qualified Data.UCD.Internal.PatternSyntax as PS
+import qualified Data.UCD.Internal.PatternWhiteSpace as PWS
+import qualified Data.UCD.Internal.PrependedConcatenationMark as PCM
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
+import qualified Data.UCD.Internal.QuotationMark as QM
+import qualified Data.UCD.Internal.Radical as Rad
+import qualified Data.UCD.Internal.RegionalIndicator as RI
 import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
 import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
+import qualified Data.UCD.Internal.SentenceTerminal as ST
+import qualified Data.UCD.Internal.SoftDotted as SD
+import qualified Data.UCD.Internal.TerminalPunctuation as TP
 import Data.UCD.Internal.Types
   ( Age(..)
   , Block(..)
@@ -51,6 +100,9 @@ import Data.UCD.Internal.Types
   , NameAliasType(..)
   , Script(..)
   )
+import qualified Data.UCD.Internal.UnifiedIdeograph as UI
+import qualified Data.UCD.Internal.VariationSelector as VS
+import qualified Data.UCD.Internal.WhiteSpace as WS
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
@@ -157,3 +209,84 @@ scriptExtensionsRaw cp =
     ptr = SEPtr.retrieve icp
     count = SELen.retrieve icp
     icp = fromEnum $ toCodePoint cp
+
+whiteSpace :: IsCodePoint cp => cp -> Bool
+whiteSpace = withCP WS.retrieve
+
+bidiControl :: IsCodePoint cp => cp -> Bool
+bidiControl = withCP BC.retrieve
+
+joinControl :: IsCodePoint cp => cp -> Bool
+joinControl = withCP JC.retrieve
+
+dash :: IsCodePoint cp => cp -> Bool
+dash = withCP Da.retrieve
+
+hyphen :: IsCodePoint cp => cp -> Bool
+hyphen = withCP Hy.retrieve
+
+quotationMark :: IsCodePoint cp => cp -> Bool
+quotationMark = withCP QM.retrieve
+
+terminalPunctuation :: IsCodePoint cp => cp -> Bool
+terminalPunctuation = withCP TP.retrieve
+
+hexDigit :: IsCodePoint cp => cp -> Bool
+hexDigit = withCP HD.retrieve
+
+asciiHexDigit :: IsCodePoint cp => cp -> Bool
+asciiHexDigit = withCP AHD.retrieve
+
+ideographic :: IsCodePoint cp => cp -> Bool
+ideographic = withCP Ide.retrieve
+
+diacritic :: IsCodePoint cp => cp -> Bool
+diacritic = withCP Di.retrieve
+
+extender :: IsCodePoint cp => cp -> Bool
+extender = withCP Ext.retrieve
+
+noncharacterCodePoint :: IsCodePoint cp => cp -> Bool
+noncharacterCodePoint = withCP NCP.retrieve
+
+idsBinaryOperator :: IsCodePoint cp => cp -> Bool
+idsBinaryOperator = withCP IBO.retrieve
+
+idsTrinaryOperator :: IsCodePoint cp => cp -> Bool
+idsTrinaryOperator = withCP ITO.retrieve
+
+radical :: IsCodePoint cp => cp -> Bool
+radical = withCP Rad.retrieve
+
+unifiedIdeograph :: IsCodePoint cp => cp -> Bool
+unifiedIdeograph = withCP UI.retrieve
+
+deprecated :: IsCodePoint cp => cp -> Bool
+deprecated = withCP De.retrieve
+
+softDotted :: IsCodePoint cp => cp -> Bool
+softDotted = withCP SD.retrieve
+
+logicalOrderException :: IsCodePoint cp => cp -> Bool
+logicalOrderException = withCP LOE.retrieve
+
+sentenceTerminal :: IsCodePoint cp => cp -> Bool
+sentenceTerminal = withCP ST.retrieve
+
+variationSelector :: IsCodePoint cp => cp -> Bool
+variationSelector = withCP VS.retrieve
+
+patternWhiteSpace :: IsCodePoint cp => cp -> Bool
+patternWhiteSpace = withCP PWS.retrieve
+
+patternSyntax :: IsCodePoint cp => cp -> Bool
+patternSyntax = withCP PS.retrieve
+
+prependedConcatenationMark :: IsCodePoint cp => cp -> Bool
+prependedConcatenationMark = withCP PCM.retrieve
+
+regionalIndicator :: IsCodePoint cp => cp -> Bool
+regionalIndicator = withCP RI.retrieve
+
+withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
+withCP f = f . fromEnum . toCodePoint

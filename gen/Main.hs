@@ -27,6 +27,7 @@ import qualified UCD.Blocks
 import UCD.Common (tableToVector)
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
+import qualified UCD.PropList
 import qualified UCD.ScriptExtensions
 import qualified UCD.Scripts
 import qualified UCD.UnicodeData
@@ -89,6 +90,41 @@ main = do
               (generateSources fullPartitionings "script_exts_len" $
                fmap V.length scriptExts))
            (generateTests "script_exts" scriptExts)
+    , do props <- UCD.PropList.fetch
+         let processProp snakeName getter =
+               processTable fullPartitionings snakeName $
+               UCD.Common.tableToVector False $ getter props
+             (~>) = (,)
+         mapConcurrently_
+           (uncurry processProp)
+           [ "white_space" ~> UCD.PropList.whiteSpace
+           , "bidi_control" ~> UCD.PropList.bidiControl
+           , "join_control" ~> UCD.PropList.joinControl
+           , "dash" ~> UCD.PropList.dash
+           , "hyphen" ~> UCD.PropList.hyphen
+           , "quotation_mark" ~> UCD.PropList.quotationMark
+           , "terminal_punctuation" ~> UCD.PropList.terminalPunctuation
+           , "hex_digit" ~> UCD.PropList.hexDigit
+           , "ascii_hex_digit" ~> UCD.PropList.asciiHexDigit
+           , "ideographic" ~> UCD.PropList.ideographic
+           , "diacritic" ~> UCD.PropList.diacritic
+           , "extender" ~> UCD.PropList.extender
+           , "noncharacter_code_point" ~> UCD.PropList.noncharacterCodePoint
+           , "ids_binary_operator" ~> UCD.PropList.idsBinaryOperator
+           , "ids_trinary_operator" ~> UCD.PropList.idsTrinaryOperator
+           , "radical" ~> UCD.PropList.radical
+           , "unified_ideograph" ~> UCD.PropList.unifiedIdeograph
+           , "deprecated" ~> UCD.PropList.deprecated
+           , "soft_dotted" ~> UCD.PropList.softDotted
+           , "logical_order_exception" ~> UCD.PropList.logicalOrderException
+           , "sentence_terminal" ~> UCD.PropList.sentenceTerminal
+           , "variation_selector" ~> UCD.PropList.variationSelector
+           , "pattern_white_space" ~> UCD.PropList.patternWhiteSpace
+           , "pattern_syntax" ~> UCD.PropList.patternSyntax
+           , "prepended_concatenation_mark" ~>
+             UCD.PropList.prependedConcatenationMark
+           , "regional_indicator" ~> UCD.PropList.regionalIndicator
+           ]
     ]
 
 printLong :: Show a => [a] -> IO ()

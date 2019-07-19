@@ -7,7 +7,7 @@ import Codec.Archive.Zip (mkEntrySelector, sourceEntry, withArchive)
 import Control.Applicative ((<|>), liftA2)
 import Control.Monad (when)
 import Data.Char (toUpper)
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
 import Data.Maybe (fromJust, mapMaybe)
@@ -105,6 +105,41 @@ testCP getAttr cp = do
   xmlScriptExts <- scriptExts
   assertEqual "Script extensions" (sort xmlScriptExts) $
     sort $ UCD.scriptExtensions cp
+  let testBoolean testName attrName f =
+        case getAttr attrName of
+          Nothing -> assertFailure $ "Can't locate " ++ show testName
+          Just attr -> do
+            b <- readBoolean attr
+            assertEqual testName b (f cp)
+  traverse_
+    (\(tn, an, f) -> testBoolean tn an f)
+    [ ("White space", "WSpace", UCD.whiteSpace)
+    , ("Bidi control", "Bidi_C", UCD.bidiControl)
+    , ("Join control", "Join_C", UCD.joinControl)
+    , ("Dash", "Dash", UCD.dash)
+    , ("Hyphen", "Hyphen", UCD.hyphen)
+    , ("Quotation mark", "QMark", UCD.quotationMark)
+    , ("Terminal punctuation", "Term", UCD.terminalPunctuation)
+    , ("Hex digit", "Hex", UCD.hexDigit)
+    , ("ASCII hex digit", "AHex", UCD.asciiHexDigit)
+    , ("Ideographic", "Ideo", UCD.ideographic)
+    , ("Diacritic", "Dia", UCD.diacritic)
+    , ("Extender", "Ext", UCD.extender)
+    , ("Noncharacter code point", "NChar", UCD.noncharacterCodePoint)
+    , ("IDS binary operator", "IDSB", UCD.idsBinaryOperator)
+    , ("IDS trinary operator", "IDST", UCD.idsTrinaryOperator)
+    , ("Radical", "Radical", UCD.radical)
+    , ("Unified Ideograph", "UIdeo", UCD.unifiedIdeograph)
+    , ("Deprecated", "Dep", UCD.deprecated)
+    , ("Soft dotted", "SD", UCD.softDotted)
+    , ("Logical order exception", "LOE", UCD.logicalOrderException)
+    , ("Sentence terminal", "STerm", UCD.sentenceTerminal)
+    , ("Variation selector", "VS", UCD.variationSelector)
+    , ("Pattern white space", "Pat_WS", UCD.patternWhiteSpace)
+    , ("Pattern syntax", "Pat_Syn", UCD.patternSyntax)
+    , ("Prepended concatenation mark", "PCM", UCD.prependedConcatenationMark)
+    , ("Regional indicator", "RI", UCD.regionalIndicator)
+    ]
   where
     generalCategory =
       case getAttr "gc" of
@@ -257,6 +292,11 @@ readHex t =
   case TR.hexadecimal t of
     Left err -> assertFailure err
     Right (n, rest) -> assertString (T.unpack rest) >> pure n
+
+readBoolean :: T.Text -> IO Bool
+readBoolean "Y" = pure True
+readBoolean "N" = pure False
+readBoolean txt = assertFailure $ "Unable to read boolean: " ++ show txt
 
 readUCD :: IO Document
 readUCD = do

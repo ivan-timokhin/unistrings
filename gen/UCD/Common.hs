@@ -5,11 +5,16 @@
 module UCD.Common where
 
 import Control.Applicative ((<|>), many, optional)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State.Strict (StateT, execStateT, modify)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.Functor (void)
 import Data.List (sortOn)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+import Data.Maybe (fromMaybe)
 import Data.Ord (Down(Down))
 import qualified Data.Vector as V
 import Data.Word (Word32)
@@ -91,3 +96,22 @@ fetchSimple file p = do
       A.skipSpace
       comments
       pure $ v <$ rng
+
+fetchBinaryMulti :: FilePath -> IO (Map ByteString (Table () () Bool))
+fetchBinaryMulti file = do
+  txt <- B.readFile file
+  case A.parseOnly (parser <* A.endOfInput) txt of
+    Left err -> fail err
+    Right tables -> pure $ Table <$> tables
+  where
+    parser :: A.Parser (Map ByteString [Range () () Bool])
+    parser =
+      flip execStateT Map.empty $ do
+        lift comments
+        many record
+    record :: StateT (Map ByteString [Range () () Bool]) A.Parser ()
+    record = do
+      rng <- lift range
+      prop <- lift $ A.takeWhile1 (not . A.isSpace)
+      lift $ A.skipSpace *> comments
+      modify $ Map.alter (Just . ((True <$ rng) :) . fromMaybe []) prop

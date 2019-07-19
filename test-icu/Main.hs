@@ -13,7 +13,8 @@ import qualified Data.UCD as UCD
 
 main :: IO ()
 main = do
-  let tests = TestList [generalCategory, canonicalCombiningClass, charName]
+  let tests =
+        TestList [generalCategory, canonicalCombiningClass, charName, propList]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
 
@@ -77,3 +78,60 @@ charName =
   TestCase $
   for_ [minBound .. maxBound] $ \c ->
     assertEqual (showHex (ord c) "") (B.pack $ ICU.charName c) (UCD.name c)
+
+propList :: Test
+propList =
+  TestList
+    [ mkBoolTest "White space" ICU.WhiteSpace UCD.whiteSpace
+    , mkBoolTest "Bidi control" ICU.BidiControl UCD.bidiControl
+    , mkBoolTest "Join control" ICU.JoinControl UCD.joinControl
+    , mkBoolTest "Dash" ICU.Dash UCD.dash
+    , mkBoolTest "Hyphen" ICU.Hyphen UCD.hyphen
+    , mkBoolTest "Quotation mark" ICU.QuotationMark UCD.quotationMark
+    , mkBoolTest
+        "Terminal punctuation"
+        ICU.TerminalPunctuation
+        UCD.terminalPunctuation
+    , mkBoolTest "Hex digit" ICU.HexDigit UCD.hexDigit
+    , mkBoolTest "ASCII hex digit" ICU.ASCIIHexDigit UCD.asciiHexDigit
+    , mkBoolTest "Ideographic" ICU.Ideographic UCD.ideographic
+    , mkBoolTest "Diacritic" ICU.Diacritic UCD.diacritic
+    , mkBoolTest "Extender" ICU.Extender UCD.extender
+    , mkBoolTest
+        "Noncharacter code point"
+        ICU.NonCharacter
+        UCD.noncharacterCodePoint
+    , mkBoolTest
+        "IDS binary operator"
+        ICU.IDSBinaryOperator
+        UCD.idsBinaryOperator
+    , mkBoolTest
+        "IDS trinary operator"
+        ICU.IDSTrinaryOperator
+        UCD.idsTrinaryOperator
+    , mkBoolTest "Radical" ICU.Radical UCD.radical
+    , mkBoolTest "Unified ideograph" ICU.UnifiedIdeograph UCD.unifiedIdeograph
+    , mkBoolTest "Deprecated" ICU.Deprecated UCD.deprecated
+    , mkBoolTest "Soft dotted" ICU.SoftDotted UCD.softDotted
+    , mkBoolTest
+        "Logical order exception"
+        ICU.LogicalOrderException
+        UCD.logicalOrderException
+    , mkBoolTest "Sentence terminal" ICU.STerm UCD.sentenceTerminal
+    , mkBoolTest
+        "Variation selector"
+        ICU.VariationSelector
+        UCD.variationSelector
+    , mkBoolTest
+        "Pattern white space"
+        ICU.PatternWhiteSpace
+        UCD.patternWhiteSpace
+    , mkBoolTest "Pattern syntax" ICU.PatternSyntax UCD.patternSyntax
+    ]
+
+mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
+mkBoolTest name prop f =
+  TestLabel name $
+  TestCase $
+  for_ [minBound .. maxBound] $ \c ->
+    assertEqual (showHex (ord c) "") (ICU.property prop c) (f c)

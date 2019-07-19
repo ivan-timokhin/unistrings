@@ -103,6 +103,14 @@ instance TableValue (V.Vector Script) where
   typeVals = first (second $ V.map $ toEnum . fromEnum) . typeContainerDedup
   generateModule = generateMonoContainer
 
+instance TableValue Bool where
+  type BottomType Bool = IntegralType
+  typeVals_ = typeEnum
+  generateModule prefix =
+    generateEnum
+      EnumSpec
+        {esCPrefix = prefix, esHsType = "Bool", esHsTypeModule = "Data.Bool"}
+
 instance TableValue Word8 where
   type BottomType Word8 = IntegralType
   typeVals_ = const word8
