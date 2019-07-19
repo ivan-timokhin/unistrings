@@ -62,7 +62,6 @@ main =
                   (Just ICU.JoinControl)
                   UCD.joinControl
               , mkBoolGroup udhr "Dash" (Just ICU.Dash) UCD.dash
-              , mkBoolGroup udhr "Hyphen" (Just ICU.Hyphen) UCD.hyphen
               , mkBoolGroup
                   udhr
                   "Quotation mark"

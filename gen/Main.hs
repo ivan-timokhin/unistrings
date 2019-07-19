@@ -101,7 +101,6 @@ main = do
            , "bidi_control" ~> UCD.PropList.bidiControl
            , "join_control" ~> UCD.PropList.joinControl
            , "dash" ~> UCD.PropList.dash
-           , "hyphen" ~> UCD.PropList.hyphen
            , "quotation_mark" ~> UCD.PropList.quotationMark
            , "terminal_punctuation" ~> UCD.PropList.terminalPunctuation
            , "hex_digit" ~> UCD.PropList.hexDigit

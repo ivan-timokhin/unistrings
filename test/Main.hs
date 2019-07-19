@@ -116,7 +116,6 @@ propList =
     , testEnum "Bidi control" "bidi_control" UCD.bidiControl
     , testEnum "Join control" "join_control" UCD.joinControl
     , testEnum "Dash" "dash" UCD.dash
-    , testEnum "Hyphen" "hyphen" UCD.hyphen
     , testEnum "Quotation mark" "quotation_mark" UCD.quotationMark
     , testEnum
         "Terminal punctuation"

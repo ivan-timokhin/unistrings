@@ -13,7 +13,6 @@ data Props =
     , bidiControl :: Table () () Bool
     , joinControl :: Table () () Bool
     , dash :: Table () () Bool
-    , hyphen :: Table () () Bool
     , quotationMark :: Table () () Bool
     , terminalPunctuation :: Table () () Bool
     , hexDigit :: Table () () Bool
@@ -49,7 +48,6 @@ fetch = do
   bidiControl <- get "Bidi_Control"
   joinControl <- get "Join_Control"
   dash <- get "Dash"
-  hyphen <- get "Hyphen"
   quotationMark <- get "Quotation_Mark"
   terminalPunctuation <- get "Terminal_Punctuation"
   hexDigit <- get "Hex_Digit"

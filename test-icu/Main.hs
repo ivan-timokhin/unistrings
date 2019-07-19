@@ -86,7 +86,6 @@ propList =
     , mkBoolTest "Bidi control" ICU.BidiControl UCD.bidiControl
     , mkBoolTest "Join control" ICU.JoinControl UCD.joinControl
     , mkBoolTest "Dash" ICU.Dash UCD.dash
-    , mkBoolTest "Hyphen" ICU.Hyphen UCD.hyphen
     , mkBoolTest "Quotation mark" ICU.QuotationMark UCD.quotationMark
     , mkBoolTest
         "Terminal punctuation"

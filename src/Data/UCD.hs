@@ -21,7 +21,6 @@ module Data.UCD
   , bidiControl
   , joinControl
   , dash
-  , hyphen
   , quotationMark
   , terminalPunctuation
   , hexDigit
@@ -65,7 +64,6 @@ import qualified Data.UCD.Internal.Diacritic as Di
 import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.HexDigit as HD
-import qualified Data.UCD.Internal.Hyphen as Hy
 import qualified Data.UCD.Internal.Ideographic as Ide
 import qualified Data.UCD.Internal.IdsBinaryOperator as IBO
 import qualified Data.UCD.Internal.IdsTrinaryOperator as ITO
@@ -221,9 +219,6 @@ joinControl = withCP JC.retrieve
 
 dash :: IsCodePoint cp => cp -> Bool
 dash = withCP Da.retrieve
-
-hyphen :: IsCodePoint cp => cp -> Bool
-hyphen = withCP Hy.retrieve
 
 quotationMark :: IsCodePoint cp => cp -> Bool
 quotationMark = withCP QM.retrieve

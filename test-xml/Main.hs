@@ -117,7 +117,6 @@ testCP getAttr cp = do
     , ("Bidi control", "Bidi_C", UCD.bidiControl)
     , ("Join control", "Join_C", UCD.joinControl)
     , ("Dash", "Dash", UCD.dash)
-    , ("Hyphen", "Hyphen", UCD.hyphen)
     , ("Quotation mark", "QMark", UCD.quotationMark)
     , ("Terminal punctuation", "Term", UCD.terminalPunctuation)
     , ("Hex digit", "Hex", UCD.hexDigit)
