@@ -360,7 +360,11 @@ math :: IsCodePoint cp => cp -> Bool
 math = withCP M.retrieve
 
 alphabetic :: IsCodePoint cp => cp -> Bool
-alphabetic = withCP A.retrieve
+alphabetic c
+  | cp < 0xaa = cp >= 0x41 && cp <= 0x7a && (cp <= 0x5a || cp >= 0x61)
+  | otherwise = A.retrieve (fromEnum cp)
+  where
+    CodePoint cp = toCodePoint c
 
 uppercase :: IsCodePoint cp => cp -> Bool
 uppercase = withCP UC.retrieve
