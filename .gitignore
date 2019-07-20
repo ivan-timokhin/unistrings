@@ -51,3 +51,4 @@ generated/
 /data/latest/ucdxml/ucd.nounihan.flat.zip
 /data/latest/ucdxml/ucd.all.grouped.zip
 /data/latest/ucdxml/ucd.all.flat.zip
+*.html
