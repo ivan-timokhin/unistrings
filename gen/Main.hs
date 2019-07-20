@@ -99,7 +99,6 @@ main = do
            (uncurry processProp)
            [ "white_space" ~> UCD.PropList.whiteSpace
            , "bidi_control" ~> UCD.PropList.bidiControl
-           , "join_control" ~> UCD.PropList.joinControl
            , "dash" ~> UCD.PropList.dash
            , "quotation_mark" ~> UCD.PropList.quotationMark
            , "terminal_punctuation" ~> UCD.PropList.terminalPunctuation
@@ -124,6 +123,12 @@ main = do
              UCD.PropList.prependedConcatenationMark
            , "regional_indicator" ~> UCD.PropList.regionalIndicator
            ]
+         let mkTestsProp snakeName getter =
+               generateTests snakeName $
+               UCD.Common.tableToVector False $ getter props
+         mapConcurrently_
+           (uncurry mkTestsProp)
+           ["join_control" ~> UCD.PropList.joinControl]
     ]
 
 printLong :: Show a => [a] -> IO ()

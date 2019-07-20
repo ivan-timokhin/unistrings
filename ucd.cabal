@@ -46,7 +46,6 @@ library
                      , Data.UCD.Internal.Ideographic
                      , Data.UCD.Internal.IdsBinaryOperator
                      , Data.UCD.Internal.IdsTrinaryOperator
-                     , Data.UCD.Internal.JoinControl
                      , Data.UCD.Internal.LogicalOrderException
                      , Data.UCD.Internal.NoncharacterCodePoint
                      , Data.UCD.Internal.PatternSyntax
@@ -93,7 +92,6 @@ library
                      , generated/cbits/ideographic.c
                      , generated/cbits/ids_binary_operator.c
                      , generated/cbits/ids_trinary_operator.c
-                     , generated/cbits/join_control.c
                      , generated/cbits/logical_order_exception.c
                      , generated/cbits/noncharacter_code_point.c
                      , generated/cbits/pattern_syntax.c

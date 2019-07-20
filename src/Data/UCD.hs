@@ -69,7 +69,6 @@ import qualified Data.UCD.Internal.IdsBinaryOperator as IBO
 import qualified Data.UCD.Internal.IdsTrinaryOperator as ITO
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
-import qualified Data.UCD.Internal.JoinControl as JC
 import qualified Data.UCD.Internal.LogicalOrderException as LOE
 import qualified Data.UCD.Internal.NameAliasesAliasesLen as NAALen
 import qualified Data.UCD.Internal.NameAliasesAliasesPtr as NAAPtr
@@ -215,7 +214,9 @@ bidiControl :: IsCodePoint cp => cp -> Bool
 bidiControl = withCP BC.retrieve
 
 joinControl :: IsCodePoint cp => cp -> Bool
-joinControl = withCP JC.retrieve
+joinControl c = cp >= CodePoint 0x200C && cp <= CodePoint 0x200D
+  where
+    cp = toCodePoint c
 
 dash :: IsCodePoint cp => cp -> Bool
 dash = withCP Da.retrieve
