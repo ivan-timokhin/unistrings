@@ -394,16 +394,38 @@ changesWhenCasemapped :: IsCodePoint cp => cp -> Bool
 changesWhenCasemapped = withCP CWCM.retrieve
 
 idStart :: IsCodePoint cp => cp -> Bool
-idStart = withCP IS.retrieve
+idStart c
+  | cp < 0xaa = cp >= 0x41 && cp <= 0x7a && (cp <= 0x5a || cp >= 0x61)
+  | otherwise = IS.retrieve (fromEnum cp)
+  where
+    CodePoint cp = toCodePoint c
 
 idContinue :: IsCodePoint cp => cp -> Bool
-idContinue = withCP IC.retrieve
+idContinue c
+  | cp < 0xaa =
+    cp >= 0x30 &&
+    cp <= 0x7a &&
+    (cp <= 0x39 || (cp >= 0x41 && (cp <= 0x5a || cp == 0x5f || cp >= 0x61)))
+  | otherwise = IC.retrieve (fromEnum cp)
+  where
+    CodePoint cp = toCodePoint c
 
 xidStart :: IsCodePoint cp => cp -> Bool
-xidStart = withCP XIS.retrieve
+xidStart c
+  | cp < 0xaa = cp >= 0x41 && cp <= 0x7a && (cp <= 0x5a || cp >= 0x61)
+  | otherwise = XIS.retrieve (fromEnum cp)
+  where
+    CodePoint cp = toCodePoint c
 
 xidContinue :: IsCodePoint cp => cp -> Bool
-xidContinue = withCP XIC.retrieve
+xidContinue c
+  | cp < 0xaa =
+    cp >= 0x30 &&
+    cp <= 0x7a &&
+    (cp <= 0x39 || (cp >= 0x41 && (cp <= 0x5a || cp == 0x5f || cp >= 0x61)))
+  | otherwise = XIC.retrieve (fromEnum cp)
+  where
+    CodePoint cp = toCodePoint c
 
 defaultIgnorableCodePoint :: IsCodePoint cp => cp -> Bool
 defaultIgnorableCodePoint = withCP DICP.retrieve
