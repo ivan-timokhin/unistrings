@@ -45,7 +45,7 @@ module Data.UCD
   , EnumeratedProperty(..)
   ) where
 
-import Data.Bits (shiftR)
+import Data.Bits ((.&.), shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
 import Data.Word (Word8)
@@ -74,7 +74,6 @@ import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
 import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
-import qualified Data.UCD.Internal.NoncharacterCodePoint as NCP
 import qualified Data.UCD.Internal.PatternSyntax as PS
 import qualified Data.UCD.Internal.PatternWhiteSpace as PWS
 import qualified Data.UCD.Internal.PrependedConcatenationMark as PCM
@@ -253,7 +252,10 @@ extender :: IsCodePoint cp => cp -> Bool
 extender = withCP Ext.retrieve
 
 noncharacterCodePoint :: IsCodePoint cp => cp -> Bool
-noncharacterCodePoint = withCP NCP.retrieve
+noncharacterCodePoint c =
+  (0xfdd0 <= cp && cp <= 0xfdef) || (cp .&. 0xfffe == 0xfffe)
+  where
+    CodePoint cp = toCodePoint c
 
 idsBinaryOperator :: IsCodePoint cp => cp -> Bool
 idsBinaryOperator = withCP IBO.retrieve
