@@ -102,7 +102,6 @@ main = do
            , "dash" ~> UCD.PropList.dash
            , "quotation_mark" ~> UCD.PropList.quotationMark
            , "terminal_punctuation" ~> UCD.PropList.terminalPunctuation
-           , "hex_digit" ~> UCD.PropList.hexDigit
            , "ascii_hex_digit" ~> UCD.PropList.asciiHexDigit
            , "ideographic" ~> UCD.PropList.ideographic
            , "diacritic" ~> UCD.PropList.diacritic
@@ -128,7 +127,9 @@ main = do
                UCD.Common.tableToVector False $ getter props
          mapConcurrently_
            (uncurry mkTestsProp)
-           ["join_control" ~> UCD.PropList.joinControl]
+           [ "join_control" ~> UCD.PropList.joinControl
+           , "hex_digit" ~> UCD.PropList.hexDigit
+           ]
     ]
 
 printLong :: Show a => [a] -> IO ()

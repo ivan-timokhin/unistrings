@@ -63,7 +63,6 @@ import qualified Data.UCD.Internal.Deprecated as De
 import qualified Data.UCD.Internal.Diacritic as Di
 import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.GeneralCategory as GC
-import qualified Data.UCD.Internal.HexDigit as HD
 import qualified Data.UCD.Internal.Ideographic as Ide
 import qualified Data.UCD.Internal.IdsBinaryOperator as IBO
 import qualified Data.UCD.Internal.IdsTrinaryOperator as ITO
@@ -228,7 +227,15 @@ terminalPunctuation :: IsCodePoint cp => cp -> Bool
 terminalPunctuation = withCP TP.retrieve
 
 hexDigit :: IsCodePoint cp => cp -> Bool
-hexDigit = withCP HD.retrieve
+hexDigit c
+  | cp <= 0x0066 =
+    cp >= 0x0061 || (0x30 <= cp && cp <= 0x39) || (0x41 <= cp && cp <= 0x46)
+  | cp >= 0xff10 =
+    cp <= 0xff19 ||
+    (0xff21 <= cp && cp <= 0xff26) || (0xff41 <= cp && cp <= 0xff46)
+  | otherwise = False
+  where
+    CodePoint cp = toCodePoint c
 
 asciiHexDigit :: IsCodePoint cp => cp -> Bool
 asciiHexDigit = withCP AHD.retrieve
