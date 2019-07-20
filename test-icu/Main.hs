@@ -1,6 +1,6 @@
 module Main where
 
-import Control.Monad (unless, when)
+import Control.Monad (when)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (ord)
 import Data.Foldable (for_)
