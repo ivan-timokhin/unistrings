@@ -47,7 +47,6 @@ library
                      , Data.UCD.Internal.PatternWhiteSpace
                      , Data.UCD.Internal.PrependedConcatenationMark
                      , Data.UCD.Internal.QuotationMark
-                     , Data.UCD.Internal.Radical
                      , Data.UCD.Internal.RegionalIndicator
                      , Data.UCD.Internal.SentenceTerminal
                      , Data.UCD.Internal.SoftDotted
@@ -88,7 +87,6 @@ library
                      , generated/cbits/pattern_white_space.c
                      , generated/cbits/prepended_concatenation_mark.c
                      , generated/cbits/quotation_mark.c
-                     , generated/cbits/radical.c
                      , generated/cbits/regional_indicator.c
                      , generated/cbits/sentence_terminal.c
                      , generated/cbits/soft_dotted.c

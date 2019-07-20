@@ -77,7 +77,6 @@ import qualified Data.UCD.Internal.PatternWhiteSpace as PWS
 import qualified Data.UCD.Internal.PrependedConcatenationMark as PCM
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
 import qualified Data.UCD.Internal.QuotationMark as QM
-import qualified Data.UCD.Internal.Radical as Rad
 import qualified Data.UCD.Internal.RegionalIndicator as RI
 import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
@@ -267,7 +266,12 @@ idsTrinaryOperator c = 0x2ff2 <= cp && cp <= 0x2ff3
     CodePoint cp = toCodePoint c
 
 radical :: IsCodePoint cp => cp -> Bool
-radical = withCP Rad.retrieve
+radical c =
+  0x2e80 <= cp &&
+  cp <= 0x2fd5 &&
+  (cp <= 0x2e99 || (0x2e9b <= cp && cp <= 0x2ef3) || 0x2f00 <= cp)
+  where
+    CodePoint cp = toCodePoint c
 
 unifiedIdeograph :: IsCodePoint cp => cp -> Bool
 unifiedIdeograph = withCP UI.retrieve
