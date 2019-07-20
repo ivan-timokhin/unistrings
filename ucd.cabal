@@ -50,6 +50,24 @@ library
                      , Data.UCD.Internal.SoftDotted
                      , Data.UCD.Internal.TerminalPunctuation
                      , Data.UCD.Internal.UnifiedIdeograph
+                     , Data.UCD.Internal.Math
+                     , Data.UCD.Internal.Alphabetic
+                     , Data.UCD.Internal.Lowercase
+                     , Data.UCD.Internal.Uppercase
+                     , Data.UCD.Internal.Cased
+                     , Data.UCD.Internal.CaseIgnorable
+                     , Data.UCD.Internal.ChangesWhenLowercased
+                     , Data.UCD.Internal.ChangesWhenUppercased
+                     , Data.UCD.Internal.ChangesWhenTitlecased
+                     , Data.UCD.Internal.ChangesWhenCasefolded
+                     , Data.UCD.Internal.ChangesWhenCasemapped
+                     , Data.UCD.Internal.IdStart
+                     , Data.UCD.Internal.IdContinue
+                     , Data.UCD.Internal.XidStart
+                     , Data.UCD.Internal.XidContinue
+                     , Data.UCD.Internal.DefaultIgnorableCodePoint
+                     , Data.UCD.Internal.GraphemeExtend
+                     , Data.UCD.Internal.GraphemeBase
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -86,6 +104,24 @@ library
                      , generated/cbits/soft_dotted.c
                      , generated/cbits/terminal_punctuation.c
                      , generated/cbits/unified_ideograph.c
+                     , generated/cbits/math.c
+                     , generated/cbits/alphabetic.c
+                     , generated/cbits/lowercase.c
+                     , generated/cbits/uppercase.c
+                     , generated/cbits/cased.c
+                     , generated/cbits/case_ignorable.c
+                     , generated/cbits/changes_when_lowercased.c
+                     , generated/cbits/changes_when_uppercased.c
+                     , generated/cbits/changes_when_titlecased.c
+                     , generated/cbits/changes_when_casefolded.c
+                     , generated/cbits/changes_when_casemapped.c
+                     , generated/cbits/id_start.c
+                     , generated/cbits/id_continue.c
+                     , generated/cbits/xid_start.c
+                     , generated/cbits/xid_continue.c
+                     , generated/cbits/default_ignorable_code_point.c
+                     , generated/cbits/grapheme_extend.c
+                     , generated/cbits/grapheme_base.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -169,6 +205,7 @@ executable ucd-gen
                      , UCD.Scripts
                      , UCD.ScriptExtensions
                      , UCD.PropList
+                     , UCD.DerivedCoreProperties
                      , UCD.Common
                      , Trie
                      , Gen

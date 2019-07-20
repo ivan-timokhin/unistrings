@@ -152,6 +152,71 @@ main =
                   Nothing
                   UCD.regionalIndicator
               ]
+          , C.bgroup
+              "DerivedCoreProps"
+              [ mkBoolGroup udhr "Math" (Just ICU.Math) UCD.math
+              , mkBoolGroup
+                  udhr
+                  "Alphabetic"
+                  (Just ICU.Alphabetic)
+                  UCD.alphabetic
+              , mkBoolGroup udhr "Uppercase" (Just ICU.Uppercase) UCD.uppercase
+              , mkBoolGroup udhr "Lowercase" (Just ICU.Lowercase) UCD.lowercase
+              , mkBoolGroup udhr "Cased" Nothing UCD.cased
+              , mkBoolGroup udhr "Case ignorable" Nothing UCD.caseIgnorable
+              , mkBoolGroup
+                  udhr
+                  "Changes when lowercased"
+                  Nothing
+                  UCD.changesWhenLowercased
+              , mkBoolGroup
+                  udhr
+                  "Changes when uppercased"
+                  Nothing
+                  UCD.changesWhenUppercased
+              , mkBoolGroup
+                  udhr
+                  "Changes when titlecased"
+                  Nothing
+                  UCD.changesWhenTitlecased
+              , mkBoolGroup
+                  udhr
+                  "Changes when casefolded"
+                  Nothing
+                  UCD.changesWhenCasefolded
+              , mkBoolGroup
+                  udhr
+                  "Changes when casemapped"
+                  Nothing
+                  UCD.changesWhenCasemapped
+              , mkBoolGroup udhr "ID start" (Just ICU.IDStart) UCD.idStart
+              , mkBoolGroup
+                  udhr
+                  "ID continue"
+                  (Just ICU.IDContinue)
+                  UCD.idContinue
+              , mkBoolGroup udhr "XID start" (Just ICU.XidStart) UCD.xidStart
+              , mkBoolGroup
+                  udhr
+                  "XID continue"
+                  (Just ICU.XidContinue)
+                  UCD.xidContinue
+              , mkBoolGroup
+                  udhr
+                  "Default ignorable"
+                  (Just ICU.DefaultIgnorable)
+                  UCD.defaultIgnorableCodePoint
+              , mkBoolGroup
+                  udhr
+                  "Grapheme extend"
+                  (Just ICU.GraphemeExtend)
+                  UCD.graphemeExtend
+              , mkBoolGroup
+                  udhr
+                  "Grapheme base"
+                  (Just ICU.GraphemeBase)
+                  UCD.graphemeBase
+              ]
           , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]

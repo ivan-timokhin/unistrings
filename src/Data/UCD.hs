@@ -42,6 +42,24 @@ module Data.UCD
   , patternSyntax
   , prependedConcatenationMark
   , regionalIndicator
+  , math
+  , alphabetic
+  , uppercase
+  , lowercase
+  , cased
+  , caseIgnorable
+  , changesWhenLowercased
+  , changesWhenUppercased
+  , changesWhenTitlecased
+  , changesWhenCasefolded
+  , changesWhenCasemapped
+  , idStart
+  , idContinue
+  , xidStart
+  , xidContinue
+  , defaultIgnorableCodePoint
+  , graphemeExtend
+  , graphemeBase
   , EnumeratedProperty(..)
   ) where
 
@@ -53,19 +71,34 @@ import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.Age as Age
+import qualified Data.UCD.Internal.Alphabetic as A
 import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
+import qualified Data.UCD.Internal.CaseIgnorable as CI
+import qualified Data.UCD.Internal.Cased as Cs
+import qualified Data.UCD.Internal.ChangesWhenCasefolded as CWCF
+import qualified Data.UCD.Internal.ChangesWhenCasemapped as CWCM
+import qualified Data.UCD.Internal.ChangesWhenLowercased as CWL
+import qualified Data.UCD.Internal.ChangesWhenTitlecased as CWT
+import qualified Data.UCD.Internal.ChangesWhenUppercased as CWU
 import qualified Data.UCD.Internal.Dash as Da
+import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
 import qualified Data.UCD.Internal.Deprecated as De
 import qualified Data.UCD.Internal.Diacritic as Di
 import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.GeneralCategory as GC
+import qualified Data.UCD.Internal.GraphemeBase as GB
+import qualified Data.UCD.Internal.GraphemeExtend as GE
+import qualified Data.UCD.Internal.IdContinue as IC
+import qualified Data.UCD.Internal.IdStart as IS
 import qualified Data.UCD.Internal.Ideographic as Ide
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
 import qualified Data.UCD.Internal.LogicalOrderException as LOE
+import qualified Data.UCD.Internal.Lowercase as LC
+import qualified Data.UCD.Internal.Math as M
 import qualified Data.UCD.Internal.NameAliasesAliasesLen as NAALen
 import qualified Data.UCD.Internal.NameAliasesAliasesPtr as NAAPtr
 import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
@@ -90,6 +123,9 @@ import Data.UCD.Internal.Types
   , Script(..)
   )
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
+import qualified Data.UCD.Internal.Uppercase as UC
+import qualified Data.UCD.Internal.XidContinue as XIC
+import qualified Data.UCD.Internal.XidStart as XIS
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
@@ -319,6 +355,60 @@ regionalIndicator :: IsCodePoint cp => cp -> Bool
 regionalIndicator c = 0x1f1e6 <= cp && cp <= 0x1f1ff
   where
     CodePoint cp = toCodePoint c
+
+math :: IsCodePoint cp => cp -> Bool
+math = withCP M.retrieve
+
+alphabetic :: IsCodePoint cp => cp -> Bool
+alphabetic = withCP A.retrieve
+
+uppercase :: IsCodePoint cp => cp -> Bool
+uppercase = withCP UC.retrieve
+
+lowercase :: IsCodePoint cp => cp -> Bool
+lowercase = withCP LC.retrieve
+
+cased :: IsCodePoint cp => cp -> Bool
+cased = withCP Cs.retrieve
+
+caseIgnorable :: IsCodePoint cp => cp -> Bool
+caseIgnorable = withCP CI.retrieve
+
+changesWhenLowercased :: IsCodePoint cp => cp -> Bool
+changesWhenLowercased = withCP CWL.retrieve
+
+changesWhenUppercased :: IsCodePoint cp => cp -> Bool
+changesWhenUppercased = withCP CWU.retrieve
+
+changesWhenTitlecased :: IsCodePoint cp => cp -> Bool
+changesWhenTitlecased = withCP CWT.retrieve
+
+changesWhenCasefolded :: IsCodePoint cp => cp -> Bool
+changesWhenCasefolded = withCP CWCF.retrieve
+
+changesWhenCasemapped :: IsCodePoint cp => cp -> Bool
+changesWhenCasemapped = withCP CWCM.retrieve
+
+idStart :: IsCodePoint cp => cp -> Bool
+idStart = withCP IS.retrieve
+
+idContinue :: IsCodePoint cp => cp -> Bool
+idContinue = withCP IC.retrieve
+
+xidStart :: IsCodePoint cp => cp -> Bool
+xidStart = withCP XIS.retrieve
+
+xidContinue :: IsCodePoint cp => cp -> Bool
+xidContinue = withCP XIC.retrieve
+
+defaultIgnorableCodePoint :: IsCodePoint cp => cp -> Bool
+defaultIgnorableCodePoint = withCP DICP.retrieve
+
+graphemeExtend :: IsCodePoint cp => cp -> Bool
+graphemeExtend = withCP GE.retrieve
+
+graphemeBase :: IsCodePoint cp => cp -> Bool
+graphemeBase = withCP GB.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

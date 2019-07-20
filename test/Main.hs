@@ -31,6 +31,7 @@ main = do
               , script
               , scriptExts
               , propList
+              , derivedCoreProps
               ]
           , TestLabel "Names" $
             TestList
@@ -141,6 +142,47 @@ propList =
         "prepended_concatenation_mark"
         UCD.prependedConcatenationMark
     , testEnum "Regional indicator" "regional_indicator" UCD.regionalIndicator
+    ]
+
+derivedCoreProps :: Test
+derivedCoreProps =
+  TestList
+    [ testEnum "Math" "math" UCD.math
+    , testEnum "Alphabetic" "alphabetic" UCD.alphabetic
+    , testEnum "Lowercase" "lowercase" UCD.lowercase
+    , testEnum "Uppercase" "uppercase" UCD.uppercase
+    , testEnum "Cased" "cased" UCD.cased
+    , testEnum "Case ignorable" "case_ignorable" UCD.caseIgnorable
+    , testEnum
+        "Changes when lowercased"
+        "changes_when_lowercased"
+        UCD.changesWhenLowercased
+    , testEnum
+        "Changes when uppercased"
+        "changes_when_uppercased"
+        UCD.changesWhenUppercased
+    , testEnum
+        "Changes when titlecased"
+        "changes_when_titlecased"
+        UCD.changesWhenTitlecased
+    , testEnum
+        "Changes when casefolded"
+        "changes_when_casefolded"
+        UCD.changesWhenCasefolded
+    , testEnum
+        "Changes when casemapped"
+        "changes_when_casemapped"
+        UCD.changesWhenCasemapped
+    , testEnum "ID start" "id_start" UCD.idStart
+    , testEnum "ID continue" "id_continue" UCD.idContinue
+    , testEnum "XID start" "xid_start" UCD.xidStart
+    , testEnum "XID continue" "xid_continue" UCD.xidContinue
+    , testEnum
+        "Default ignorable code point"
+        "default_ignorable_code_point"
+        UCD.defaultIgnorableCodePoint
+    , testEnum "Grapheme extend" "grapheme_extend" UCD.graphemeExtend
+    , testEnum "Grapheme base" "grapheme_base" UCD.graphemeBase
     ]
 
 testFullNames ::

@@ -14,7 +14,13 @@ import qualified Data.UCD as UCD
 main :: IO ()
 main = do
   let tests =
-        TestList [generalCategory, canonicalCombiningClass, charName, propList]
+        TestList
+          [ generalCategory
+          , canonicalCombiningClass
+          , charName
+          , propList
+          , derivedCoreProps
+          ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
 
@@ -126,6 +132,25 @@ propList =
         ICU.PatternWhiteSpace
         UCD.patternWhiteSpace
     , mkBoolTest "Pattern syntax" ICU.PatternSyntax UCD.patternSyntax
+    ]
+
+derivedCoreProps :: Test
+derivedCoreProps =
+  TestList
+    [ mkBoolTest "Math" ICU.Math UCD.math
+    , mkBoolTest "Alphabetic" ICU.Alphabetic UCD.alphabetic
+    , mkBoolTest "Uppercase" ICU.Uppercase UCD.uppercase
+    , mkBoolTest "Lowercase" ICU.Lowercase UCD.lowercase
+    , mkBoolTest "ID start" ICU.IDStart UCD.idStart
+    , mkBoolTest "ID continue" ICU.IDContinue UCD.idContinue
+    , mkBoolTest "XID start" ICU.XidStart UCD.xidStart
+    , mkBoolTest "XID continue" ICU.XidContinue UCD.xidContinue
+    , mkBoolTest
+        "Default ignorable"
+        ICU.DefaultIgnorable
+        UCD.defaultIgnorableCodePoint
+    , mkBoolTest "Grapheme extend" ICU.GraphemeExtend UCD.graphemeExtend
+    , mkBoolTest "Grapheme base" ICU.GraphemeBase UCD.graphemeBase
     ]
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test

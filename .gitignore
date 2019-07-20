@@ -15,7 +15,6 @@ data/latest/ucd/BidiTest.txt
 data/latest/ucd/CJKRadicals.txt
 data/latest/ucd/CaseFolding.txt
 data/latest/ucd/CompositionExclusions.txt
-data/latest/ucd/DerivedCoreProperties.txt
 data/latest/ucd/DerivedNormalizationProps.txt
 data/latest/ucd/EastAsianWidth.txt
 data/latest/ucd/EmojiSources.txt

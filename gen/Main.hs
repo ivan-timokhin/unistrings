@@ -25,6 +25,7 @@ import ListM (ListM(Nil), generatePartitionings)
 import qualified UCD.Age
 import qualified UCD.Blocks
 import UCD.Common (tableToVector)
+import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
 import qualified UCD.PropList
@@ -129,6 +130,32 @@ main = do
            , "variation_selector" ~> UCD.PropList.variationSelector
            , "regional_indicator" ~> UCD.PropList.regionalIndicator
            , "pattern_white_space" ~> UCD.PropList.patternWhiteSpace
+           ]
+    , do props <- UCD.DCP.fetch
+         let processProp snakeName getter =
+               processTable fullPartitionings snakeName $
+               UCD.Common.tableToVector False $ getter props
+             (~>) = (,)
+         mapConcurrently_
+           (uncurry processProp)
+           [ "math" ~> UCD.DCP.math
+           , "alphabetic" ~> UCD.DCP.alphabetic
+           , "lowercase" ~> UCD.DCP.lowercase
+           , "uppercase" ~> UCD.DCP.uppercase
+           , "cased" ~> UCD.DCP.cased
+           , "case_ignorable" ~> UCD.DCP.caseIgnorable
+           , "changes_when_lowercased" ~> UCD.DCP.changesWhenLowercased
+           , "changes_when_uppercased" ~> UCD.DCP.changesWhenUppercased
+           , "changes_when_titlecased" ~> UCD.DCP.changesWhenTitlecased
+           , "changes_when_casefolded" ~> UCD.DCP.changesWhenCasefolded
+           , "changes_when_casemapped" ~> UCD.DCP.changesWhenCasemapped
+           , "id_start" ~> UCD.DCP.idStart
+           , "id_continue" ~> UCD.DCP.idContinue
+           , "xid_start" ~> UCD.DCP.xidStart
+           , "xid_continue" ~> UCD.DCP.xidContinue
+           , "default_ignorable_code_point" ~> UCD.DCP.defaultIgnorableCodePoint
+           , "grapheme_extend" ~> UCD.DCP.graphemeExtend
+           , "grapheme_base" ~> UCD.DCP.graphemeBase
            ]
     ]
 
