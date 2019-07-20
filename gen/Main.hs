@@ -114,7 +114,6 @@ main = do
            , "pattern_syntax" ~> UCD.PropList.patternSyntax
            , "prepended_concatenation_mark" ~>
              UCD.PropList.prependedConcatenationMark
-           , "regional_indicator" ~> UCD.PropList.regionalIndicator
            ]
          let mkTestsProp snakeName getter =
                generateTests snakeName $
@@ -129,6 +128,7 @@ main = do
            , "ids_trinary_operator" ~> UCD.PropList.idsTrinaryOperator
            , "radical" ~> UCD.PropList.radical
            , "variation_selector" ~> UCD.PropList.variationSelector
+           , "regional_indicator" ~> UCD.PropList.regionalIndicator
            ]
     ]
 

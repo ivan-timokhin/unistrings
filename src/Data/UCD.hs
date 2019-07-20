@@ -77,7 +77,6 @@ import qualified Data.UCD.Internal.PatternWhiteSpace as PWS
 import qualified Data.UCD.Internal.PrependedConcatenationMark as PCM
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
 import qualified Data.UCD.Internal.QuotationMark as QM
-import qualified Data.UCD.Internal.RegionalIndicator as RI
 import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
 import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
@@ -305,7 +304,9 @@ prependedConcatenationMark :: IsCodePoint cp => cp -> Bool
 prependedConcatenationMark = withCP PCM.retrieve
 
 regionalIndicator :: IsCodePoint cp => cp -> Bool
-regionalIndicator = withCP RI.retrieve
+regionalIndicator c = 0x1f1e6 <= cp && cp <= 0x1f1ff
+  where
+    CodePoint cp = toCodePoint c
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
