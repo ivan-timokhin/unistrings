@@ -43,13 +43,7 @@ main = do
 
 generalCategory :: Test
 generalCategory =
-  TestLabel "General category" $
-  TestCase $ do
-    reference <- readFullTable enumP "generated/test_data/general_category.txt"
-    assertEqual "Table size" (fromEnum maxCp - fromEnum minCp + 1) $
-      length reference
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, refGC) ->
-      assertEqual (show cp) refGC $ UCD.generalCategory cp
+  testEnum "General category" "general_category" UCD.generalCategory
 
 canonicalCombiningClass :: Test
 canonicalCombiningClass =
@@ -92,12 +86,7 @@ ages =
     parser = Nothing <$ "Nothing" <|> Just <$> ("Just " *> enumP)
 
 script :: Test
-script =
-  TestLabel "Script" $
-  TestCase $ do
-    reference <- readFullTable enumP "generated/test_data/script.txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, refScr) ->
-      assertEqual (show cp) refScr $ UCD.script cp
+script = testEnum "Script" "script" UCD.script
 
 scriptExts :: Test
 scriptExts =
