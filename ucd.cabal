@@ -36,7 +36,6 @@ library
                      , Data.UCD.Internal.Script
                      , Data.UCD.Internal.ScriptExtsPtr
                      , Data.UCD.Internal.ScriptExtsLen
-                     , Data.UCD.Internal.AsciiHexDigit
                      , Data.UCD.Internal.BidiControl
                      , Data.UCD.Internal.Dash
                      , Data.UCD.Internal.Deprecated
@@ -81,7 +80,6 @@ library
                      , generated/cbits/script.c
                      , generated/cbits/script_exts_ptr.c
                      , generated/cbits/script_exts_len.c
-                     , generated/cbits/ascii_hex_digit.c
                      , generated/cbits/bidi_control.c
                      , generated/cbits/dash.c
                      , generated/cbits/deprecated.c

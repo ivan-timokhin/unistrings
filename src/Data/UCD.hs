@@ -53,7 +53,6 @@ import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.Age as Age
-import qualified Data.UCD.Internal.AsciiHexDigit as AHD
 import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
@@ -238,7 +237,11 @@ hexDigit c
     CodePoint cp = toCodePoint c
 
 asciiHexDigit :: IsCodePoint cp => cp -> Bool
-asciiHexDigit = withCP AHD.retrieve
+asciiHexDigit c =
+  cp <= 0x66 &&
+  cp >= 0x30 && (cp <= 0x39 || (0x41 <= cp && cp <= 0x46) || cp >= 0x61)
+  where
+    CodePoint cp = toCodePoint c
 
 ideographic :: IsCodePoint cp => cp -> Bool
 ideographic = withCP Ide.retrieve

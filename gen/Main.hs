@@ -102,7 +102,6 @@ main = do
            , "dash" ~> UCD.PropList.dash
            , "quotation_mark" ~> UCD.PropList.quotationMark
            , "terminal_punctuation" ~> UCD.PropList.terminalPunctuation
-           , "ascii_hex_digit" ~> UCD.PropList.asciiHexDigit
            , "ideographic" ~> UCD.PropList.ideographic
            , "diacritic" ~> UCD.PropList.diacritic
            , "extender" ~> UCD.PropList.extender
@@ -129,6 +128,7 @@ main = do
            (uncurry mkTestsProp)
            [ "join_control" ~> UCD.PropList.joinControl
            , "hex_digit" ~> UCD.PropList.hexDigit
+           , "ascii_hex_digit" ~> UCD.PropList.asciiHexDigit
            ]
     ]
 
