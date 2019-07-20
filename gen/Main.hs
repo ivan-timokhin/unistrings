@@ -105,8 +105,6 @@ main = do
            , "ideographic" ~> UCD.PropList.ideographic
            , "diacritic" ~> UCD.PropList.diacritic
            , "extender" ~> UCD.PropList.extender
-           , "ids_binary_operator" ~> UCD.PropList.idsBinaryOperator
-           , "ids_trinary_operator" ~> UCD.PropList.idsTrinaryOperator
            , "radical" ~> UCD.PropList.radical
            , "unified_ideograph" ~> UCD.PropList.unifiedIdeograph
            , "deprecated" ~> UCD.PropList.deprecated
@@ -129,6 +127,8 @@ main = do
            , "hex_digit" ~> UCD.PropList.hexDigit
            , "ascii_hex_digit" ~> UCD.PropList.asciiHexDigit
            , "noncharacter_code_point" ~> UCD.PropList.noncharacterCodePoint
+           , "ids_binary_operator" ~> UCD.PropList.idsBinaryOperator
+           , "ids_trinary_operator" ~> UCD.PropList.idsTrinaryOperator
            ]
     ]
 

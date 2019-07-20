@@ -63,8 +63,6 @@ import qualified Data.UCD.Internal.Diacritic as Di
 import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.Ideographic as Ide
-import qualified Data.UCD.Internal.IdsBinaryOperator as IBO
-import qualified Data.UCD.Internal.IdsTrinaryOperator as ITO
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
 import qualified Data.UCD.Internal.LogicalOrderException as LOE
@@ -258,10 +256,15 @@ noncharacterCodePoint c =
     CodePoint cp = toCodePoint c
 
 idsBinaryOperator :: IsCodePoint cp => cp -> Bool
-idsBinaryOperator = withCP IBO.retrieve
+idsBinaryOperator c =
+  cp .&. 0xfffff0 == 0x2ff0 && (cp <= 0x2ff1 || (0x2ff4 <= cp && cp <= 0x2ffb))
+  where
+    CodePoint cp = toCodePoint c
 
 idsTrinaryOperator :: IsCodePoint cp => cp -> Bool
-idsTrinaryOperator = withCP ITO.retrieve
+idsTrinaryOperator c = 0x2ff2 <= cp && cp <= 0x2ff3
+  where
+    CodePoint cp = toCodePoint c
 
 radical :: IsCodePoint cp => cp -> Bool
 radical = withCP Rad.retrieve
