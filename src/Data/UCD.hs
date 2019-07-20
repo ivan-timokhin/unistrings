@@ -73,7 +73,6 @@ import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
 import qualified Data.UCD.Internal.PatternSyntax as PS
-import qualified Data.UCD.Internal.PatternWhiteSpace as PWS
 import qualified Data.UCD.Internal.PrependedConcatenationMark as PCM
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
 import qualified Data.UCD.Internal.QuotationMark as QM
@@ -303,7 +302,12 @@ variationSelector c =
     CodePoint cp = toCodePoint c
 
 patternWhiteSpace :: IsCodePoint cp => cp -> Bool
-patternWhiteSpace = withCP PWS.retrieve
+patternWhiteSpace c
+  | cp <= 0x85 = (0x9 <= cp && cp <= 0xd) || cp == 0x20 || cp == 0x85
+  | cp >= 0x200e = cp <= 0x200f || cp == 0x2028 || cp == 0x2029
+  | otherwise = False
+  where
+    CodePoint cp = toCodePoint c
 
 patternSyntax :: IsCodePoint cp => cp -> Bool
 patternSyntax = withCP PS.retrieve

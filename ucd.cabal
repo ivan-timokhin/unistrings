@@ -44,7 +44,6 @@ library
                      , Data.UCD.Internal.Ideographic
                      , Data.UCD.Internal.LogicalOrderException
                      , Data.UCD.Internal.PatternSyntax
-                     , Data.UCD.Internal.PatternWhiteSpace
                      , Data.UCD.Internal.PrependedConcatenationMark
                      , Data.UCD.Internal.QuotationMark
                      , Data.UCD.Internal.SentenceTerminal
@@ -81,7 +80,6 @@ library
                      , generated/cbits/ideographic.c
                      , generated/cbits/logical_order_exception.c
                      , generated/cbits/pattern_syntax.c
-                     , generated/cbits/pattern_white_space.c
                      , generated/cbits/prepended_concatenation_mark.c
                      , generated/cbits/quotation_mark.c
                      , generated/cbits/sentence_terminal.c

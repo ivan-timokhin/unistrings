@@ -109,7 +109,6 @@ main = do
            , "soft_dotted" ~> UCD.PropList.softDotted
            , "logical_order_exception" ~> UCD.PropList.logicalOrderException
            , "sentence_terminal" ~> UCD.PropList.sentenceTerminal
-           , "pattern_white_space" ~> UCD.PropList.patternWhiteSpace
            , "pattern_syntax" ~> UCD.PropList.patternSyntax
            , "prepended_concatenation_mark" ~>
              UCD.PropList.prependedConcatenationMark
@@ -129,6 +128,7 @@ main = do
            , "radical" ~> UCD.PropList.radical
            , "variation_selector" ~> UCD.PropList.variationSelector
            , "regional_indicator" ~> UCD.PropList.regionalIndicator
+           , "pattern_white_space" ~> UCD.PropList.patternWhiteSpace
            ]
     ]
 
