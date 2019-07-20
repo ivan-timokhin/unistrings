@@ -112,10 +112,10 @@ instance IsCodePoint Char where
   toCodePoint = CodePoint . toEnum . ord
 
 generalCategory :: IsCodePoint cp => cp -> GeneralCategory
-generalCategory = GC.retrieve . fromEnum . toCodePoint
+generalCategory = withCP GC.retrieve
 
 canonicalCombiningClass :: IsCodePoint cp => cp -> Word8
-canonicalCombiningClass = CCC.retrieve . fromEnum . toCodePoint
+canonicalCombiningClass = withCP CCC.retrieve
 
 name :: IsCodePoint cp => cp -> ByteString
 name cp
@@ -177,7 +177,7 @@ nameAliases cp =
     icp = fromEnum $ toCodePoint cp
 
 block :: IsCodePoint cp => cp -> Block
-block = Blocks.retrieve . (`shiftR` 4) . fromEnum . toCodePoint
+block = withCP $ Blocks.retrieve . (`shiftR` 4)
 
 age :: IsCodePoint cp => cp -> Maybe Age
 age cp
@@ -188,7 +188,7 @@ age cp
     iage = Age.retrieve icp
 
 script :: IsCodePoint cp => cp -> Script
-script = Script.retrieve . fromEnum . toCodePoint
+script = withCP Script.retrieve
 
 scriptExtensions :: IsCodePoint cp => cp -> [Script]
 scriptExtensions cp =
