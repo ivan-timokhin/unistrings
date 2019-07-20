@@ -92,7 +92,6 @@ import Data.UCD.Internal.Types
   , Script(..)
   )
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
-import qualified Data.UCD.Internal.VariationSelector as VS
 import qualified Data.UCD.Internal.WhiteSpace as WS
 
 class IsCodePoint c where
@@ -289,7 +288,12 @@ sentenceTerminal :: IsCodePoint cp => cp -> Bool
 sentenceTerminal = withCP ST.retrieve
 
 variationSelector :: IsCodePoint cp => cp -> Bool
-variationSelector = withCP VS.retrieve
+variationSelector c =
+  cp >= 0x180b &&
+  (cp <= 0x180d ||
+   (cp >= 0xfe00 && (cp <= 0xfe0f || (cp >= 0xe0100 && cp <= 0xe01ef))))
+  where
+    CodePoint cp = toCodePoint c
 
 patternWhiteSpace :: IsCodePoint cp => cp -> Bool
 patternWhiteSpace = withCP PWS.retrieve

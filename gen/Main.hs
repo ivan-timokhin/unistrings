@@ -110,7 +110,6 @@ main = do
            , "soft_dotted" ~> UCD.PropList.softDotted
            , "logical_order_exception" ~> UCD.PropList.logicalOrderException
            , "sentence_terminal" ~> UCD.PropList.sentenceTerminal
-           , "variation_selector" ~> UCD.PropList.variationSelector
            , "pattern_white_space" ~> UCD.PropList.patternWhiteSpace
            , "pattern_syntax" ~> UCD.PropList.patternSyntax
            , "prepended_concatenation_mark" ~>
@@ -129,6 +128,7 @@ main = do
            , "ids_binary_operator" ~> UCD.PropList.idsBinaryOperator
            , "ids_trinary_operator" ~> UCD.PropList.idsTrinaryOperator
            , "radical" ~> UCD.PropList.radical
+           , "variation_selector" ~> UCD.PropList.variationSelector
            ]
     ]
 
