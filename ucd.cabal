@@ -51,7 +51,6 @@ library
                      , Data.UCD.Internal.SoftDotted
                      , Data.UCD.Internal.TerminalPunctuation
                      , Data.UCD.Internal.UnifiedIdeograph
-                     , Data.UCD.Internal.WhiteSpace
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -89,7 +88,6 @@ library
                      , generated/cbits/soft_dotted.c
                      , generated/cbits/terminal_punctuation.c
                      , generated/cbits/unified_ideograph.c
-                     , generated/cbits/white_space.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src

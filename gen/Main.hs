@@ -97,8 +97,7 @@ main = do
              (~>) = (,)
          mapConcurrently_
            (uncurry processProp)
-           [ "white_space" ~> UCD.PropList.whiteSpace
-           , "bidi_control" ~> UCD.PropList.bidiControl
+           [ "bidi_control" ~> UCD.PropList.bidiControl
            , "dash" ~> UCD.PropList.dash
            , "quotation_mark" ~> UCD.PropList.quotationMark
            , "terminal_punctuation" ~> UCD.PropList.terminalPunctuation
@@ -120,7 +119,8 @@ main = do
                UCD.Common.tableToVector False $ getter props
          mapConcurrently_
            (uncurry mkTestsProp)
-           [ "join_control" ~> UCD.PropList.joinControl
+           [ "white_space" ~> UCD.PropList.whiteSpace
+           , "join_control" ~> UCD.PropList.joinControl
            , "hex_digit" ~> UCD.PropList.hexDigit
            , "ascii_hex_digit" ~> UCD.PropList.asciiHexDigit
            , "noncharacter_code_point" ~> UCD.PropList.noncharacterCodePoint

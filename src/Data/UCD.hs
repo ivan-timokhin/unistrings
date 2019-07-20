@@ -91,7 +91,6 @@ import Data.UCD.Internal.Types
   , Script(..)
   )
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
-import qualified Data.UCD.Internal.WhiteSpace as WS
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
@@ -200,7 +199,16 @@ scriptExtensionsRaw cp =
     icp = fromEnum $ toCodePoint cp
 
 whiteSpace :: IsCodePoint cp => cp -> Bool
-whiteSpace = withCP WS.retrieve
+whiteSpace c
+  | cp <= 0x00A0 =
+    cp == 0x20 || (0x9 <= cp && cp <= 0xd) || cp == 0x85 || cp == 0xa0
+  | cp >= 0x1680 && cp <= 0x3000 =
+    (0x2000 <= cp && cp <= 0x200a) ||
+    cp == 0x2028 ||
+    cp == 0x2029 || cp == 0x202F || cp == 0x205F || cp == 0x1680 || cp == 0x3000
+  | otherwise = False
+  where
+    CodePoint cp = toCodePoint c
 
 bidiControl :: IsCodePoint cp => cp -> Bool
 bidiControl = withCP BC.retrieve
