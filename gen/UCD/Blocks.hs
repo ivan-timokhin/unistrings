@@ -2,14 +2,18 @@
 
 module UCD.Blocks where
 
+import Control.Applicative (many)
+import Control.Arrow ((&&&))
 import Control.Monad (guard)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.Bits ((.&.), shiftR)
+import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
-import Data.Traversable (for)
+import Data.Char (toLower)
+import Data.List (find)
 import qualified Data.Vector as V
 
-import Data.UCD.Internal.Types (Block(NoBlock))
+import Data.UCD.Internal.Types (Block(NoBlock), fullPropertyValueName)
 import UCD.Common (comments, unicodeTableSize)
 
 fetch :: IO (V.Vector Block)
@@ -26,17 +30,11 @@ fetch = do
 parser :: A.Parser [(Int, Int, Block)]
 parser = do
   comments
-  records <-
-    for [succ minBound .. maxBound] $ \block -> do
-      (start, end) <- record <* A.char '\n'
-      pure (start, end, block)
-  -- This relies rather crucially on there being no duplicate block
-  -- names in Blocks.txt /and/ variants in Block enum being in exactly
-  -- the same order as blocks in Blocks.txt
+  records <- many $ record <* A.char '\n'
   comments
   pure records
 
-record :: A.Parser (Int, Int)
+record :: A.Parser (Int, Int, Block)
 record = do
   start <- A.hexadecimal
   guard $ start .&. 0xf == 0
@@ -44,5 +42,16 @@ record = do
   end <- A.hexadecimal
   guard $ end .&. 0xf == 0xf
   _ <- A.char ';'
-  _ <- A.takeWhile (/= '\n')
-  pure (start, end)
+  A.skipSpace
+  blockName <- A.takeWhile (/= '\n')
+  let normalised = normalise blockName
+  case find ((== normalised) . fst) candidates of
+    Just (_, block) -> pure (start, end, block)
+    Nothing -> fail $ "Can't recognise block " ++ show blockName
+
+normalise :: ByteString -> ByteString
+normalise = B.map toLower . B.filter (\c -> c /= ' ' && c /= '-' && c /= '_')
+
+candidates :: [(ByteString, Block)]
+candidates =
+  map (normalise . fullPropertyValueName &&& id) [minBound .. maxBound]
