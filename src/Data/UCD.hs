@@ -205,12 +205,7 @@ block :: IsCodePoint cp => cp -> Block
 block = withCP $ Blocks.retrieve . (`shiftR` 4)
 
 age :: IsCodePoint cp => cp -> Maybe Age
-age cp
-  | iage == 0 = Nothing
-  | otherwise = Just $ toEnum (iage - 1)
-  where
-    icp = fromEnum $ toCodePoint cp
-    iage = Age.retrieve icp
+age = withCP Age.retrieve
 
 script :: IsCodePoint cp => cp -> Script
 script = withCP Script.retrieve

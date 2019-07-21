@@ -7,6 +7,7 @@
 module Gen
   ( Module(Module, moduleC, moduleHs)
   , generateEnum
+  , generateMayEnum
   , EnumSpec(..)
   , generateIntegral
   , IntSpec(..)
@@ -59,6 +60,24 @@ enumSpec2IntGSpec espec =
     , igsHsConvert = "toEnum . fromEnum $ "
     , igsConvert = toInteger . fromEnum
     }
+
+generateMayEnum ::
+     Enum a
+  => EnumSpec
+  -> TrieDesc Identity IntegralType IntegralType (Maybe a)
+  -> Module
+generateMayEnum spec =
+  generateIntG
+    IntGSpec
+      { igsCPrefix = esCPrefix spec
+      , igsHsType = "Maybe " <> esHsType spec
+      , igsHsImports =
+          [ B.concat ["import ", esHsTypeModule spec, " (", esHsType spec, ")"]
+          , "import Data.UCD.Internal.Enum (toMEnum)"
+          ]
+      , igsHsConvert = "toMEnum . fromEnum $ "
+      , igsConvert = maybe 0 (toInteger . succ . fromEnum)
+      }
 
 data IntSpec =
   IntSpec

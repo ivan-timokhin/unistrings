@@ -22,7 +22,7 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
-import Data.UCD.Internal.Types (Block, Script)
+import Data.UCD.Internal.Types (Age, Block, Script)
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
   , EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
@@ -31,6 +31,7 @@ import Gen
   , generateASCII
   , generateEnum
   , generateIntegral
+  , generateMayEnum
   , generateMonoContainer
   )
 import Gen.Cost (SizedTy, pickBest, totalCost)
@@ -41,6 +42,7 @@ import Gen.Type
   , typeContainerDedup
   , typeEnum
   , typeLayers
+  , typeMEnum
   , word8
   )
 import ListM (ListM)
@@ -94,6 +96,17 @@ instance TableValue Script where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "Script"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue (Maybe Age) where
+  type BottomType (Maybe Age) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "Age"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

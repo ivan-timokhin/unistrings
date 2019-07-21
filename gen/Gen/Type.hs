@@ -9,6 +9,7 @@ module Gen.Type
   ( IntegralType(..)
   , FFIIntegralType(itypeOf)
   , typeEnum
+  , typeMEnum
   , typeASCII
   , typeContainer
   , typeContainerDedup
@@ -64,6 +65,9 @@ instance FFIIntegralType Word8 where
 
 typeEnum :: Enum a => V.Vector a -> IntegralType
 typeEnum = findTypeForTable fromEnum
+
+typeMEnum :: Enum a => V.Vector (Maybe a) -> IntegralType
+typeMEnum = findTypeForTable $ maybe 0 (succ . fromEnum)
 
 typeASCII :: V.Vector ByteString -> ((IntegralType, ByteString), V.Vector Int)
 typeASCII = typeContainer

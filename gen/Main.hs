@@ -78,9 +78,7 @@ main = do
     , do blocks <- UCD.Blocks.fetch
          generateSources (generatePartitionings 4 0 12) "blocks" blocks
     , do ages <- UCD.Common.tableToVector Nothing . fmap Just <$> UCD.Age.fetch
-         generateTests "age" ages
-         generateSources fullPartitionings "age" $
-           fmap (maybe 0 (succ . fromEnum)) ages
+         processTable fullPartitionings "age" ages
     , do scripts <- UCD.Common.tableToVector UnknownScript <$> UCD.Scripts.fetch
          processTable fullPartitionings "script" scripts
     , do scriptExts <-
