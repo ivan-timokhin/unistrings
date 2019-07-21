@@ -22,7 +22,7 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
-import Data.UCD.Internal.Types (Age, Block, Script)
+import Data.UCD.Internal.Types (Age, Block, HangulSyllableType, Script)
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
   , EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
@@ -107,6 +107,17 @@ instance TableValue (Maybe Age) where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "Age"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue (Maybe HangulSyllableType) where
+  type BottomType (Maybe HangulSyllableType) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "HangulSyllableType"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

@@ -60,6 +60,8 @@ module Data.UCD
   , defaultIgnorableCodePoint
   , graphemeExtend
   , graphemeBase
+  , hangulSyllableType
+  , HangulSyllableType(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -91,6 +93,7 @@ import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.GraphemeBase as GB
 import qualified Data.UCD.Internal.GraphemeExtend as GE
+import qualified Data.UCD.Internal.HangulSyllableType as HST
 import qualified Data.UCD.Internal.IdContinue as IC
 import qualified Data.UCD.Internal.IdStart as IS
 import qualified Data.UCD.Internal.Ideographic as Ide
@@ -119,6 +122,7 @@ import Data.UCD.Internal.Types
   ( Age(..)
   , Block(..)
   , EnumeratedProperty(..)
+  , HangulSyllableType(..)
   , NameAliasType(..)
   , Script(..)
   )
@@ -430,6 +434,9 @@ graphemeExtend = withCP GE.retrieve
 
 graphemeBase :: IsCodePoint cp => cp -> Bool
 graphemeBase = withCP GB.retrieve
+
+hangulSyllableType :: IsCodePoint cp => cp -> Maybe HangulSyllableType
+hangulSyllableType = withCP HST.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

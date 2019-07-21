@@ -85,6 +85,25 @@ charName =
   for_ [minBound .. maxBound] $ \c ->
     assertEqual (showHex (ord c) "") (B.pack $ ICU.charName c) (UCD.name c)
 
+hangulSyllableType :: Test
+hangulSyllableType =
+  TestLabel "Hangul syllable type" $
+  TestCase $
+  for_ [minBound .. maxBound] $ \c ->
+    assertEqual
+      (showHex (ord c) "")
+      (icu2ucd <$> ICU.property ICU.HangulSyllableType c) $
+    UCD.hangulSyllableType c
+  where
+    icu2ucd :: ICU.HangulSyllableType -> UCD.HangulSyllableType
+    icu2ucd hst =
+      case hst of
+        ICU.LeadingJamo -> UCD.LeadingJamo
+        ICU.VowelJamo -> UCD.VowelJamo
+        ICU.TrailingJamo -> UCD.TrailingJamo
+        ICU.LVSyllable -> UCD.LVSyllable
+        ICU.LVTSyllable -> UCD.LVTSyllable
+
 propList :: Test
 propList =
   TestList

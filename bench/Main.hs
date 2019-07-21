@@ -45,6 +45,15 @@ main =
               -- , C.bench "ICU" $ mkBenchmark udhr ICU.blockCode
               ]
           , C.bgroup
+              "Hangul syllable type"
+              [ C.bench "UCD" $
+                mkBenchmark udhr (maybe () (`seq` ()) . UCD.hangulSyllableType)
+              , C.bench "ICU" $
+                mkBenchmark
+                  udhr
+                  (maybe () (`seq` ()) . ICU.property ICU.HangulSyllableType)
+              ]
+          , C.bgroup
               "PropList"
               [ mkBoolGroup
                   udhr

@@ -32,6 +32,7 @@ main = do
               , scriptExts
               , propList
               , derivedCoreProps
+              , hangulSyllableType
               ]
           , TestLabel "Names" $
             TestList
@@ -80,11 +81,18 @@ ages :: Test
 ages =
   TestLabel "Ages" $
   TestCase $ do
-    reference <- readFullTable parser "generated/test_data/age.txt"
+    reference <- readFullTable mayEnumP "generated/test_data/age.txt"
     for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
       assertEqual (show cp) ref $ UCD.age cp
-  where
-    parser = Nothing <$ "Nothing" <|> Just <$> ("Just " *> enumP)
+
+hangulSyllableType :: Test
+hangulSyllableType =
+  TestLabel "Hangul syllable type" $
+  TestCase $ do
+    reference <-
+      readFullTable mayEnumP "generated/test_data/hangul_syllable_type.txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
+      assertEqual (show cp) ref $ UCD.hangulSyllableType cp
 
 script :: Test
 script = testEnum "Script" "script" UCD.script
@@ -232,6 +240,9 @@ enumP =
   map (\(e, str) -> e <$ A.string str) $
   sortOn (Down . B.length . snd) $
   map (\e -> (e, B.pack (show e))) [minBound .. maxBound]
+
+mayEnumP :: (Enum a, Show a, Bounded a) => A.Parser (Maybe a)
+mayEnumP = Nothing <$ "Nothing" <|> Just <$> ("Just " *> enumP)
 
 enclosedP :: A.Parser a -> A.Parser b -> A.Parser c -> A.Parser c
 enclosedP start end p = start *> p <* end

@@ -26,6 +26,7 @@ import qualified UCD.Age
 import qualified UCD.Blocks
 import UCD.Common (tableToVector)
 import qualified UCD.DerivedCoreProperties as UCD.DCP
+import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
 import qualified UCD.PropList
@@ -155,6 +156,10 @@ main = do
            , "grapheme_extend" ~> UCD.DCP.graphemeExtend
            , "grapheme_base" ~> UCD.DCP.graphemeBase
            ]
+    , do hst <-
+           UCD.Common.tableToVector Nothing . fmap Just <$>
+           UCD.HangulSyllableType.fetch
+         processTable fullPartitionings "hangul_syllable_type" hst
     ]
 
 printLong :: Show a => [a] -> IO ()

@@ -3,6 +3,7 @@
 module Data.UCD.Internal.Types
   ( Age(..)
   , BidiClass(..)
+  , HangulSyllableType(..)
   , NameAliasType(..)
   , Block(..)
   , Script(..)
@@ -236,6 +237,30 @@ instance EnumeratedProperty BidiClass where
       RightToLeftOverrideBC -> "RLO"
       SegmentSeparatorBC -> "S"
       WhiteSpaceBC -> "WS"
+
+data HangulSyllableType
+  = LeadingJamo
+  | VowelJamo
+  | TrailingJamo
+  | LVSyllable
+  | LVTSyllable
+  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+
+instance EnumeratedProperty HangulSyllableType where
+  fullPropertyValueName h =
+    case h of
+      LeadingJamo -> "Leading_Jamo"
+      VowelJamo -> "Vowel_Jamo"
+      TrailingJamo -> "Trailing_Jamo"
+      LVSyllable -> "LV_Syllable"
+      LVTSyllable -> "LVT_Syllable"
+  abbreviatedPropertyValueName h =
+    case h of
+      LeadingJamo -> "L"
+      VowelJamo -> "V"
+      TrailingJamo -> "T"
+      LVSyllable -> "LV"
+      LVTSyllable -> "LVT"
 
 data NameAliasType
   = CorrectionAlias

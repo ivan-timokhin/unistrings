@@ -157,6 +157,20 @@ testCP getAttr cp = do
     , ("Grapheme extend", "Gr_Ext", UCD.graphemeExtend)
     , ("Grapheme base", "Gr_Base", UCD.graphemeBase)
     ]
+  hst <-
+    case getAttr "hst" of
+      Nothing -> assertFailure "Can't locate hangul syllable type"
+      Just "NA" -> pure Nothing
+      Just hsStr ->
+        let hsStr8 = TE.encodeUtf8 hsStr
+         in case find
+                   ((== hsStr8) . UCD.abbreviatedPropertyValueName)
+                   [minBound .. maxBound] of
+              Just p -> pure $ Just p
+              Nothing ->
+                assertFailure $
+                "Can't recognise hangul syllable type " ++ show hsStr
+  assertEqual "Hangul syllable type" hst $ UCD.hangulSyllableType cp
   where
     generalCategory =
       case getAttr "gc" of

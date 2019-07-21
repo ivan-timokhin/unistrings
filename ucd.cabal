@@ -69,6 +69,7 @@ library
                      , Data.UCD.Internal.DefaultIgnorableCodePoint
                      , Data.UCD.Internal.GraphemeExtend
                      , Data.UCD.Internal.GraphemeBase
+                     , Data.UCD.Internal.HangulSyllableType
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -123,6 +124,7 @@ library
                      , generated/cbits/default_ignorable_code_point.c
                      , generated/cbits/grapheme_extend.c
                      , generated/cbits/grapheme_base.c
+                     , generated/cbits/hangul_syllable_type.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -207,6 +209,7 @@ executable ucd-gen
                      , UCD.ScriptExtensions
                      , UCD.PropList
                      , UCD.DerivedCoreProperties
+                     , UCD.HangulSyllableType
                      , UCD.Common
                      , Trie
                      , Gen
