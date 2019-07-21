@@ -13,19 +13,19 @@ import Data.Char (toLower)
 import Data.List (find)
 import qualified Data.Vector as V
 
-import Data.UCD.Internal.Types (Block(NoBlock), fullPropertyValueName)
+import Data.UCD.Internal.Types (Block, fullPropertyValueName)
 import UCD.Common (comments, unicodeTableSize)
 
-fetch :: IO (V.Vector Block)
+fetch :: IO (V.Vector (Maybe Block))
 fetch = do
   txt <- B.readFile "data/latest/ucd/Blocks.txt"
   case A.parseOnly (parser <* A.endOfInput) txt of
     Left err -> fail err
     Right blocks ->
       pure $
-      (V.replicate (unicodeTableSize `shiftR` 4) NoBlock V.//) $
+      (V.replicate (unicodeTableSize `shiftR` 4) Nothing V.//) $
       blocks >>= \(start, end, block) ->
-        [(i, block) | i <- [start `shiftR` 4 .. end `shiftR` 4]]
+        [(i, Just block) | i <- [start `shiftR` 4 .. end `shiftR` 4]]
 
 parser :: A.Parser [(Int, Int, Block)]
 parser = do

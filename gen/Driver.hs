@@ -77,11 +77,11 @@ instance TableValue GeneralCategory where
         , esHsTypeModule = "Data.Char"
         }
 
-instance TableValue Block where
-  type BottomType Block = IntegralType
-  typeVals_ = typeEnum
+instance TableValue (Maybe Block) where
+  type BottomType (Maybe Block) = IntegralType
+  typeVals_ = typeMEnum
   generateModule prefix =
-    generateEnum
+    generateMayEnum
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "Block"

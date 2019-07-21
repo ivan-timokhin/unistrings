@@ -246,8 +246,7 @@ data NameAliasType
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
 
 data Block
-  = NoBlock
-  | BasicLatinBlock
+  = BasicLatinBlock
   | Latin1SupplementBlock
   | LatinExtendedABlock
   | LatinExtendedBBlock
@@ -773,7 +772,6 @@ instance EnumeratedProperty Block where
       NandinagariBlock -> "Nandinagari"
       NewTaiLueBlock -> "New_Tai_Lue"
       NewaBlock -> "Newa"
-      NoBlock -> "No_Block"
       NumberFormsBlock -> "Number_Forms"
       NushuBlock -> "Nushu"
       NyiakengPuachueHmongBlock -> "Nyiakeng_Puachue_Hmong"
@@ -1082,7 +1080,6 @@ instance EnumeratedProperty Block where
       NandinagariBlock -> "Nandinagari"
       NewTaiLueBlock -> "New_Tai_Lue"
       NewaBlock -> "Newa"
-      NoBlock -> "NB"
       NumberFormsBlock -> "Number_Forms"
       NushuBlock -> "Nushu"
       NyiakengPuachueHmongBlock -> "Nyiakeng_Puachue_Hmong"

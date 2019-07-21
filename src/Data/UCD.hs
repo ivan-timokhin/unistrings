@@ -201,7 +201,7 @@ nameAliases cp =
     count = NAALen.retrieve icp
     icp = fromEnum $ toCodePoint cp
 
-block :: IsCodePoint cp => cp -> Block
+block :: IsCodePoint cp => cp -> Maybe Block
 block = withCP $ Blocks.retrieve . (`shiftR` 4)
 
 age :: IsCodePoint cp => cp -> Maybe Age

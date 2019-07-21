@@ -233,13 +233,14 @@ testCP getAttr cp = do
     block =
       case getAttr "blk" of
         Nothing -> assertFailure "Can't locate block"
+        Just "NB" -> pure Nothing
         Just blkStr ->
           let blkStr8 = TE.encodeUtf8 blkStr
            in case find
                      ((== blkStr8) . UCD.abbreviatedPropertyValueName)
                      [minBound .. maxBound] of
                 Nothing -> assertFailure $ "Can't parse block: " ++ show blkStr
-                Just blk -> pure blk
+                Just blk -> pure (Just blk)
     scriptExts =
       case getAttr "scx" of
         Nothing -> assertFailure "Can't locate script extensions"
@@ -296,9 +297,9 @@ testBlock blockDescr =
         Just str -> readHex str
         Nothing -> assertFailure "Can't locate block end"
     block
-      | blockName == "No_Block" = Just UCD.NoBlock
+      | blockName == "No_Block" = Just Nothing
       | otherwise =
-        flip find [succ minBound .. maxBound] $ \b ->
+        Just <$> flip find [minBound .. maxBound] $ \b ->
           let prepare =
                 T.toLower . T.filter (\c -> c /= ' ' && c /= '-' && c /= '\'')
               bname = prepare $ T.dropEnd 5 $ T.pack $ show b
