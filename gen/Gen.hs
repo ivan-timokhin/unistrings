@@ -234,7 +234,10 @@ generateGenericHs spec trie =
       "import Data.Int (Int8, Int16, Int32)" :
       "import Data.Word (Word8, Word16)" : gsHsImports spec
     function :: [ByteString]
-    function = sig : "retrieve cp = val" : " where" : map ("  " <>) locals
+    function =
+      sig :
+      "{-# INLINE retrieve #-}" :
+      "retrieve cp = val" : " where" : map ("  " <>) locals
       where
         sig = B.concat ["retrieve :: Int -> ", gsHsType spec]
         locals =
