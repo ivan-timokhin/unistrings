@@ -226,6 +226,18 @@ main =
                   (Just ICU.GraphemeBase)
                   UCD.graphemeBase
               ]
+          , C.bgroup
+              "Simple case mappings"
+              [ C.bgroup
+                  "Lowercase"
+                  [C.bench "UCD" $ mkBenchmark udhr UCD.simpleLowercaseMapping]
+              , C.bgroup
+                  "Uppercase"
+                  [C.bench "UCD" $ mkBenchmark udhr UCD.simpleUppercaseMapping]
+              , C.bgroup
+                  "Titlecase"
+                  [C.bench "UCD" $ mkBenchmark udhr UCD.simpleTitlecaseMapping]
+              ]
           , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]

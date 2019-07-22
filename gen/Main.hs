@@ -49,6 +49,15 @@ main = do
     , processTable fullPartitionings "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
+    , processTable fullPartitionings "simple_uppercase_mapping" $
+      UCD.Common.tableToVector Nothing $
+      fmap UCD.UnicodeData.propSimpleUppercaseMapping records
+    , processTable fullPartitionings "simple_lowercase_mapping" $
+      UCD.Common.tableToVector Nothing $
+      fmap UCD.UnicodeData.propSimpleLowercaseMapping records
+    , processTable fullPartitionings "simple_titlecase_mapping" $
+      UCD.Common.tableToVector Nothing $
+      fmap UCD.UnicodeData.propSimpleTitlecaseMapping records
     , generateASCIITableSources fullPartitionings "name" $
       UCD.UnicodeData.tableToNames records V.//
       map

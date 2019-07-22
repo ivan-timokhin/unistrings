@@ -19,7 +19,7 @@ import Data.Foldable (fold, for_)
 import Data.Functor.Identity (Identity)
 import Data.Maybe (fromMaybe)
 import qualified Data.Vector as V
-import Data.Word (Word8)
+import Data.Word (Word32, Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
 import Data.UCD.Internal.Types (Age, Block, HangulSyllableType, Script)
@@ -120,6 +120,14 @@ instance TableValue (Maybe HangulSyllableType) where
         , esHsType = "HangulSyllableType"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
+
+instance TableValue (Maybe Word32) where
+  type BottomType (Maybe Word32) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        {esCPrefix = prefix, esHsType = "Word32", esHsTypeModule = "Data.Word"}
 
 instance TableValue (V.Vector Script) where
   type BottomType (V.Vector Script) = (IntegralType, V.Vector Word8)

@@ -33,6 +33,7 @@ main = do
               , propList
               , derivedCoreProps
               , hangulSyllableType
+              , simpleCaseMappings
               ]
           , TestLabel "Names" $
             TestList
@@ -193,6 +194,23 @@ derivedCoreProps =
     , testEnum "Grapheme base" "grapheme_base" UCD.graphemeBase
     ]
 
+simpleCaseMappings :: Test
+simpleCaseMappings =
+  TestList
+    [ testSelfDefaultCP
+        "Simple lowercase mapping"
+        "simple_lowercase_mapping"
+        UCD.simpleLowercaseMapping
+    , testSelfDefaultCP
+        "Simple uppercase mapping"
+        "simple_uppercase_mapping"
+        UCD.simpleUppercaseMapping
+    , testSelfDefaultCP
+        "Simple titlecase mapping"
+        "simple_titlecase_mapping"
+        UCD.simpleTitlecaseMapping
+    ]
+
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)
   => String
@@ -220,6 +238,16 @@ testEnum name file f =
     for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
       assertEqual (show cp) ref $ f cp
 
+testSelfDefaultCP ::
+     String -> FilePath -> (UCD.CodePoint -> UCD.CodePoint) -> Test
+testSelfDefaultCP name file f =
+  TestLabel name $
+  TestCase $ do
+    reference <-
+      readFullTable mayIntegralP $ "generated/test_data/" ++ file ++ ".txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
+      assertEqual (show cp) (maybe cp toEnum ref) $ f cp
+
 maxCp :: UCD.CodePoint
 maxCp = maxBound
 
@@ -243,6 +271,9 @@ enumP =
 
 mayEnumP :: (Enum a, Show a, Bounded a) => A.Parser (Maybe a)
 mayEnumP = Nothing <$ "Nothing" <|> Just <$> ("Just " *> enumP)
+
+mayIntegralP :: Integral a => A.Parser (Maybe a)
+mayIntegralP = Nothing <$ "Nothing" <|> Just <$> ("Just " *> A.decimal)
 
 enclosedP :: A.Parser a -> A.Parser b -> A.Parser c -> A.Parser c
 enclosedP start end p = start *> p <* end

@@ -62,13 +62,16 @@ module Data.UCD
   , graphemeBase
   , hangulSyllableType
   , HangulSyllableType(..)
+  , simpleLowercaseMapping
+  , simpleUppercaseMapping
+  , simpleTitlecaseMapping
   , EnumeratedProperty(..)
   ) where
 
 import Data.Bits ((.&.), shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
-import Data.Word (Word8)
+import Data.Word (Word32, Word8)
 import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
@@ -116,6 +119,9 @@ import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
 import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
 import qualified Data.UCD.Internal.SentenceTerminal as ST
+import qualified Data.UCD.Internal.SimpleLowercaseMapping as SLM
+import qualified Data.UCD.Internal.SimpleTitlecaseMapping as STM
+import qualified Data.UCD.Internal.SimpleUppercaseMapping as SUM
 import qualified Data.UCD.Internal.SoftDotted as SD
 import qualified Data.UCD.Internal.TerminalPunctuation as TP
 import Data.UCD.Internal.Types
@@ -438,5 +444,19 @@ graphemeBase = withCP GB.retrieve
 hangulSyllableType :: IsCodePoint cp => cp -> Maybe HangulSyllableType
 hangulSyllableType = withCP HST.retrieve
 
+simpleLowercaseMapping :: IsCodePoint cp => cp -> CodePoint
+simpleLowercaseMapping = withMCP SLM.retrieve
+
+simpleUppercaseMapping :: IsCodePoint cp => cp -> CodePoint
+simpleUppercaseMapping = withMCP SUM.retrieve
+
+simpleTitlecaseMapping :: IsCodePoint cp => cp -> CodePoint
+simpleTitlecaseMapping = withMCP STM.retrieve
+
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
+
+withMCP :: IsCodePoint cp => (Int -> Maybe Word32) -> cp -> CodePoint
+withMCP f c = maybe cp CodePoint . f $ fromEnum cp
+  where
+    cp = toCodePoint c

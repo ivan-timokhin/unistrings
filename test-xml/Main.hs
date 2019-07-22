@@ -171,6 +171,21 @@ testCP getAttr cp = do
                 assertFailure $
                 "Can't recognise hangul syllable type " ++ show hsStr
   assertEqual "Hangul syllable type" hst $ UCD.hangulSyllableType cp
+  let testCPProp testName attrName f =
+        case getAttr attrName of
+          Nothing -> assertFailure $ "Can't locate " ++ show testName
+          Just attr -> do
+            expected <-
+              if attr == "#"
+                then pure (fromEnum cp)
+                else readHex attr
+            assertEqual testName expected $ fromEnum $ f cp
+  traverse_
+    (\(tn, an, f) -> testCPProp tn an f)
+    [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
+    , ("Simple uppercase mapping", "suc", UCD.simpleUppercaseMapping)
+    , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
+    ]
   where
     generalCategory =
       case getAttr "gc" of
