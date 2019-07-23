@@ -1,0 +1,26 @@
+* UCD
+** Manual
+Note: tests should catch all of those, but possibly with not terribly
+helpful error messages.
+*** TODO Update types
+Most importantly ~Age~, ~Block~ and ~Script~, but a quick look whether
+other are updated would also be in order.  Though, again, the (not
+nice) parse errors should guide you.
+*** TODO Update special name ranges
+*** TODO Update manual predicates [0/16]
+- [ ] ~whiteSpace~
+- [ ] ~joinControl~
+- [ ] ~hexDigit~
+- [ ] ~asciiHexDigit~
+- [ ] ~noncharacterCodePoint~
+- [ ] ~idsBinaryOperator~
+- [ ] ~idsTrinaryOperator~
+- [ ] ~radical~
+- [ ] ~variationSelector~
+- [ ] ~patternWhiteSpace~
+- [ ] ~regionalIndicator~
+- [ ] ~alphabetic~
+- [ ] ~idStart~
+- [ ] ~idContinue~
+- [ ] ~xidStart~
+- [ ] ~xidContinue~
