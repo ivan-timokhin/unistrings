@@ -81,11 +81,7 @@ enumeratedP :: (Enum a, Bounded a) => (a -> ByteString) -> A.Parser a
 enumeratedP f = tableP $ flip map [minBound .. maxBound] $ \p -> (f p, p)
 
 fetchSimple :: Show a => FilePath -> A.Parser a -> IO (Table () () a)
-fetchSimple file p = do
-  txt <- B.readFile file
-  case A.parseOnly (parser <* A.endOfInput) txt of
-    Left err -> fail err
-    Right rngs -> pure $ Table rngs
+fetchSimple file p = fetchGeneral (fmap Table parser) file
   where
     parser = do
       comments
@@ -98,11 +94,7 @@ fetchSimple file p = do
       pure $ v <$ rng
 
 fetchBinaryMulti :: FilePath -> IO (Map ByteString (Table () () Bool))
-fetchBinaryMulti file = do
-  txt <- B.readFile file
-  case A.parseOnly (parser <* A.endOfInput) txt of
-    Left err -> fail err
-    Right tables -> pure $ Table <$> tables
+fetchBinaryMulti = fetchGeneral (fmap Table <$> parser)
   where
     parser :: A.Parser (Map ByteString [Range () () Bool])
     parser =
@@ -115,3 +107,10 @@ fetchBinaryMulti file = do
       prop <- lift $ A.takeWhile1 (not . A.isSpace)
       lift $ A.skipSpace *> comments
       modify $ Map.alter (Just . ((True <$ rng) :) . fromMaybe []) prop
+
+fetchGeneral :: A.Parser a -> FilePath -> IO a
+fetchGeneral parser file = do
+  txt <- B.readFile file
+  case A.parseOnly (parser <* A.endOfInput) txt of
+    Left err -> fail $ "Fetching " ++ show file ++ ": " ++ show err
+    Right result -> pure result
