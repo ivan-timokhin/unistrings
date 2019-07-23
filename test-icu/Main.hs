@@ -26,23 +26,17 @@ main = do
 
 canonicalCombiningClass :: Test
 canonicalCombiningClass =
-  TestLabel "Canonical combining class" $
-  TestCase $
-  for_ [minBound .. maxBound] $ \c ->
-    assertEqual
-      (showHex (ord c) "")
-      (ICU.property ICU.CanonicalCombiningClass c)
-      (fromIntegral $ UCD.canonicalCombiningClass c)
+  compareForAll
+    "Canonical combining class"
+    (ICU.property ICU.CanonicalCombiningClass)
+    (fromIntegral . UCD.canonicalCombiningClass)
 
 generalCategory :: Test
 generalCategory =
-  TestLabel "General category" $
-  TestCase $
-  for_ [minBound .. maxBound] $ \c ->
-    assertEqual
-      (showHex (ord c) "")
-      (icu2ucd $ ICU.property ICU.GeneralCategory c)
-      (UCD.generalCategory c)
+  compareForAll
+    "General category"
+    (icu2ucd . ICU.property ICU.GeneralCategory)
+    UCD.generalCategory
   where
     icu2ucd :: ICU.GeneralCategory -> UCD.GeneralCategory
     icu2ucd c =
@@ -79,21 +73,14 @@ generalCategory =
         ICU.FinalPunctuation -> UCD.FinalQuote
 
 charName :: Test
-charName =
-  TestLabel "Name" $
-  TestCase $
-  for_ [minBound .. maxBound] $ \c ->
-    assertEqual (showHex (ord c) "") (B.pack $ ICU.charName c) (UCD.name c)
+charName = compareForAll "Name" (B.pack . ICU.charName) UCD.name
 
 hangulSyllableType :: Test
 hangulSyllableType =
-  TestLabel "Hangul syllable type" $
-  TestCase $
-  for_ [minBound .. maxBound] $ \c ->
-    assertEqual
-      (showHex (ord c) "")
-      (icu2ucd <$> ICU.property ICU.HangulSyllableType c) $
-    UCD.hangulSyllableType c
+  compareForAll
+    "Hangul syllable type"
+    (fmap icu2ucd . ICU.property ICU.HangulSyllableType)
+    UCD.hangulSyllableType
   where
     icu2ucd :: ICU.HangulSyllableType -> UCD.HangulSyllableType
     icu2ucd hst =
@@ -173,8 +160,11 @@ derivedCoreProps =
     ]
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
-mkBoolTest name prop f =
+mkBoolTest name prop = compareForAll name (ICU.property prop)
+
+compareForAll :: (Show a, Eq a) => String -> (Char -> a) -> (Char -> a) -> Test
+compareForAll name icuQuery ucdQuery =
   TestLabel name $
   TestCase $
   for_ [minBound .. maxBound] $ \c ->
-    assertEqual (showHex (ord c) "") (ICU.property prop c) (f c)
+    assertEqual (showHex (ord c) "") (icuQuery c) (ucdQuery c)
