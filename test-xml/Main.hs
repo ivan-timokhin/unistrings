@@ -10,7 +10,7 @@ import Data.Char (toUpper)
 import Data.Foldable (for_, traverse_)
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
-import Data.Maybe (fromJust, mapMaybe)
+import Data.Maybe (fromJust, fromMaybe, mapMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
@@ -59,132 +59,145 @@ groupsOnly els =
 
 testGroup :: Int -> Element -> Test
 testGroup n group =
-  TestLabel ("Group #" ++ show n) $
-  TestCase $ do
-    let attrs = elementAttributes group
-    for_ (elementChildren group) $ \el -> do
-      nameLocalName (elementName el) `elem`
+  TestLabel ("Group #" ++ show n) $ TestList [validRecordTypes, cpTests]
+  where
+    validRecordTypes =
+      TestLabel "Valid record types" $
+      TestList $
+      flip map (elementChildren group) $ \el ->
+        TestCase $
+        nameLocalName (elementName el) `elem`
         ["reserved", "noncharacter", "surrogate", "char"] @?
         "Unrecognized record type"
-      let testCP' =
-            testCP $ \nm ->
-              M.lookup nm (elementAttributes el) <|> M.lookup nm attrs
-      case M.lookup "first-cp" (elementAttributes el) of
-        Just startStr -> do
-          start <- readHex startStr
-          end <-
-            readHex =<<
-            maybe
-              (assertFailure "Missing \"last-cp\" attribute")
-              pure
-              (M.lookup "last-cp" (elementAttributes el))
-          for_ [toEnum start .. toEnum end] testCP'
-        Nothing ->
-          case M.lookup "cp" (elementAttributes el) of
-            Just cpStr -> do
-              cp <- readHex cpStr
-              testCP' $ toEnum cp
-              testCPAliases (elementChildren el) $ toEnum cp
-            Nothing -> assertFailure $ "Unrecognized record type: " ++ show el
-
-testCP :: (Name -> Maybe T.Text) -> UCD.CodePoint -> IO ()
-testCP getAttr cp = do
-  xmlGC <- generalCategory
-  assertEqual "General category" xmlGC $ UCD.generalCategory cp
-  xmlCCC <- canonicalCombiningClass
-  assertEqual "Canonical combining class" xmlCCC $
-    UCD.canonicalCombiningClass cp
-  xmlName <- name
-  assertEqual "Name" xmlName $ UCD.name cp
-  xmlAge <- age
-  assertEqual "Age" xmlAge $ UCD.age cp
-  xmlScript <- script
-  assertEqual "Script" xmlScript $ UCD.script cp
-  xmlBlock <- block
-  assertEqual "Block" xmlBlock $ UCD.block cp
-  xmlScriptExts <- scriptExts
-  assertEqual "Script extensions" (sort xmlScriptExts) $
-    sort $ UCD.scriptExtensions cp
-  let testBoolean testName attrName f =
-        case getAttr attrName of
-          Nothing -> assertFailure $ "Can't locate " ++ show testName
-          Just attr -> do
-            b <- readBoolean attr
-            assertEqual testName b (f cp)
-  traverse_
-    (\(tn, an, f) -> testBoolean tn an f)
-    [ ("White space", "WSpace", UCD.whiteSpace)
-    , ("Bidi control", "Bidi_C", UCD.bidiControl)
-    , ("Join control", "Join_C", UCD.joinControl)
-    , ("Dash", "Dash", UCD.dash)
-    , ("Quotation mark", "QMark", UCD.quotationMark)
-    , ("Terminal punctuation", "Term", UCD.terminalPunctuation)
-    , ("Hex digit", "Hex", UCD.hexDigit)
-    , ("ASCII hex digit", "AHex", UCD.asciiHexDigit)
-    , ("Ideographic", "Ideo", UCD.ideographic)
-    , ("Diacritic", "Dia", UCD.diacritic)
-    , ("Extender", "Ext", UCD.extender)
-    , ("Noncharacter code point", "NChar", UCD.noncharacterCodePoint)
-    , ("IDS binary operator", "IDSB", UCD.idsBinaryOperator)
-    , ("IDS trinary operator", "IDST", UCD.idsTrinaryOperator)
-    , ("Radical", "Radical", UCD.radical)
-    , ("Unified Ideograph", "UIdeo", UCD.unifiedIdeograph)
-    , ("Deprecated", "Dep", UCD.deprecated)
-    , ("Soft dotted", "SD", UCD.softDotted)
-    , ("Logical order exception", "LOE", UCD.logicalOrderException)
-    , ("Sentence terminal", "STerm", UCD.sentenceTerminal)
-    , ("Variation selector", "VS", UCD.variationSelector)
-    , ("Pattern white space", "Pat_WS", UCD.patternWhiteSpace)
-    , ("Pattern syntax", "Pat_Syn", UCD.patternSyntax)
-    , ("Prepended concatenation mark", "PCM", UCD.prependedConcatenationMark)
-    , ("Regional indicator", "RI", UCD.regionalIndicator)
-    , ("Math", "Math", UCD.math)
-    , ("Alphabetic", "Alpha", UCD.alphabetic)
-    , ("Uppercase", "Upper", UCD.uppercase)
-    , ("Lowercase", "Lower", UCD.lowercase)
-    , ("Cased", "Cased", UCD.cased)
-    , ("Case ignorable", "CI", UCD.caseIgnorable)
-    , ("Changes when lowercased", "CWL", UCD.changesWhenLowercased)
-    , ("Changes when uppercased", "CWU", UCD.changesWhenUppercased)
-    , ("Changes when titlecased", "CWT", UCD.changesWhenTitlecased)
-    , ("Changes when casefolded", "CWCF", UCD.changesWhenCasefolded)
-    , ("Changes when casemapped", "CWCM", UCD.changesWhenCasemapped)
-    , ("ID start", "IDS", UCD.idStart)
-    , ("ID continue", "IDC", UCD.idContinue)
-    , ("XID start", "XIDS", UCD.xidStart)
-    , ("XID continue", "XIDC", UCD.xidContinue)
-    , ("Default ignorable", "DI", UCD.defaultIgnorableCodePoint)
-    , ("Grapheme extend", "Gr_Ext", UCD.graphemeExtend)
-    , ("Grapheme base", "Gr_Base", UCD.graphemeBase)
-    ]
-  hst <-
-    case getAttr "hst" of
-      Nothing -> assertFailure "Can't locate hangul syllable type"
-      Just "NA" -> pure Nothing
-      Just hsStr ->
-        let hsStr8 = TE.encodeUtf8 hsStr
-         in case find
-                   ((== hsStr8) . UCD.abbreviatedPropertyValueName)
-                   [minBound .. maxBound] of
-              Just p -> pure $ Just p
+    cpTests =
+      TestLabel "Code point properties" $
+      TestList $
+      flip map (elementChildren group) $ \el ->
+        let testCP' =
+              testCP (elementChildren el) $ \nm ->
+                M.lookup nm (elementAttributes el) <|> M.lookup nm attrs
+         in case M.lookup "first-cp" (elementAttributes el) of
+              Just startStr ->
+                let start = readHex startStr
+                    end =
+                      readHex $
+                      fromMaybe
+                        (error "Missing \"last-cp\" attribute")
+                        (M.lookup "last-cp" (elementAttributes el))
+                 in TestList $ map testCP' [toEnum start .. toEnum end]
               Nothing ->
-                assertFailure $
-                "Can't recognise hangul syllable type " ++ show hsStr
-  assertEqual "Hangul syllable type" hst $ UCD.hangulSyllableType cp
-  let testCPProp testName attrName f =
-        case getAttr attrName of
-          Nothing -> assertFailure $ "Can't locate " ++ show testName
-          Just attr -> do
-            expected <-
-              if attr == "#"
-                then pure (fromEnum cp)
-                else readHex attr
-            assertEqual testName expected $ fromEnum $ f cp
-  traverse_
-    (\(tn, an, f) -> testCPProp tn an f)
-    [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
-    , ("Simple uppercase mapping", "suc", UCD.simpleUppercaseMapping)
-    , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
+                case M.lookup "cp" (elementAttributes el) of
+                  Just cpStr ->
+                    let cp = readHex cpStr
+                     in testCP' $ toEnum cp
+                  Nothing -> error $ "Unrecognized record type: " ++ show el
+    attrs = elementAttributes group
+
+testCP :: [Element] -> (Name -> Maybe T.Text) -> UCD.CodePoint -> Test
+testCP children getAttr cp =
+  TestLabel (show cp) $
+  TestList
+    [ "Name aliases" ~: testCPAliases children cp
+    , "Properties" ~:
+      (do xmlGC <- generalCategory
+          assertEqual "General category" xmlGC $ UCD.generalCategory cp
+          xmlCCC <- canonicalCombiningClass
+          assertEqual "Canonical combining class" xmlCCC $
+            UCD.canonicalCombiningClass cp
+          xmlName <- name
+          assertEqual "Name" xmlName $ UCD.name cp
+          xmlAge <- age
+          assertEqual "Age" xmlAge $ UCD.age cp
+          xmlScript <- script
+          assertEqual "Script" xmlScript $ UCD.script cp
+          xmlBlock <- block
+          assertEqual "Block" xmlBlock $ UCD.block cp
+          xmlScriptExts <- scriptExts
+          assertEqual "Script extensions" (sort xmlScriptExts) $
+            sort $ UCD.scriptExtensions cp
+          let testBoolean testName attrName f =
+                case getAttr attrName of
+                  Nothing -> assertFailure $ "Can't locate " ++ show testName
+                  Just attr -> do
+                    b <- readBoolean attr
+                    assertEqual testName b (f cp)
+          traverse_
+            (\(tn, an, f) -> testBoolean tn an f)
+            [ ("White space", "WSpace", UCD.whiteSpace)
+            , ("Bidi control", "Bidi_C", UCD.bidiControl)
+            , ("Join control", "Join_C", UCD.joinControl)
+            , ("Dash", "Dash", UCD.dash)
+            , ("Quotation mark", "QMark", UCD.quotationMark)
+            , ("Terminal punctuation", "Term", UCD.terminalPunctuation)
+            , ("Hex digit", "Hex", UCD.hexDigit)
+            , ("ASCII hex digit", "AHex", UCD.asciiHexDigit)
+            , ("Ideographic", "Ideo", UCD.ideographic)
+            , ("Diacritic", "Dia", UCD.diacritic)
+            , ("Extender", "Ext", UCD.extender)
+            , ("Noncharacter code point", "NChar", UCD.noncharacterCodePoint)
+            , ("IDS binary operator", "IDSB", UCD.idsBinaryOperator)
+            , ("IDS trinary operator", "IDST", UCD.idsTrinaryOperator)
+            , ("Radical", "Radical", UCD.radical)
+            , ("Unified Ideograph", "UIdeo", UCD.unifiedIdeograph)
+            , ("Deprecated", "Dep", UCD.deprecated)
+            , ("Soft dotted", "SD", UCD.softDotted)
+            , ("Logical order exception", "LOE", UCD.logicalOrderException)
+            , ("Sentence terminal", "STerm", UCD.sentenceTerminal)
+            , ("Variation selector", "VS", UCD.variationSelector)
+            , ("Pattern white space", "Pat_WS", UCD.patternWhiteSpace)
+            , ("Pattern syntax", "Pat_Syn", UCD.patternSyntax)
+            , ( "Prepended concatenation mark"
+              , "PCM"
+              , UCD.prependedConcatenationMark)
+            , ("Regional indicator", "RI", UCD.regionalIndicator)
+            , ("Math", "Math", UCD.math)
+            , ("Alphabetic", "Alpha", UCD.alphabetic)
+            , ("Uppercase", "Upper", UCD.uppercase)
+            , ("Lowercase", "Lower", UCD.lowercase)
+            , ("Cased", "Cased", UCD.cased)
+            , ("Case ignorable", "CI", UCD.caseIgnorable)
+            , ("Changes when lowercased", "CWL", UCD.changesWhenLowercased)
+            , ("Changes when uppercased", "CWU", UCD.changesWhenUppercased)
+            , ("Changes when titlecased", "CWT", UCD.changesWhenTitlecased)
+            , ("Changes when casefolded", "CWCF", UCD.changesWhenCasefolded)
+            , ("Changes when casemapped", "CWCM", UCD.changesWhenCasemapped)
+            , ("ID start", "IDS", UCD.idStart)
+            , ("ID continue", "IDC", UCD.idContinue)
+            , ("XID start", "XIDS", UCD.xidStart)
+            , ("XID continue", "XIDC", UCD.xidContinue)
+            , ("Default ignorable", "DI", UCD.defaultIgnorableCodePoint)
+            , ("Grapheme extend", "Gr_Ext", UCD.graphemeExtend)
+            , ("Grapheme base", "Gr_Base", UCD.graphemeBase)
+            ]
+          hst <-
+            case getAttr "hst" of
+              Nothing -> assertFailure "Can't locate hangul syllable type"
+              Just "NA" -> pure Nothing
+              Just hsStr ->
+                let hsStr8 = TE.encodeUtf8 hsStr
+                 in case find
+                           ((== hsStr8) . UCD.abbreviatedPropertyValueName)
+                           [minBound .. maxBound] of
+                      Just p -> pure $ Just p
+                      Nothing ->
+                        assertFailure $
+                        "Can't recognise hangul syllable type " ++ show hsStr
+          assertEqual "Hangul syllable type" hst $ UCD.hangulSyllableType cp
+          let testCPProp testName attrName f =
+                case getAttr attrName of
+                  Nothing -> assertFailure $ "Can't locate " ++ show testName
+                  Just attr -> do
+                    expected <-
+                      if attr == "#"
+                        then pure (fromEnum cp)
+                        else pure $ readHex attr
+                    assertEqual testName expected $ fromEnum $ f cp
+          traverse_
+            (\(tn, an, f) -> testCPProp tn an f)
+            [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
+            , ("Simple uppercase mapping", "suc", UCD.simpleUppercaseMapping)
+            , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
+            ])
     ]
   where
     generalCategory =
@@ -319,11 +332,11 @@ testBlock blockDescr =
     blockName = fromJust $ M.lookup "name" $ elementAttributes blockDescr
     blockStart =
       case M.lookup "first-cp" $ elementAttributes blockDescr of
-        Just str -> readHex str
+        Just str -> pure $ readHex str
         Nothing -> assertFailure "Can't locate block start"
     blockEnd =
       case M.lookup "last-cp" $ elementAttributes blockDescr of
-        Just str -> readHex str
+        Just str -> pure $ readHex str
         Nothing -> assertFailure "Can't locate block end"
     block
       | blockName == "No_Block" = Just Nothing
@@ -334,11 +347,12 @@ testBlock blockDescr =
               bname = prepare $ T.dropEnd 5 $ T.pack $ show b
            in bname == prepare blockName
 
-readHex :: T.Text -> IO Int
+readHex :: T.Text -> Int
 readHex t =
   case TR.hexadecimal t of
-    Left err -> assertFailure err
-    Right (n, rest) -> assertString (T.unpack rest) >> pure n
+    Left err -> error err
+    Right (n, "") -> n
+    Right (_, rest) -> error $ "Leftover parse input " ++ show (T.unpack rest)
 
 readBoolean :: T.Text -> IO Bool
 readBoolean "Y" = pure True
