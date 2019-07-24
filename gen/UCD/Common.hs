@@ -52,6 +52,9 @@ adjustWith vec table = vec V.// assignments
         Single code _ udata -> [(fromIntegral code, udata)]
         Range lo hi _ udata -> [(fromIntegral i, udata) | i <- [lo .. hi]]
 
+adjustWithM :: V.Vector a -> Table annS annR (Maybe a) -> V.Vector a
+adjustWithM vec table = vec `adjustWith` dropNothing table
+
 comment :: A.Parser ()
 comment = void (A.char '#' *> A.takeWhile (/= '\n')) A.<?> "comment"
 

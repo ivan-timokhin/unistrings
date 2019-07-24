@@ -24,7 +24,7 @@ import Driver
 import ListM (ListM(Nil), generatePartitionings)
 import qualified UCD.Age
 import qualified UCD.Blocks
-import UCD.Common (adjustWith, dropNothing, tableToVector, unicodeTableSize)
+import UCD.Common (adjustWithM, tableToVector, unicodeTableSize)
 import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -51,8 +51,7 @@ main = do
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
     , let identityMapping = V.generate unicodeTableSize fromIntegral
           processSimpleCaseMapping name getter =
-            let table =
-                  identityMapping `adjustWith` dropNothing (fmap getter records)
+            let table = identityMapping `adjustWithM` fmap getter records
                 diffTable =
                   V.imap (\cp mapping -> fromIntegral mapping - cp) table
              in do generateTests name table
