@@ -71,7 +71,7 @@ module Data.UCD
 import Data.Bits ((.&.), shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
-import Data.Word (Word32, Word8)
+import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
 
 import Data.UCD.Internal (CodePoint(CodePoint))
@@ -445,18 +445,16 @@ hangulSyllableType :: IsCodePoint cp => cp -> Maybe HangulSyllableType
 hangulSyllableType = withCP HST.retrieve
 
 simpleLowercaseMapping :: IsCodePoint cp => cp -> CodePoint
-simpleLowercaseMapping = withMCP SLM.retrieve
+simpleLowercaseMapping = simpleCaseMapping SLM.retrieve
 
 simpleUppercaseMapping :: IsCodePoint cp => cp -> CodePoint
-simpleUppercaseMapping = withMCP SUM.retrieve
+simpleUppercaseMapping = simpleCaseMapping SUM.retrieve
 
 simpleTitlecaseMapping :: IsCodePoint cp => cp -> CodePoint
-simpleTitlecaseMapping = withMCP STM.retrieve
+simpleTitlecaseMapping = simpleCaseMapping STM.retrieve
+
+simpleCaseMapping :: IsCodePoint cp => (Int -> Int) -> cp -> CodePoint
+simpleCaseMapping f = withCP $ \cp -> CodePoint $ fromIntegral $ cp + f cp
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
-
-withMCP :: IsCodePoint cp => (Int -> Maybe Word32) -> cp -> CodePoint
-withMCP f c = maybe cp CodePoint . f $ fromEnum cp
-  where
-    cp = toCodePoint c

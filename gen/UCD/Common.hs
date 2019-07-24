@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -14,7 +14,7 @@ import Data.Functor (void)
 import Data.List (sortOn)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Ord (Down(Down))
 import qualified Data.Vector as V
 import Data.Word (Word32)
@@ -33,7 +33,10 @@ newtype Table annS annR a =
 data Range annS annR a
   = Single Word32 annS a
   | Range Word32 Word32 annR a
-  deriving (Eq, Show, Functor)
+  deriving (Eq, Show, Functor, Foldable, Traversable)
+
+dropNothing :: Table annS annR (Maybe a) -> Table annS annR a
+dropNothing (Table tbl) = Table $ mapMaybe sequence tbl
 
 unicodeTableSize :: Int
 unicodeTableSize = 0x110000

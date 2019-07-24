@@ -24,7 +24,7 @@ import Driver
 import ListM (ListM(Nil), generatePartitionings)
 import qualified UCD.Age
 import qualified UCD.Blocks
-import UCD.Common (tableToVector)
+import UCD.Common (adjustWith, dropNothing, tableToVector, unicodeTableSize)
 import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -49,15 +49,26 @@ main = do
     , processTable fullPartitionings "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
-    , processTable fullPartitionings "simple_uppercase_mapping" $
-      UCD.Common.tableToVector Nothing $
-      fmap UCD.UnicodeData.propSimpleUppercaseMapping records
-    , processTable fullPartitionings "simple_lowercase_mapping" $
-      UCD.Common.tableToVector Nothing $
-      fmap UCD.UnicodeData.propSimpleLowercaseMapping records
-    , processTable fullPartitionings "simple_titlecase_mapping" $
-      UCD.Common.tableToVector Nothing $
-      fmap UCD.UnicodeData.propSimpleTitlecaseMapping records
+    , let identityMapping = V.generate unicodeTableSize fromIntegral
+          processSimpleCaseMapping name getter =
+            let table =
+                  identityMapping `adjustWith` dropNothing (fmap getter records)
+                diffTable =
+                  V.imap (\cp mapping -> fromIntegral mapping - cp) table
+             in do generateTests name table
+                   generateSources fullPartitionings name diffTable
+       in mapConcurrently_
+            id
+            [ processSimpleCaseMapping
+                "simple_uppercase_mapping"
+                UCD.UnicodeData.propSimpleUppercaseMapping
+            , processSimpleCaseMapping
+                "simple_lowercase_mapping"
+                UCD.UnicodeData.propSimpleLowercaseMapping
+            , processSimpleCaseMapping
+                "simple_titlecase_mapping"
+                UCD.UnicodeData.propSimpleTitlecaseMapping
+            ]
     , generateASCIITableSources fullPartitionings "name" $
       UCD.UnicodeData.tableToNames records V.//
       map
