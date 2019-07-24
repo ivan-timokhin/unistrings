@@ -39,7 +39,10 @@ unicodeTableSize :: Int
 unicodeTableSize = 0x110000
 
 tableToVector :: a -> Table annS annR a -> V.Vector a
-tableToVector def table = V.replicate unicodeTableSize def V.// assignments
+tableToVector def table = V.replicate unicodeTableSize def `adjustWith` table
+
+adjustWith :: V.Vector a -> Table annS annR a -> V.Vector a
+adjustWith vec table = vec V.// assignments
   where
     assignments =
       getTable table >>= \case
