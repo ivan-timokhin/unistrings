@@ -29,20 +29,18 @@ import UCD.Common
   ( Range(Range, Single)
   , Table(Table, getTable)
   , enumeratedAbbrP
+  , fetchGeneral
   , tableP
   , tableToVector
   )
 
 fetch :: IO (Table Name ByteString Properties)
-fetch = do
-  txt <- B.readFile "data/latest/ucd/UnicodeData.txt"
-  let parsed = A.parseOnly (parser <* A.endOfInput) txt
-  case parsed of
-    Left err -> fail err
-    Right records ->
-      case rangeify records of
-        Left err -> fail err
-        Right ranges -> pure $ Table ranges
+fetch =
+  fetchGeneral "data/latest/ucd/UnicodeData.txt" $ do
+    records <- parser
+    case rangeify records of
+      Left err -> fail err
+      Right ranges -> pure $ Table ranges
 
 tableToNames :: Table Name annR a -> V.Vector ByteString
 tableToNames table =

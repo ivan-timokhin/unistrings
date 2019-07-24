@@ -14,15 +14,13 @@ import Data.List (find)
 import qualified Data.Vector as V
 
 import Data.UCD.Internal.Types (Block, fullPropertyValueName)
-import UCD.Common (comments, unicodeTableSize)
+import UCD.Common (comments, unicodeTableSize, fetchGeneral)
 
 fetch :: IO (V.Vector (Maybe Block))
-fetch = do
-  txt <- B.readFile "data/latest/ucd/Blocks.txt"
-  case A.parseOnly (parser <* A.endOfInput) txt of
-    Left err -> fail err
-    Right blocks ->
-      pure $
+fetch =
+  fetchGeneral "data/latest/ucd/Blocks.txt" $ do
+    blocks <- parser
+    pure $
       (V.replicate (unicodeTableSize `shiftR` 4) Nothing V.//) $
       blocks >>= \(start, end, block) ->
         [(i, Just block) | i <- [start `shiftR` 4 .. end `shiftR` 4]]

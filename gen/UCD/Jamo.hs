@@ -5,19 +5,16 @@ module UCD.Jamo where
 import Control.Applicative (many)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString.Char8 (ByteString)
-import qualified Data.ByteString.Char8 as B
 import qualified Data.Vector as V
 import Data.Word (Word32)
 
-import UCD.Common (comment, comments)
+import UCD.Common (comment, comments, fetchGeneral)
 
 fetch :: IO (V.Vector ByteString)
-fetch = do
-  txt <- B.readFile "data/latest/ucd/Jamo.txt"
-  case A.parseOnly (parser <* A.endOfInput) txt of
-    Left err -> fail err
-    Right shortNames ->
-      pure $
+fetch =
+  fetchGeneral "data/latest/ucd/Jamo.txt" $ do
+    shortNames <- parser
+    pure $
       V.replicate 0xC3 "" V.//
       map (\(n, str) -> (fromIntegral n - 0x1100, str)) shortNames
 
