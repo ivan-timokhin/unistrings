@@ -1,0 +1,175 @@
+* Unicode Properties [60/99]
+:PROPERTIES:
+:COOKIE_DATA: recursive
+:END:
+See also [[http://userguide.icu-project.org/strings/properties][ICU properties docs]].
+- [X] General [15/15]
+  - [X] Name
+  - [X] Name_Alias
+  - [X] Block
+  - [X] Age
+  - [X] General_Category
+  - [X] Script
+  - [X] Script_Extensions
+  - [X] White_Space
+  - [X] Alphabetic
+  - [X] Hangul_Syllable_Type
+  - [X] Noncharacter_Code_Point
+  - [X] Default_Ignorable_Code_Point
+  - [X] Deprecated
+  - [X] Logical_Order_Exception
+  - [X] Variation_Selector
+- [-] Case [16/18]
+  - [X] Uppercase
+  - [X] Lowercase
+  - [X] Lowercase_Mapping
+  - [X] Titlecase_Mapping
+  - [X] Uppercase_Mapping
+  - [ ] Case_Folding
+  - [X] Simple_Lowercase_Mapping
+  - [X] Simple_Titlecase_Mapping
+  - [X] Simple_Uppercase_Mapping
+  - [ ] Simple_Case_Folding
+  - [X] Soft_Dotted
+  - [X] Cased
+  - [X] Case_Ignorable
+  - [X] Changes_When_Lowercased
+  - [X] Changes_When_Uppercased
+  - [X] Changes_When_Titlecased
+  - [X] Changes_When_Casefolded
+  - [X] Changes_When_Casemapped
+- [-] Numeric [2/4] NB: These have to account for Unihan database
+  #+begin_quote
+  The characters tagged with either kPrimaryNumeric,
+  kAccountingNumeric, or kOtherNumeric are given the property value
+  Numeric_Type=Numeric, and the Numeric_Value indicated in those tags.
+
+  Most characters have these numeric properties based on values from
+  UnicodeData.txt.
+  #+end_quote
+  - [ ] Numeric_Value
+  - [ ] Numeric_Type
+  - [X] Hex_Digit
+  - [X] ASCII_Hex_Digit
+- [-] Normalization [1/11]
+  - [X] Canonical_Combining_Class
+  - [ ] Decomposition_Mapping.  This one, and the next two, are not
+    recommended for exposure in public APIs, so I may need to stuff
+    them into some internal module or some such.  Also, this probably
+    has to take Hangul decomposition rules into account.
+  - [ ] Composition_Exclusion
+  - [ ] Full_Composition_Exclusion
+  - [ ] Decomposition_Type.  Also Hangul-sensitive
+  - [ ] NFC_Quick_Check
+  - [ ] NFKC_Quick_Check
+  - [ ] NFD_Quick_Check
+  - [ ] NFKD_Quick_Check
+  - [ ] NFKC_Casefold
+  - [ ] Changes_When_NFKC_Casefolded
+- [-] Shaping and Rendering [2/10]
+  - [X] Join_Control
+  - [ ] Joining_Group
+  - [ ] Joining_Type
+  - [ ] Vertical_Orientation
+  - [ ] Line_Break
+  - [ ] Grapheme_Cluster_Break
+  - [ ] Sentence_Break
+  - [ ] Word_Break
+  - [ ] East_Asian_Width
+  - [X] Prepended_Concatenation_Mark
+- [-] Bidirectional [1/6]
+  - [ ] Bidi_Class
+  - [X] Bidi_Control
+  - [ ] Bidi_Mirrored
+  - [ ] Bidi_Mirroring_Glyph
+  - [ ] Bidi_Paired_Bracket
+  - [ ] Bidi_Paired_Bracket_Type
+- [X] Identifiers [6/6]
+  - [X] ID_Continue
+  - [X] ID_Start
+  - [X] XID_Continue
+  - [X] XID_Start
+  - [X] Pattern_Syntax
+  - [X] Pattern_White_Space
+- [-] CJK [5/7]
+  - [X] Ideographic
+  - [X] Unified_Ideograph
+  - [X] Radical
+  - [X] IDS_Binary_Operator
+  - [X] IDS_Trinary_Operator
+  - [ ] Unicode_Radical_Stroke
+  - [ ] Equivalent_Unified_Ideograph
+- [-] Miscellaneous [10/13]
+  - [X] Math
+  - [X] Quotation_Mark
+  - [X] Dash
+  - [X] Sentence_Terminal
+  - [X] Terminal_Punctuation
+  - [X] Diacritic
+  - [X] Extender
+  - [X] Grapheme_Base
+  - [X] Grapheme_Extend
+  - [ ] Unicode_1_Name
+  - [X] Regional_Indicator
+  - [ ] Indic_Positional_Category
+  - [ ] Indic_Syllabic_Category
+* Miscellaneous code tasks [3/6]
+** DONE Switch age to enum
+Then convert it to Version if desired.
+** TODO Add missing instances to enums
+Eq, Ord, Show, Read, Enum, Bounded, Data, Generic, Ix.
+** DONE Pretty-print C code
+This can be done either manually, by splitting long arrays, or using
+some pretty-printing library, such as =pretty=.
+** TODO Switch to cross-platform path construction
+Currently quite a number of places hard-code ~/~.
+** DONE Investigate storing the offset from the current code point for
+simple case mappings; these should change less often.  Don't know
+what to do about full ones.
+** TODO Revamp benchmarks
+I am deeply worried that all of the actual property lookup is getting
+optimised away, and the perceived gains over ICU are all due to the
+fact that GHC can't actually do that for FFI.
+* Organisational tasks [0/1]
+** TODO Move =ucd-gen= to a separate .cabal package
+So it doesn't show up on Hackage and does not end up confusing anyone.
+* TODO Other UCD Files
+UCD contains an enormous amount of various crap: emoji sources, tangut
+sources, named sequences, and so on.  I have no idea if it is of any
+high-level use, but if I want to seriously claim to offer a
+comprehensive UCD interface, I suppose I have to somehow offer access
+to all of those as well.  Maybe in some sort of =ucd-extras= package,
+I don't know.
+* TODO Unihan
+It is, generally speaking, a part of UCD, so…
+
+Since Unihan contains a number of UTF8-encoded fields, it may be
+useful to place it into a separate package, which depends on a
+=unistrings= library.  So the overall dependency chain will be like
+this: =unihan ⟶ unistrings ⟶ ucd=.
+
+NB.: IRG is [[https://en.wikipedia.org/wiki/Ideographic_Research_Group][Ideographic Research Group]].
+* Archive                                                           :ARCHIVE:
+** DONE Reorganise type assignment
+CLOSED: [2019-07-08 Пн 15:06]
+:PROPERTIES:
+:ARCHIVE_TIME: 2019-07-13 Сб 21:12
+:END:
+:LOGBOOK:
+- State "DONE"       from "NEXT"       [2019-07-08 Пн 15:06]
+:END:
+The core problem is that the bottom layer is always assigned the same
+type, regardless of the partitioning used for the trie, because the
+set of values is always the same.  This is not too much of a problem
+for simple enum-like types, but will lead to a /lot/ of duplicated
+work for Name.  Therefore, it needs to happen as a separate pass.
+
+The plan is roughly as follows:
+- [X] Move away from TTG, and instead just give Trie two type
+  parameters for annotations.
+- [X] Teach mkTrieM to take into account user-provided annotation for
+  the bottom layer.
+- [X] Split existing typing functions into /one/ function for
+  annotating previous layers, and many type-specific functions for
+  calculating annotations for the original vector.
+- [X] Profit.
