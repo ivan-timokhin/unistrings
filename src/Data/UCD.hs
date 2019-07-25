@@ -65,6 +65,10 @@ module Data.UCD
   , simpleLowercaseMapping
   , simpleUppercaseMapping
   , simpleTitlecaseMapping
+  , lowercaseMapping
+  , uppercaseMapping
+  , titlecaseMapping
+  , CaseMapping(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -123,6 +127,14 @@ import qualified Data.UCD.Internal.SimpleLowercaseMapping as SLM
 import qualified Data.UCD.Internal.SimpleTitlecaseMapping as STM
 import qualified Data.UCD.Internal.SimpleUppercaseMapping as SUM
 import qualified Data.UCD.Internal.SoftDotted as SD
+import qualified Data.UCD.Internal.SpecialLowercaseMapping0 as SpLM0
+import qualified Data.UCD.Internal.SpecialLowercaseMapping1 as SpLM1
+import qualified Data.UCD.Internal.SpecialTitlecaseMapping0 as SpTM0
+import qualified Data.UCD.Internal.SpecialTitlecaseMapping1 as SpTM1
+import qualified Data.UCD.Internal.SpecialTitlecaseMapping2 as SpTM2
+import qualified Data.UCD.Internal.SpecialUppercaseMapping0 as SpUM0
+import qualified Data.UCD.Internal.SpecialUppercaseMapping1 as SpUM1
+import qualified Data.UCD.Internal.SpecialUppercaseMapping2 as SpUM2
 import qualified Data.UCD.Internal.TerminalPunctuation as TP
 import Data.UCD.Internal.Types
   ( Age(..)
@@ -455,6 +467,46 @@ simpleTitlecaseMapping = simpleCaseMapping STM.retrieve
 
 simpleCaseMapping :: IsCodePoint cp => (Int -> Int) -> cp -> CodePoint
 simpleCaseMapping f = withCP $ \cp -> CodePoint $ fromIntegral $ cp + f cp
+
+lowercaseMapping :: IsCodePoint cp => cp -> CaseMapping
+lowercaseMapping cp
+  | first == 0 = SingleCM (simpleLowercaseMapping cp)
+  | otherwise =
+    DoubleCM (CodePoint first) $ CodePoint $ fromIntegral $ SpLM1.retrieve icp
+  where
+    icp = fromEnum $ toCodePoint cp
+    first = fromIntegral $ SpLM0.retrieve icp
+
+uppercaseMapping :: IsCodePoint cp => cp -> CaseMapping
+uppercaseMapping cp
+  | first == 0 = SingleCM (simpleUppercaseMapping cp)
+  | third == 0 = DoubleCM (CodePoint first) (CodePoint second)
+  | otherwise = TripleCM (CodePoint first) (CodePoint second) (CodePoint third)
+  where
+    icp = fromEnum $ toCodePoint cp
+    first = fromIntegral $ SpUM0.retrieve icp
+    second = fromIntegral $ SpUM1.retrieve icp
+    third = fromIntegral $ SpUM2.retrieve icp
+
+titlecaseMapping :: IsCodePoint cp => cp -> CaseMapping
+titlecaseMapping cp
+  | first == 0 = SingleCM (simpleTitlecaseMapping cp)
+  | third == 0 = DoubleCM (CodePoint first) (CodePoint second)
+  | otherwise = TripleCM (CodePoint first) (CodePoint second) (CodePoint third)
+  where
+    icp = fromEnum $ toCodePoint cp
+    first = fromIntegral $ SpTM0.retrieve icp
+    second = fromIntegral $ SpTM1.retrieve icp
+    third = fromIntegral $ SpTM2.retrieve icp
+
+data CaseMapping
+  = SingleCM {-# UNPACK #-}!CodePoint
+  | DoubleCM {-# UNPACK #-}!CodePoint {-# UNPACK #-}!CodePoint
+  | TripleCM
+      {-# UNPACK #-}!CodePoint
+      {-# UNPACK #-}!CodePoint
+      {-# UNPACK #-}!CodePoint
+  deriving (Show, Eq)
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

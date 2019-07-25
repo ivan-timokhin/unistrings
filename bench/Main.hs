@@ -238,6 +238,18 @@ main =
                   "Titlecase"
                   [C.bench "UCD" $ mkBenchmark udhr UCD.simpleTitlecaseMapping]
               ]
+          , C.bgroup
+              "Full case mappings"
+              [ C.bgroup
+                  "Lowercase"
+                  [C.bench "UCD" $ mkBenchmark udhr UCD.lowercaseMapping]
+              , C.bgroup
+                  "Uppercase"
+                  [C.bench "UCD" $ mkBenchmark udhr UCD.uppercaseMapping]
+              , C.bgroup
+                  "Titlecase"
+                  [C.bench "UCD" $ mkBenchmark udhr UCD.titlecaseMapping]
+              ]
           , C.bench "No-op" $ mkBenchmark udhr id
           ]
     ]

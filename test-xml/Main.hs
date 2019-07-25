@@ -197,6 +197,27 @@ testCP children getAttr cp =
             [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
             , ("Simple uppercase mapping", "suc", UCD.simpleUppercaseMapping)
             , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
+            ]
+          let testCaseMappingProp testName attrName f =
+                case getAttr attrName of
+                  Nothing -> assertFailure $ "Can't locate " ++ show testName
+                  Just attr ->
+                    let expected =
+                          if attr == "#"
+                            then [fromEnum cp]
+                            else map readHex (T.words attr)
+                        actual =
+                          case f cp of
+                            UCD.SingleCM c1 -> [fromEnum c1]
+                            UCD.DoubleCM c1 c2 -> [fromEnum c1, fromEnum c2]
+                            UCD.TripleCM c1 c2 c3 ->
+                              [fromEnum c1, fromEnum c2, fromEnum c3]
+                     in assertEqual testName expected actual
+          traverse_
+            (\(tn, an, f) -> testCaseMappingProp tn an f)
+            [ ("Lowercase mapping", "lc", UCD.lowercaseMapping)
+            , ("Uppercase mapping", "uc", UCD.uppercaseMapping)
+            , ("Titlecase mapping", "tc", UCD.titlecaseMapping)
             ])
     ]
   where

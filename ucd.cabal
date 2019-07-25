@@ -73,6 +73,14 @@ library
                      , Data.UCD.Internal.SimpleLowercaseMapping
                      , Data.UCD.Internal.SimpleUppercaseMapping
                      , Data.UCD.Internal.SimpleTitlecaseMapping
+                     , Data.UCD.Internal.SpecialLowercaseMapping0
+                     , Data.UCD.Internal.SpecialLowercaseMapping1
+                     , Data.UCD.Internal.SpecialTitlecaseMapping0
+                     , Data.UCD.Internal.SpecialTitlecaseMapping1
+                     , Data.UCD.Internal.SpecialTitlecaseMapping2
+                     , Data.UCD.Internal.SpecialUppercaseMapping0
+                     , Data.UCD.Internal.SpecialUppercaseMapping1
+                     , Data.UCD.Internal.SpecialUppercaseMapping2
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -131,6 +139,14 @@ library
                      , generated/cbits/simple_lowercase_mapping.c
                      , generated/cbits/simple_uppercase_mapping.c
                      , generated/cbits/simple_titlecase_mapping.c
+                     , generated/cbits/special_lowercase_mapping_0.c
+                     , generated/cbits/special_lowercase_mapping_1.c
+                     , generated/cbits/special_titlecase_mapping_0.c
+                     , generated/cbits/special_titlecase_mapping_1.c
+                     , generated/cbits/special_titlecase_mapping_2.c
+                     , generated/cbits/special_uppercase_mapping_0.c
+                     , generated/cbits/special_uppercase_mapping_1.c
+                     , generated/cbits/special_uppercase_mapping_2.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -216,6 +232,7 @@ executable ucd-gen
                      , UCD.PropList
                      , UCD.DerivedCoreProperties
                      , UCD.HangulSyllableType
+                     , UCD.SpecialCasing
                      , UCD.Common
                      , Trie
                      , Gen

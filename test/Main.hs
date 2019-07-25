@@ -34,6 +34,7 @@ main = do
               , derivedCoreProps
               , hangulSyllableType
               , simpleCaseMappings
+              , caseMappings
               ]
           , TestLabel "Names" $
             TestList
@@ -210,6 +211,41 @@ simpleCaseMappings =
         "simple_titlecase_mapping"
         UCD.simpleTitlecaseMapping
     ]
+
+caseMappings :: Test
+caseMappings =
+  TestList
+    [ testCM
+        "Uppercase mapping"
+        "uppercase_mapping"
+        UCD.simpleUppercaseMapping
+        UCD.uppercaseMapping
+    , testCM
+        "Lowercase mapping"
+        "lowercase_mapping"
+        UCD.simpleLowercaseMapping
+        UCD.lowercaseMapping
+    , testCM
+        "Titlecase mapping"
+        "titlecase_mapping"
+        UCD.simpleTitlecaseMapping
+        UCD.titlecaseMapping
+    ]
+  where
+    testCM name file sf f =
+      TestLabel name $
+      TestCase $ do
+        reference <-
+          readFullTable
+            (enclosedP "[" "]" $ A.decimal `A.sepBy` ",")
+            ("generated/test_data/special_" ++ file ++ ".txt")
+        for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
+          if null ref
+            then assertEqual (show cp) (UCD.SingleCM $ sf cp) (f cp)
+            else assertEqual (show cp) (map toEnum ref) (cm2list $ f cp)
+    cm2list (UCD.SingleCM c) = [c]
+    cm2list (UCD.DoubleCM c1 c2) = [c1, c2]
+    cm2list (UCD.TripleCM c1 c2 c3) = [c1, c2, c3]
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

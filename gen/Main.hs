@@ -6,7 +6,12 @@
 
 module Main where
 
-import Control.Concurrent.Async (concurrently_, mapConcurrently_)
+import Control.Concurrent.Async
+  ( concurrently_
+  , forConcurrently_
+  , mapConcurrently_
+  )
+import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
 import qualified Data.Vector as V
@@ -24,7 +29,7 @@ import Driver
 import ListM (ListM(Nil), generatePartitionings)
 import qualified UCD.Age
 import qualified UCD.Blocks
-import UCD.Common (adjustWithM, tableToVector, unicodeTableSize)
+import UCD.Common (adjustWithM, dropNothing, tableToVector, unicodeTableSize)
 import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -32,6 +37,7 @@ import qualified UCD.NameAliases
 import qualified UCD.PropList
 import qualified UCD.ScriptExtensions
 import qualified UCD.Scripts
+import qualified UCD.SpecialCasing
 import qualified UCD.UnicodeData
 
 main :: IO ()
@@ -68,6 +74,42 @@ main = do
                 "simple_titlecase_mapping"
                 UCD.UnicodeData.propSimpleTitlecaseMapping
             ]
+    , do special <- UCD.SpecialCasing.fetch
+         let zeroMapping = V.replicate unicodeTableSize 0
+             processSpecialCaseMapping maxLen name getter = do
+               let sparseTable =
+                     dropNothing $
+                     fmap
+                       (\r ->
+                          let field = getter r
+                           in if V.length field == 1
+                                then Nothing
+                                else Just field)
+                       special
+                   fullTable = tableToVector V.empty sparseTable
+               generateTests name fullTable
+               forConcurrently_ [0 .. maxLen - 1] $ \i ->
+                 let ithCPSparse = fmap (V.!? i) sparseTable
+                     ithCPFull = zeroMapping `adjustWithM` ithCPSparse
+                  in generateSources
+                       fullPartitionings
+                       (name <> "_" <> B.pack (show i))
+                       ithCPFull
+         mapConcurrently_
+           id
+           [ processSpecialCaseMapping
+               3
+               "special_uppercase_mapping"
+               UCD.SpecialCasing.upper
+           , processSpecialCaseMapping
+               2
+               "special_lowercase_mapping"
+               UCD.SpecialCasing.lower
+           , processSpecialCaseMapping
+               3
+               "special_titlecase_mapping"
+               UCD.SpecialCasing.title
+           ]
     , generateASCIITableSources fullPartitionings "name" $
       UCD.UnicodeData.tableToNames records V.//
       map

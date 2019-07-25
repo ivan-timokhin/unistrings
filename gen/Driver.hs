@@ -121,11 +121,11 @@ instance TableValue (Maybe HangulSyllableType) where
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 
-instance TableValue (Maybe Word32) where
-  type BottomType (Maybe Word32) = IntegralType
-  typeVals_ = typeMEnum
+instance TableValue Word32 where
+  type BottomType Word32 = IntegralType
+  typeVals_ = typeEnum
   generateModule prefix =
-    generateMayEnum
+    generateEnum
       EnumSpec
         {esCPrefix = prefix, esHsType = "Word32", esHsTypeModule = "Data.Word"}
 
