@@ -113,7 +113,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Regional_Indicator
   - [ ] Indic_Positional_Category
   - [ ] Indic_Syllabic_Category
-* Miscellaneous code tasks [3/6]
+* Miscellaneous code tasks [4/6]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
 ** TODO Add missing instances to enums
@@ -126,7 +126,11 @@ Currently quite a number of places hard-code ~/~.
 ** DONE Investigate storing the offset from the current code point for
 simple case mappings; these should change less often.  Don't know
 what to do about full ones.
-** TODO Revamp benchmarks
+** DONE Revamp benchmarks
+CLOSED: [2019-07-25 Чт 17:10]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2019-07-25 Чт 17:10]
+:END:
 I am deeply worried that all of the actual property lookup is getting
 optimised away, and the perceived gains over ICU are all due to the
 fact that GHC can't actually do that for FFI.

@@ -17,21 +17,22 @@ main =
           "UDHR"
           [ C.bgroup
               "General category"
-              [ C.bench "UCD" $ mkBenchmark udhr UCD.generalCategory
-              , C.bench "Data.Char" $ mkBenchmark udhr Ch.generalCategory
+              [ C.bench "UCD" $ mkEnumBenchmark udhr UCD.generalCategory
+              , C.bench "Data.Char" $ mkEnumBenchmark udhr Ch.generalCategory
               , C.bench "ICU" $
-                mkBenchmark udhr (ICU.property ICU.GeneralCategory)
+                mkEnumBenchmark udhr (ICU.property ICU.GeneralCategory)
               ]
           , C.bgroup
               "Canonical combining class"
-              [ C.bench "UCD" $ mkBenchmark udhr UCD.canonicalCombiningClass
+              [ C.bench "UCD" $
+                mkIntegralBenchmark udhr UCD.canonicalCombiningClass
               , C.bench "ICU" $
                 mkBenchmark udhr (ICU.property ICU.CanonicalCombiningClass)
               ]
           , C.bgroup
               "Name"
-              [ C.bench "UCD" $ mkBenchmark udhr UCD.name
-              , C.bench "ICU" $ mkBenchmark udhr ICU.charName
+              [ C.bench "UCD" $ mkBenchmark udhr ((`seq` 0) . UCD.name)
+              , C.bench "ICU" $ mkBenchmark udhr ((`seq` 0) . ICU.charName)
               ]
           , C.bgroup
               "Name aliases"
@@ -40,18 +41,18 @@ main =
               ]
           , C.bgroup
               "Block"
-              [ C.bench "UCD" $ mkBenchmark udhr UCD.block
+              [ C.bench "UCD" $ mkBenchmark udhr (maybe 0 fromEnum . UCD.block)
               -- https://github.com/bos/text-icu/pull/37
               -- , C.bench "ICU" $ mkBenchmark udhr ICU.blockCode
               ]
           , C.bgroup
               "Hangul syllable type"
               [ C.bench "UCD" $
-                mkBenchmark udhr (maybe () (`seq` ()) . UCD.hangulSyllableType)
+                mkBenchmark udhr (maybe 0 fromEnum . UCD.hangulSyllableType)
               , C.bench "ICU" $
                 mkBenchmark
                   udhr
-                  (maybe () (`seq` ()) . ICU.property ICU.HangulSyllableType)
+                  (maybe 0 fromEnum . ICU.property ICU.HangulSyllableType)
               ]
           , C.bgroup
               "PropList"
@@ -230,27 +231,33 @@ main =
               "Simple case mappings"
               [ C.bgroup
                   "Lowercase"
-                  [C.bench "UCD" $ mkBenchmark udhr UCD.simpleLowercaseMapping]
+                  [ C.bench "UCD" $
+                    mkEnumBenchmark udhr UCD.simpleLowercaseMapping
+                  ]
               , C.bgroup
                   "Uppercase"
-                  [C.bench "UCD" $ mkBenchmark udhr UCD.simpleUppercaseMapping]
+                  [ C.bench "UCD" $
+                    mkEnumBenchmark udhr UCD.simpleUppercaseMapping
+                  ]
               , C.bgroup
                   "Titlecase"
-                  [C.bench "UCD" $ mkBenchmark udhr UCD.simpleTitlecaseMapping]
+                  [ C.bench "UCD" $
+                    mkEnumBenchmark udhr UCD.simpleTitlecaseMapping
+                  ]
               ]
           , C.bgroup
               "Full case mappings"
               [ C.bgroup
                   "Lowercase"
-                  [C.bench "UCD" $ mkBenchmark udhr UCD.lowercaseMapping]
+                  [C.bench "UCD" $ mkCMBenchmark udhr UCD.lowercaseMapping]
               , C.bgroup
                   "Uppercase"
-                  [C.bench "UCD" $ mkBenchmark udhr UCD.uppercaseMapping]
+                  [C.bench "UCD" $ mkCMBenchmark udhr UCD.uppercaseMapping]
               , C.bgroup
                   "Titlecase"
-                  [C.bench "UCD" $ mkBenchmark udhr UCD.titlecaseMapping]
+                  [C.bench "UCD" $ mkCMBenchmark udhr UCD.titlecaseMapping]
               ]
-          , C.bench "No-op" $ mkBenchmark udhr id
+          , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]
 
@@ -259,18 +266,36 @@ mkBoolGroup ::
 {-# INLINE mkBoolGroup #-}
 mkBoolGroup vals name mprop f =
   C.bgroup name $
-  C.bench "UCD" (mkBenchmark vals f) :
+  C.bench "UCD" (mkEnumBenchmark vals f) :
   case mprop of
     Nothing -> []
-    Just prop -> [C.bench "ICU" $ mkBenchmark vals (ICU.property prop)]
+    Just prop -> [C.bench "ICU" $ mkEnumBenchmark vals (ICU.property prop)]
 
-mkBenchmark :: V.Vector Char -> (Char -> a) -> C.Benchmarkable
+mkEnumBenchmark :: Enum a => V.Vector Char -> (Char -> a) -> C.Benchmarkable
+{-# INLINE mkEnumBenchmark #-}
+mkEnumBenchmark vals f = mkBenchmark vals (fromEnum . f)
+
+mkIntegralBenchmark ::
+     Integral a => V.Vector Char -> (Char -> a) -> C.Benchmarkable
+{-# INLINE mkIntegralBenchmark #-}
+mkIntegralBenchmark vals f = mkBenchmark vals (fromIntegral . f)
+
+mkCMBenchmark :: V.Vector Char -> (Char -> UCD.CaseMapping) -> C.Benchmarkable
+{-# INLINE mkCMBenchmark #-}
+mkCMBenchmark vals f =
+  mkBenchmark vals $ \c ->
+    case f c of
+      UCD.SingleCM w -> fromEnum w
+      UCD.DoubleCM w1 w2 -> fromEnum w1 + fromEnum w2
+      UCD.TripleCM w1 w2 w3 -> fromEnum w1 + fromEnum w2 + fromEnum w3
+
+mkBenchmark :: V.Vector Char -> (Char -> Int) -> C.Benchmarkable
 {-# INLINE mkBenchmark #-}
-mkBenchmark vals f = C.nf (V.foldl' (\() c -> f c `seq` ()) ()) vals
+mkBenchmark vals f = C.whnf (V.foldl' (\n c -> n + f c) 0) vals
 
-evalPairsList :: [(a, b)] -> [(a, b)]
+evalPairsList :: [(a, b)] -> Int
 {-# INLINE evalPairsList #-}
-evalPairsList xs = go xs `seq` xs
+evalPairsList xs = go xs `seq` 0
   where
     go ((a, b):rest) = a `seq` b `seq` go rest
     go [] = ()
