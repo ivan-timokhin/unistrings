@@ -24,3 +24,4 @@ nice) parse errors should guide you.
 - [ ] ~idContinue~
 - [ ] ~xidStart~
 - [ ] ~xidContinue~
+*** TODO Double-check length bounds for case mappings
