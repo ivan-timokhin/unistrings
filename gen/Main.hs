@@ -29,7 +29,14 @@ import Driver
 import ListM (ListM(Nil), generatePartitionings)
 import qualified UCD.Age
 import qualified UCD.Blocks
-import UCD.Common (adjustWithM, dropNothing, tableToVector, unicodeTableSize)
+import qualified UCD.CaseFolding
+import UCD.Common
+  ( adjustWith
+  , adjustWithM
+  , dropNothing
+  , tableToVector
+  , unicodeTableSize
+  )
 import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -110,6 +117,31 @@ main = do
                "special_titlecase_mapping"
                UCD.SpecialCasing.title
            ]
+    , do foldings <- UCD.CaseFolding.fetch
+         let identityMapping = V.generate unicodeTableSize id
+             fullSimpleTable =
+               identityMapping `adjustWith` UCD.CaseFolding.common foldings `adjustWith`
+               UCD.CaseFolding.simple foldings
+             diffSimpleTable = V.imap (flip (-)) fullSimpleTable
+             maxLen = 3
+         concurrently_
+           (do generateTests "simple_case_folding" fullSimpleTable
+               generateSources
+                 fullPartitionings
+                 "simple_case_folding"
+                 diffSimpleTable)
+           (do generateTests "full_case_folding" $
+                 V.replicate unicodeTableSize V.empty `adjustWith`
+                 UCD.CaseFolding.full foldings
+               forConcurrently_ [0 .. maxLen - 1] $ \i ->
+                 let ithSparseTable = (V.!? i) <$> UCD.CaseFolding.full foldings
+                     ithFullMap =
+                       V.replicate unicodeTableSize 0 `adjustWithM`
+                       ithSparseTable
+                  in generateSources
+                       fullPartitionings
+                       ("full_case_folding_" <> B.pack (show i))
+                       ithFullMap)
     , generateASCIITableSources fullPartitionings "name" $
       UCD.UnicodeData.tableToNames records V.//
       map

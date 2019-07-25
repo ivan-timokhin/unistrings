@@ -197,6 +197,7 @@ testCP children getAttr cp =
             [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
             , ("Simple uppercase mapping", "suc", UCD.simpleUppercaseMapping)
             , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
+            , ("Simple case folding", "scf", UCD.simpleCaseFolding)
             ]
           let testCaseMappingProp testName attrName f =
                 case getAttr attrName of
@@ -218,6 +219,7 @@ testCP children getAttr cp =
             [ ("Lowercase mapping", "lc", UCD.lowercaseMapping)
             , ("Uppercase mapping", "uc", UCD.uppercaseMapping)
             , ("Titlecase mapping", "tc", UCD.titlecaseMapping)
+            , ("Case folding", "cf", UCD.caseFolding)
             ])
     ]
   where

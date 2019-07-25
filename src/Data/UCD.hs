@@ -65,9 +65,11 @@ module Data.UCD
   , simpleLowercaseMapping
   , simpleUppercaseMapping
   , simpleTitlecaseMapping
+  , simpleCaseFolding
   , lowercaseMapping
   , uppercaseMapping
   , titlecaseMapping
+  , caseFolding
   , CaseMapping(..)
   , EnumeratedProperty(..)
   ) where
@@ -97,6 +99,9 @@ import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
 import qualified Data.UCD.Internal.Deprecated as De
 import qualified Data.UCD.Internal.Diacritic as Di
 import qualified Data.UCD.Internal.Extender as Ext
+import qualified Data.UCD.Internal.FullCaseFolding0 as FCF0
+import qualified Data.UCD.Internal.FullCaseFolding1 as FCF1
+import qualified Data.UCD.Internal.FullCaseFolding2 as FCF2
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.GraphemeBase as GB
 import qualified Data.UCD.Internal.GraphemeExtend as GE
@@ -123,6 +128,7 @@ import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
 import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
 import qualified Data.UCD.Internal.SentenceTerminal as ST
+import qualified Data.UCD.Internal.SimpleCaseFolding as SCF
 import qualified Data.UCD.Internal.SimpleLowercaseMapping as SLM
 import qualified Data.UCD.Internal.SimpleTitlecaseMapping as STM
 import qualified Data.UCD.Internal.SimpleUppercaseMapping as SUM
@@ -465,6 +471,9 @@ simpleUppercaseMapping = simpleCaseMapping SUM.retrieve
 simpleTitlecaseMapping :: IsCodePoint cp => cp -> CodePoint
 simpleTitlecaseMapping = simpleCaseMapping STM.retrieve
 
+simpleCaseFolding :: IsCodePoint cp => cp -> CodePoint
+simpleCaseFolding = simpleCaseMapping SCF.retrieve
+
 simpleCaseMapping :: IsCodePoint cp => (Int -> Int) -> cp -> CodePoint
 simpleCaseMapping f = withCP $ \cp -> CodePoint $ fromIntegral $ cp + f cp
 
@@ -498,6 +507,17 @@ titlecaseMapping cp
     first = fromIntegral $ SpTM0.retrieve icp
     second = fromIntegral $ SpTM1.retrieve icp
     third = fromIntegral $ SpTM2.retrieve icp
+
+caseFolding :: IsCodePoint cp => cp -> CaseMapping
+caseFolding cp
+  | first == 0 = SingleCM (simpleCaseFolding cp)
+  | third == 0 = DoubleCM (CodePoint first) (CodePoint second)
+  | otherwise = TripleCM (CodePoint first) (CodePoint second) (CodePoint third)
+  where
+    icp = fromEnum $ toCodePoint cp
+    first = fromIntegral $ FCF0.retrieve icp
+    second = fromIntegral $ FCF1.retrieve icp
+    third = fromIntegral $ FCF2.retrieve icp
 
 data CaseMapping
   = SingleCM {-# UNPACK #-}!CodePoint

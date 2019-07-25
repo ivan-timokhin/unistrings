@@ -257,6 +257,15 @@ main =
                   "Titlecase"
                   [C.bench "UCD" $ mkCMBenchmark udhr UCD.titlecaseMapping]
               ]
+          , C.bgroup
+              "Case folding"
+              [ C.bgroup
+                  "Simple"
+                  [C.bench "UCD" $ mkEnumBenchmark udhr UCD.simpleCaseFolding]
+              , C.bgroup
+                  "Full"
+                  [C.bench "UCD" $ mkCMBenchmark udhr UCD.caseFolding]
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

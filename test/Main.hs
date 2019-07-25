@@ -210,6 +210,7 @@ simpleCaseMappings =
         "Simple titlecase mapping"
         "simple_titlecase_mapping"
         UCD.simpleTitlecaseMapping
+    , testCP "Simple case folding" "simple_case_folding" UCD.simpleCaseFolding
     ]
 
 caseMappings :: Test
@@ -217,19 +218,24 @@ caseMappings =
   TestList
     [ testCM
         "Uppercase mapping"
-        "uppercase_mapping"
+        "special_uppercase_mapping"
         UCD.simpleUppercaseMapping
         UCD.uppercaseMapping
     , testCM
         "Lowercase mapping"
-        "lowercase_mapping"
+        "special_lowercase_mapping"
         UCD.simpleLowercaseMapping
         UCD.lowercaseMapping
     , testCM
         "Titlecase mapping"
-        "titlecase_mapping"
+        "special_titlecase_mapping"
         UCD.simpleTitlecaseMapping
         UCD.titlecaseMapping
+    , testCM
+        "Case folding"
+        "full_case_folding"
+        UCD.simpleCaseFolding
+        UCD.caseFolding
     ]
   where
     testCM name file sf f =
@@ -238,7 +244,7 @@ caseMappings =
         reference <-
           readFullTable
             (enclosedP "[" "]" $ A.decimal `A.sepBy` ",")
-            ("generated/test_data/special_" ++ file ++ ".txt")
+            ("generated/test_data/" ++ file ++ ".txt")
         for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
           if null ref
             then assertEqual (show cp) (UCD.SingleCM $ sf cp) (f cp)
