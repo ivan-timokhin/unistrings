@@ -80,9 +80,9 @@ import Data.Bits ((.&.), shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
 import Data.Int (Int64)
-import Data.Ratio (Ratio, (%))
 import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
+import GHC.Real (Ratio((:%)))
 
 import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.Age as Age
@@ -536,7 +536,6 @@ data CaseMapping
   deriving (Show, Eq)
 
 numeric :: IsCodePoint cp => cp -> Maybe Numeric
-{-# INLINE numeric #-}
 numeric =
   withCP $ \icp ->
     let ty = NT.retrieve icp
@@ -546,7 +545,7 @@ numeric =
           0 -> Nothing
           1 -> Just $ Decimal $ fromIntegral numerator
           2 -> Just $ Digit $ fromIntegral numerator
-          _ -> Just $ Numeric $ numerator % denominator
+          _ -> Just $ Numeric $ numerator :% denominator
 
 data Numeric
   = Decimal Word8
