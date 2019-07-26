@@ -17,6 +17,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory, toUpper)
 import Data.Foldable (fold, for_)
 import Data.Functor.Identity (Identity)
+import Data.Int (Int64)
 import Data.Maybe (fromMaybe)
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
@@ -37,6 +38,7 @@ import Gen
 import Gen.Cost (SizedTy, pickBest, totalCost)
 import Gen.Type
   ( IntegralType
+  , int64
   , typeASCII
   , typeContainer
   , typeContainerDedup
@@ -148,6 +150,12 @@ instance TableValue Word8 where
   typeVals_ = const word8
   generateModule prefix =
     generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Word8"}
+
+instance TableValue Int64 where
+  type BottomType Int64 = IntegralType
+  typeVals_ = const int64
+  generateModule prefix =
+    generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Int64"}
 
 instance TableValue Int where
   type BottomType Int = IntegralType

@@ -48,3 +48,10 @@ generated/
 /data/latest/ucdxml/ucd.all.grouped.zip
 /data/latest/ucdxml/ucd.all.flat.zip
 *.html
+/data/latest/ucd/Unihan_DictionaryIndices.txt
+/data/latest/ucd/Unihan_DictionaryLikeData.txt
+/data/latest/ucd/Unihan_IRGSources.txt
+/data/latest/ucd/Unihan_OtherMappings.txt
+/data/latest/ucd/Unihan_RadicalStrokeCounts.txt
+/data/latest/ucd/Unihan_Readings.txt
+/data/latest/ucd/Unihan_Variants.txt

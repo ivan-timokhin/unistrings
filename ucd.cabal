@@ -85,6 +85,9 @@ library
                      , Data.UCD.Internal.FullCaseFolding0
                      , Data.UCD.Internal.FullCaseFolding1
                      , Data.UCD.Internal.FullCaseFolding2
+                     , Data.UCD.Internal.NumericType
+                     , Data.UCD.Internal.NumericNumerator
+                     , Data.UCD.Internal.NumericDenominator
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -155,6 +158,9 @@ library
                      , generated/cbits/full_case_folding_0.c
                      , generated/cbits/full_case_folding_1.c
                      , generated/cbits/full_case_folding_2.c
+                     , generated/cbits/numeric_type.c
+                     , generated/cbits/numeric_numerator.c
+                     , generated/cbits/numeric_denominator.c
   build-depends:       base >=4.12 && <4.13
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -242,6 +248,7 @@ executable ucd-gen
                      , UCD.HangulSyllableType
                      , UCD.SpecialCasing
                      , UCD.CaseFolding
+                     , UCD.Unihan.NumericValues
                      , UCD.Common
                      , Trie
                      , Gen

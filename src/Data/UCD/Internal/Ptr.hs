@@ -10,12 +10,13 @@ import GHC.Exts
   , Ptr(Ptr)
   , indexInt16OffAddr#
   , indexInt32OffAddr#
+  , indexInt64OffAddr#
   , indexInt8OffAddr#
   , indexWord16OffAddr#
   , indexWord8OffAddr#
   )
 
-import GHC.Int (Int16(I16#), Int32(I32#), Int8(I8#))
+import GHC.Int (Int16(I16#), Int32(I32#), Int64(I64#), Int8(I8#))
 import GHC.Word (Word16(W16#), Word8(W8#))
 
 class Readable a where
@@ -35,3 +36,6 @@ instance Readable Word16 where
 
 instance Readable Int32 where
   unsafeReadPtr (Ptr addr) (I# offset) = I32# (indexInt32OffAddr# addr offset)
+
+instance Readable Int64 where
+  unsafeReadPtr (Ptr addr) (I# offset) = I64# (indexInt64OffAddr# addr offset)

@@ -20,6 +20,7 @@ main = do
           , charName
           , propList
           , derivedCoreProps
+          , numeric
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -158,6 +159,24 @@ derivedCoreProps =
     , mkBoolTest "Grapheme extend" ICU.GraphemeExtend UCD.graphemeExtend
     , mkBoolTest "Grapheme base" ICU.GraphemeBase UCD.graphemeBase
     ]
+
+numeric :: Test
+numeric =
+  TestLabel "Numeric" $
+  TestList
+    [ compareForAll
+        "Type"
+        (ICU.property ICU.NumericType)
+        (fmap ucd2icuType . UCD.numeric)
+    , compareForAll "Value" ICU.numericValue (fmap ucd2icuVal . UCD.numeric)
+    ]
+  where
+    ucd2icuType (UCD.Decimal _) = ICU.NTDecimal
+    ucd2icuType (UCD.Digit _) = ICU.NTDigit
+    ucd2icuType (UCD.Numeric _) = ICU.NTNumeric
+    ucd2icuVal (UCD.Decimal n) = fromIntegral n
+    ucd2icuVal (UCD.Digit n) = fromIntegral n
+    ucd2icuVal (UCD.Numeric q) = fromRational $ toRational q
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest name prop = compareForAll name (ICU.property prop)

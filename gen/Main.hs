@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -14,6 +15,8 @@ import Control.Concurrent.Async
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
+import Data.Int (Int64)
+import Data.Ratio (denominator, numerator)
 import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
@@ -46,6 +49,7 @@ import qualified UCD.ScriptExtensions
 import qualified UCD.Scripts
 import qualified UCD.SpecialCasing
 import qualified UCD.UnicodeData
+import qualified UCD.Unihan.NumericValues
 
 main :: IO ()
 main = do
@@ -253,6 +257,40 @@ main = do
            UCD.Common.tableToVector Nothing . fmap Just <$>
            UCD.HangulSyllableType.fetch
          processTable fullPartitionings "hangul_syllable_type" hst
+    , do unihanNumVals <- UCD.Unihan.NumericValues.fetch
+         let table =
+               UCD.Common.tableToVector
+                 Nothing
+                 (fmap UCD.UnicodeData.propNumeric records) `adjustWith`
+               fmap (Just . UCD.UnicodeData.Numeric . fromInteger) unihanNumVals
+             typesTable =
+               flip fmap table $ \case
+                 Nothing -> (0 :: Word8)
+                 Just (UCD.UnicodeData.Decimal _) -> 1
+                 Just (UCD.UnicodeData.Digit _) -> 2
+                 Just (UCD.UnicodeData.Numeric _) -> 3
+             numeratorTable =
+               flip fmap table $ \case
+                 Nothing -> (0 :: Int64)
+                 Just (UCD.UnicodeData.Decimal n) -> fromIntegral n
+                 Just (UCD.UnicodeData.Digit n) -> fromIntegral n
+                 Just (UCD.UnicodeData.Numeric r) -> fromIntegral $ numerator r
+             denominatorTable =
+               flip fmap table $ \case
+                 Just (UCD.UnicodeData.Numeric r) ->
+                   fromIntegral $ denominator r
+                 _ -> (1 :: Int64)
+         concurrently_
+           (concurrently_
+              (generateSources fullPartitionings "numeric_type" typesTable)
+              (generateSources
+                 fullPartitionings
+                 "numeric_numerator"
+                 numeratorTable))
+           (generateSources
+              fullPartitionings
+              "numeric_denominator"
+              denominatorTable)
     ]
 
 printLong :: Show a => [a] -> IO ()

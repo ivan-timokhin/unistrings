@@ -231,7 +231,7 @@ generateGenericHs spec trie =
     header =
       "import Data.UCD.Internal.Ptr (Ptr, unsafeReadPtr)" :
       "import Data.Bits ((.&.), shiftR, shiftL)" :
-      "import Data.Int (Int8, Int16, Int32)" :
+      "import Data.Int (Int8, Int16, Int32, Int64)" :
       "import Data.Word (Word8, Word16)" : gsHsImports spec
     function :: [ByteString]
     function =

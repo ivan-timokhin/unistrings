@@ -11,6 +11,7 @@ import Data.Foldable (for_, traverse_)
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
 import Data.Maybe (fromJust, fromMaybe, mapMaybe)
+import Data.Ratio ((%), denominator, numerator)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
@@ -220,7 +221,59 @@ testCP children getAttr cp =
             , ("Uppercase mapping", "uc", UCD.uppercaseMapping)
             , ("Titlecase mapping", "tc", UCD.titlecaseMapping)
             , ("Case folding", "cf", UCD.caseFolding)
-            ])
+            ]
+          case getAttr "nt" of
+            Nothing -> assertFailure "Can't locate numeric type"
+            Just ntStr ->
+              case getAttr "nv" of
+                Nothing -> assertFailure "Can't locate numeric value"
+                Just nvStr ->
+                  let ucdNum = UCD.numeric cp
+                   in case ntStr of
+                        "None" -> assertEqual "Not numeric" Nothing ucdNum
+                        "De" ->
+                          case ucdNum of
+                            Just (UCD.Decimal n) ->
+                              assertEqual
+                                "Numeric decimal"
+                                (read $ T.unpack nvStr) $
+                              toInteger n
+                            _ ->
+                              assertFailure $
+                              "Expected decimal, got " ++ show ucdNum
+                        "Di" ->
+                          case ucdNum of
+                            Just (UCD.Digit n) ->
+                              assertEqual
+                                "Numeric digit"
+                                (read $ T.unpack nvStr) $
+                              toInteger n
+                            _ ->
+                              assertFailure $
+                              "Expected digit, got " ++ show ucdNum
+                        "Nu" ->
+                          case ucdNum of
+                            Just (UCD.Numeric r) ->
+                              let (numStr, mdenomStr) =
+                                    break (== '/') $ T.unpack nvStr
+                                  numer = read numStr
+                                  denom =
+                                    case mdenomStr of
+                                      "" -> 1
+                                      (_:denomStr) -> read denomStr
+                                  r' =
+                                    toInteger (numerator r) %
+                                    toInteger (denominator r)
+                               in assertEqual
+                                    "Numeric numeric"
+                                    (numer % denom)
+                                    r'
+                            _ ->
+                              assertFailure $
+                              "Expected numeric, got " ++ show ucdNum
+                        _ ->
+                          assertFailure $
+                          "Unrecognised numeric type: " ++ show ntStr)
     ]
   where
     generalCategory =

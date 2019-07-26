@@ -19,6 +19,7 @@ module Gen.Type
   , int16
   , word16
   , int32
+  , int64
   ) where
 
 import Control.Monad.Trans.State.Strict (evalState, get, put)
@@ -26,7 +27,7 @@ import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Foldable (fold, foldl')
 import Data.Functor.Compose (Compose(Compose))
-import Data.Int (Int16, Int32, Int8)
+import Data.Int (Int16, Int32, Int64, Int8)
 import Data.List (find)
 import Data.Maybe (fromJust)
 import Data.Traversable (for)
@@ -131,6 +132,8 @@ int16 = integralType "Int16" "HsInt16" (minBound :: Int16) maxBound 2
 word16 = integralType "Word16" "HsWord16" (minBound :: Word16) maxBound 2
 
 int32 = integralType "Int32" "HsInt32" (minBound :: Int32) maxBound 4
+
+int64 = integralType "Int64" "HsInt64" (minBound :: Int64) maxBound 8
 
 ffiIntegralTypes :: [IntegralType]
 ffiIntegralTypes = [int8, word8, int16, word16, int32]

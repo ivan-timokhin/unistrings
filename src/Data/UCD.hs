@@ -71,12 +71,16 @@ module Data.UCD
   , titlecaseMapping
   , caseFolding
   , CaseMapping(..)
+  , numeric
+  , Numeric(..)
   , EnumeratedProperty(..)
   ) where
 
 import Data.Bits ((.&.), shiftR)
 import Data.ByteString (ByteString)
 import Data.Char (GeneralCategory(..), ord)
+import Data.Int (Int64)
+import Data.Ratio (Ratio, (%))
 import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
 
@@ -120,6 +124,9 @@ import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
 import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
+import qualified Data.UCD.Internal.NumericDenominator as ND
+import qualified Data.UCD.Internal.NumericNumerator as NN
+import qualified Data.UCD.Internal.NumericType as NT
 import qualified Data.UCD.Internal.PatternSyntax as PS
 import qualified Data.UCD.Internal.PrependedConcatenationMark as PCM
 import Data.UCD.Internal.Ptr (unsafeReadPtr)
@@ -526,6 +533,24 @@ data CaseMapping
       {-# UNPACK #-}!CodePoint
       {-# UNPACK #-}!CodePoint
       {-# UNPACK #-}!CodePoint
+  deriving (Show, Eq)
+
+numeric :: IsCodePoint cp => cp -> Maybe Numeric
+numeric =
+  withCP $ \icp ->
+    let ty = NT.retrieve icp
+        numerator = NN.retrieve icp
+        denominator = ND.retrieve icp
+     in case ty of
+          0 -> Nothing
+          1 -> Just $ Decimal $ fromIntegral numerator
+          2 -> Just $ Digit $ fromIntegral numerator
+          _ -> Just $ Numeric $ numerator % denominator
+
+data Numeric
+  = Decimal Word8
+  | Digit Word8
+  | Numeric (Ratio Int64)
   deriving (Show, Eq)
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a

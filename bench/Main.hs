@@ -3,6 +3,7 @@ module Main where
 import Control.Exception (evaluate)
 import qualified Criterion.Main as C
 import qualified Data.Char as Ch
+import Data.Maybe (fromMaybe)
 import qualified Data.Text.ICU.Char as ICU
 import qualified Data.Vector.Unboxed as V
 import System.IO (IOMode(ReadMode), hGetContents, hSetEncoding, utf8, withFile)
@@ -265,6 +266,52 @@ main =
               , C.bgroup
                   "Full"
                   [C.bench "UCD" $ mkCMBenchmark udhr UCD.caseFolding]
+              ]
+          , C.bgroup
+              "Numeric"
+              [ C.bgroup
+                  "Value"
+                  [ C.bench "UCD" $
+                    mkBenchmark udhr $ \c ->
+                      case UCD.numeric c of
+                        Nothing -> 0
+                        Just num ->
+                          case num of
+                            UCD.Decimal n -> fromIntegral n
+                            UCD.Digit n -> fromIntegral n
+                            UCD.Numeric q -> round q
+                  , C.bench "ICU" $
+                    mkBenchmark udhr (round . fromMaybe 0 . ICU.numericValue)
+                  ]
+              , C.bgroup
+                  "Type"
+                  [ C.bench "UCD" $
+                    mkBenchmark udhr $ \c ->
+                      case UCD.numeric c of
+                        Nothing -> 0
+                        Just num ->
+                          case num of
+                            UCD.Decimal _ -> 1
+                            UCD.Digit _ -> 2
+                            UCD.Numeric _ -> 3
+                  , C.bench "ICU" $
+                    mkBenchmark
+                      udhr
+                      (maybe 0 fromEnum . ICU.property ICU.NumericType)
+                  ]
+              , C.bgroup
+                  "Decimals only"
+                  [ C.bench "UCD" $
+                    mkBenchmark udhr $ \c ->
+                      case UCD.numeric c of
+                        Just (UCD.Decimal n) -> fromIntegral n
+                        _ -> 0
+                  , C.bench "ICU" $
+                    mkBenchmark udhr $ \c ->
+                      case ICU.property ICU.NumericType c of
+                        Just ICU.NTDecimal -> maybe 0 round $ ICU.numericValue c
+                        _ -> 0
+                  ]
               ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
