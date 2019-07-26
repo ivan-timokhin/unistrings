@@ -536,6 +536,7 @@ data CaseMapping
   deriving (Show, Eq)
 
 numeric :: IsCodePoint cp => cp -> Maybe Numeric
+{-# INLINE numeric #-}
 numeric =
   withCP $ \icp ->
     let ty = NT.retrieve icp
