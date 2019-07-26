@@ -10,7 +10,6 @@ import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
 import Data.Maybe (catMaybes)
 import qualified Data.Vector as V
-import Data.Word (Word32)
 
 import UCD.Common (Range(Single), Table(Table), comments, fetchGeneral)
 
