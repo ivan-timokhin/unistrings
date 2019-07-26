@@ -1,4 +1,4 @@
-* Unicode Properties [63/99]
+* Unicode Properties [66/99]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -38,7 +38,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Changes_When_Titlecased
   - [X] Changes_When_Casefolded
   - [X] Changes_When_Casemapped
-- [-] Numeric [2/4] NB: These have to account for Unihan database
+- [X] Numeric [4/4] NB: These have to account for Unihan database
   #+begin_quote
   The characters tagged with either kPrimaryNumeric,
   kAccountingNumeric, or kOtherNumeric are given the property value
@@ -47,8 +47,8 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   Most characters have these numeric properties based on values from
   UnicodeData.txt.
   #+end_quote
-  - [ ] Numeric_Value
-  - [ ] Numeric_Type
+  - [X] Numeric_Value
+  - [X] Numeric_Type
   - [X] Hex_Digit
   - [X] ASCII_Hex_Digit
 - [-] Normalization [1/11]
