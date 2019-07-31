@@ -291,6 +291,9 @@ main = do
               fullPartitionings
               "numeric_denominator"
               denominatorTable)
+    , processTable fullPartitionings "decomposition_type" $
+      UCD.Common.tableToVector Nothing $
+      fmap fst . UCD.UnicodeData.propDecompositionMapping <$> records
     ]
 
 printLong :: Show a => [a] -> IO ()

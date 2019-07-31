@@ -313,6 +313,15 @@ main =
                         _ -> 0
                   ]
               ]
+          , C.bgroup
+              "Decomposition type"
+              [ C.bench "UCD" $
+                mkBenchmark udhr (maybe 0 fromEnum . UCD.decompositionType)
+              , C.bench "ICU" $
+                mkBenchmark
+                  udhr
+                  (maybe 0 fromEnum . ICU.property ICU.Decomposition)
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

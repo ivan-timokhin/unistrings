@@ -8,6 +8,7 @@ module Data.UCD.Internal.Types
   , Block(..)
   , Script(..)
   , EnumeratedProperty(..)
+  , DecompositionType(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -1670,3 +1671,23 @@ instance EnumeratedProperty Script where
       WarangCitiScript -> "Wara"
       YiScript -> "Yiii"
       ZanabazarSquareScript -> "Zanb"
+
+data DecompositionType
+  = Canonical
+  | Font
+  | NoBreak
+  | InitialPresentationForm
+  | MedialPresentationForm
+  | FinalPresentationForm
+  | IsolatedPresentationForm
+  | Encircled
+  | Superscript
+  | Subscript
+  | VerticalLayout
+  | Wide
+  | Narrow
+  | Small
+  | Squared
+  | VulgarFraction
+  | Compatibility
+  deriving (Eq, Ord, Show, Enum, Bounded, Read)

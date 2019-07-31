@@ -6,7 +6,7 @@
 module Main where
 
 import Control.Applicative ((<|>))
-import Control.Monad (replicateM, when)
+import Control.Monad (replicateM, unless, when)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
 import Data.Char (toLower)
@@ -35,6 +35,7 @@ main = do
               , hangulSyllableType
               , simpleCaseMappings
               , caseMappings
+              , decompositionType
               ]
           , TestLabel "Names" $
             TestList
@@ -252,6 +253,16 @@ caseMappings =
     cm2list (UCD.SingleCM c) = [c]
     cm2list (UCD.DoubleCM c1 c2) = [c1, c2]
     cm2list (UCD.TripleCM c1 c2 c3) = [c1, c2, c3]
+
+decompositionType :: Test
+decompositionType =
+  TestLabel "Decomposition type" $
+  TestCase $ do
+    reference <-
+      readFullTable mayEnumP "generated/test_data/decomposition_type.txt"
+    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
+      unless (0xac00 <= fromEnum cp && fromEnum cp <= 0xd7a3) $
+      assertEqual (show cp) ref $ UCD.decompositionType cp
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

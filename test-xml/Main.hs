@@ -273,7 +273,37 @@ testCP children getAttr cp =
                               "Expected numeric, got " ++ show ucdNum
                         _ ->
                           assertFailure $
-                          "Unrecognised numeric type: " ++ show ntStr)
+                          "Unrecognised numeric type: " ++ show ntStr
+          decompType <-
+            case getAttr "dt" of
+              Nothing -> assertFailure "Can't find decomposition type"
+              Just str
+                | str == "none" -> pure Nothing
+                | otherwise ->
+                  Just <$>
+                  case str of
+                    "can" -> pure UCD.Canonical
+                    "com" -> pure UCD.Compatibility
+                    "enc" -> pure UCD.Encircled
+                    "fin" -> pure UCD.FinalPresentationForm
+                    "font" -> pure UCD.Font
+                    "fra" -> pure UCD.VulgarFraction
+                    "init" -> pure UCD.InitialPresentationForm
+                    "iso" -> pure UCD.IsolatedPresentationForm
+                    "med" -> pure UCD.MedialPresentationForm
+                    "nar" -> pure UCD.Narrow
+                    "nb" -> pure UCD.NoBreak
+                    "sml" -> pure UCD.Small
+                    "sqr" -> pure UCD.Squared
+                    "sub" -> pure UCD.Subscript
+                    "sup" -> pure UCD.Superscript
+                    "vert" -> pure UCD.VerticalLayout
+                    "wide" -> pure UCD.Wide
+                    _ ->
+                      assertFailure $
+                      "Unrecognised decomposition type: " ++ show str
+          assertEqual "Decomposition type" decompType $ UCD.decompositionType cp
+          pure ())
     ]
   where
     generalCategory =

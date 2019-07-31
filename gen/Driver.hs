@@ -23,7 +23,13 @@ import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
-import Data.UCD.Internal.Types (Age, Block, HangulSyllableType, Script)
+import Data.UCD.Internal.Types
+  ( Age
+  , Block
+  , DecompositionType
+  , HangulSyllableType
+  , Script
+  )
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
   , EnumSpec(EnumSpec, esCPrefix, esHsType, esHsTypeModule)
@@ -120,6 +126,17 @@ instance TableValue (Maybe HangulSyllableType) where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "HangulSyllableType"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue (Maybe DecompositionType) where
+  type BottomType (Maybe DecompositionType) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "DecompositionType"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

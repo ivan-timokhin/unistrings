@@ -7,7 +7,6 @@ module UCD.UnicodeData
   , unicodeTableSize
   , Properties(..)
   , Name(Name, Unnamed)
-  , CompatibilityMappingTag(..)
   , NumericProperties(..)
   , fetch
   ) where
@@ -24,7 +23,14 @@ import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 
-import Data.UCD.Internal.Types (BidiClass)
+import Data.UCD.Internal.Types
+  ( BidiClass
+  , DecompositionType(Canonical, Compatibility, Encircled,
+                  FinalPresentationForm, Font, InitialPresentationForm,
+                  IsolatedPresentationForm, MedialPresentationForm, Narrow, NoBreak,
+                  Small, Squared, Subscript, Superscript, VerticalLayout,
+                  VulgarFraction, Wide)
+  )
 import UCD.Common
   ( Range(Range, Single)
   , Table(Table, getTable)
@@ -78,8 +84,7 @@ data Properties =
     { propCategory :: C.GeneralCategory
     , propCanonicalCombiningClass :: Word8
     , propBidiClass :: BidiClass
-    , propDecompositionMapping :: Maybe ( Maybe CompatibilityMappingTag
-                                        , [Word32])
+    , propDecompositionMapping :: Maybe (DecompositionType, [Word32])
     , propNumeric :: Maybe NumericProperties
     , propBidiMirrored :: Bool
     , propUnicode1Name :: ByteString
@@ -99,25 +104,6 @@ data Name
   = Name ByteString
   | Unnamed ByteString
   deriving (Eq, Show)
-
-data CompatibilityMappingTag
-  = Font
-  | NoBreak
-  | Initial
-  | Medial
-  | Final
-  | Isolated
-  | Circle
-  | Super
-  | Sub
-  | Vertical
-  | Wide
-  | Narrow
-  | Small
-  | Square
-  | Fraction
-  | Compat
-  deriving (Eq, Ord, Show, Enum, Bounded, Read)
 
 data NumericProperties
   = Decimal Word8
@@ -198,30 +184,30 @@ pCategory = enumeratedAbbrP A.<?> "general category"
 pBidiClass :: A.Parser BidiClass
 pBidiClass = enumeratedAbbrP A.<?> "bidirectional class"
 
-pDecompositionMapping :: A.Parser (Maybe CompatibilityMappingTag, [Word32])
+pDecompositionMapping :: A.Parser (DecompositionType, [Word32])
 pDecompositionMapping =
   (do tag <-
-        optional $
-        A.char '<' *>
-        tableP
-          [ "font" ~> Font
-          , "noBreak" ~> NoBreak
-          , "initial" ~> Initial
-          , "medial" ~> Medial
-          , "final" ~> Final
-          , "isolated" ~> Isolated
-          , "circle" ~> Circle
-          , "super" ~> Super
-          , "sub" ~> Sub
-          , "vertical" ~> Vertical
-          , "wide" ~> Wide
-          , "narrow" ~> Narrow
-          , "small" ~> Small
-          , "square" ~> Square
-          , "fraction" ~> Fraction
-          , "compat" ~> Compat
-          ] <*
-        A.string "> "
+        (A.char '<' *>
+         tableP
+           [ "font" ~> Font
+           , "noBreak" ~> NoBreak
+           , "initial" ~> InitialPresentationForm
+           , "medial" ~> MedialPresentationForm
+           , "final" ~> FinalPresentationForm
+           , "isolated" ~> IsolatedPresentationForm
+           , "circle" ~> Encircled
+           , "super" ~> Superscript
+           , "sub" ~> Subscript
+           , "vertical" ~> VerticalLayout
+           , "wide" ~> Wide
+           , "narrow" ~> Narrow
+           , "small" ~> Small
+           , "square" ~> Squared
+           , "fraction" ~> VulgarFraction
+           , "compat" ~> Compatibility
+           ] <*
+         A.string "> ") <|>
+        pure Canonical
       decomposition <- A.hexadecimal `A.sepBy1` A.char ' '
       pure (tag, decomposition)) A.<?>
   "decomposition mapping"

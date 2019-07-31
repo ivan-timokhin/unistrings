@@ -21,6 +21,7 @@ main = do
           , propList
           , derivedCoreProps
           , numeric
+          , decompositionType
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -177,6 +178,35 @@ numeric =
     ucd2icuVal (UCD.Decimal n) = fromIntegral n
     ucd2icuVal (UCD.Digit n) = fromIntegral n
     ucd2icuVal (UCD.Numeric q) = fromRational $ toRational q
+
+decompositionType :: Test
+decompositionType =
+  compareForAll
+    "Decomposition type"
+    (fmap icu2ucd . ICU.property ICU.Decomposition)
+    UCD.decompositionType
+  where
+    icu2ucd :: ICU.Decomposition -> UCD.DecompositionType
+    icu2ucd d =
+      case d of
+        ICU.Canonical -> UCD.Canonical
+        ICU.Compat -> UCD.Compatibility
+        ICU.Circle -> UCD.Encircled
+        ICU.Final -> UCD.FinalPresentationForm
+        ICU.Font -> UCD.Font
+        ICU.Fraction -> UCD.VulgarFraction
+        ICU.Initial -> UCD.InitialPresentationForm
+        ICU.Isolated -> UCD.IsolatedPresentationForm
+        ICU.Medial -> UCD.MedialPresentationForm
+        ICU.Narrow -> UCD.Narrow
+        ICU.NoBreak -> UCD.NoBreak
+        ICU.Small -> UCD.Small
+        ICU.Square -> UCD.Squared
+        ICU.Sub -> UCD.Subscript
+        ICU.Super -> UCD.Superscript
+        ICU.Vertical -> UCD.VerticalLayout
+        ICU.Wide -> UCD.Wide
+        ICU.Count -> error "'Count' is not actually a decomposition type"
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest name prop = compareForAll name (ICU.property prop)

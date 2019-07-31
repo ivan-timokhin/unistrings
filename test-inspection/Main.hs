@@ -45,5 +45,10 @@ isNumeric cp = isJust (UCD.numeric cp)
 
 inspect $ 'isNumeric `hasNoType` ''Maybe
 
+hasDecomposition :: UCD.CodePoint -> Bool
+hasDecomposition cp = isJust (UCD.decompositionType cp)
+
+inspect $ 'hasDecomposition `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()

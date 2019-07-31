@@ -73,6 +73,8 @@ module Data.UCD
   , CaseMapping(..)
   , numeric
   , Numeric(..)
+  , decompositionType
+  , DecompositionType(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -99,6 +101,7 @@ import qualified Data.UCD.Internal.ChangesWhenLowercased as CWL
 import qualified Data.UCD.Internal.ChangesWhenTitlecased as CWT
 import qualified Data.UCD.Internal.ChangesWhenUppercased as CWU
 import qualified Data.UCD.Internal.Dash as Da
+import qualified Data.UCD.Internal.DecompositionType as DT
 import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
 import qualified Data.UCD.Internal.Deprecated as De
 import qualified Data.UCD.Internal.Diacritic as Di
@@ -152,6 +155,7 @@ import qualified Data.UCD.Internal.TerminalPunctuation as TP
 import Data.UCD.Internal.Types
   ( Age(..)
   , Block(..)
+  , DecompositionType(..)
   , EnumeratedProperty(..)
   , HangulSyllableType(..)
   , NameAliasType(..)
@@ -552,6 +556,14 @@ data Numeric
   | Digit Word8
   | Numeric (Ratio Int64)
   deriving (Show, Eq)
+
+decompositionType :: IsCodePoint cp => cp -> Maybe DecompositionType
+{-# INLINE decompositionType #-}
+decompositionType =
+  withCP $ \icp ->
+    if 0xac00 <= icp && icp <= 0xd7a3
+      then Just Canonical
+      else DT.retrieve icp
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
