@@ -52,24 +52,15 @@ generalCategory =
 
 canonicalCombiningClass :: Test
 canonicalCombiningClass =
-  TestLabel "Canonical combining class" $
-  TestCase $ do
-    reference <-
-      readFullTable
-        A.decimal
-        "generated/test_data/canonical_combining_class.txt"
-    assertEqual "Table size" (fromEnum maxCp - fromEnum minCp + 1) $
-      length reference
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, refCCC) ->
-      assertEqual (show cp) refCCC $ UCD.canonicalCombiningClass cp
+  mkTest
+    A.decimal
+    "Canonical combining class"
+    "canonical_combining_class"
+    UCD.canonicalCombiningClass
 
 nameAliases :: Test
 nameAliases =
-  TestLabel "Name aliases" $
-  TestCase $ do
-    reference <- readFullTable parser "generated/test_data/name_aliases.txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, refNA) ->
-      assertEqual (show cp) (sort refNA) $ UCD.nameAliases cp
+  mkTest (sort <$> parser) "Name aliases" "name_aliases" UCD.nameAliases
   where
     parser :: A.Parser [(UCD.NameAliasType, B.ByteString)]
     parser =
@@ -81,32 +72,25 @@ nameAliases =
       ","
 
 ages :: Test
-ages =
-  TestLabel "Ages" $
-  TestCase $ do
-    reference <- readFullTable mayEnumP "generated/test_data/age.txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      assertEqual (show cp) ref $ UCD.age cp
+ages = testMayEnum "Ages" "age" UCD.age
 
 hangulSyllableType :: Test
 hangulSyllableType =
-  TestLabel "Hangul syllable type" $
-  TestCase $ do
-    reference <-
-      readFullTable mayEnumP "generated/test_data/hangul_syllable_type.txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      assertEqual (show cp) ref $ UCD.hangulSyllableType cp
+  testMayEnum
+    "Hangul syllable type"
+    "hangul_syllable_type"
+    UCD.hangulSyllableType
 
 script :: Test
 script = testEnum "Script" "script" UCD.script
 
 scriptExts :: Test
 scriptExts =
-  TestLabel "Script extensions (raw)" $
-  TestCase $ do
-    reference <- readFullTable parser "generated/test_data/script_exts.txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, refSE) ->
-      assertEqual (show cp) (sort refSE) $ sort $ UCD.scriptExtensionsRaw cp
+  mkTest
+    (sort <$> parser)
+    "Script extensions (raw)"
+    "script_exts"
+    (sort . UCD.scriptExtensionsRaw)
   where
     parser = enclosedP "[" "]" $ enumP `A.sepBy` ","
 
@@ -256,13 +240,12 @@ caseMappings =
 
 decompositionType :: Test
 decompositionType =
-  TestLabel "Decomposition type" $
-  TestCase $ do
-    reference <-
-      readFullTable mayEnumP "generated/test_data/decomposition_type.txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      unless (0xac00 <= fromEnum cp && fromEnum cp <= 0xd7a3) $
-      assertEqual (show cp) ref $ UCD.decompositionType cp
+  mkTestConditional
+    (\cp -> 0xac00 <= fromEnum cp && fromEnum cp <= 0xd7a3)
+    mayEnumP
+    "Decomposition type"
+    "decomposition_type"
+    UCD.decompositionType
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)
@@ -284,21 +267,42 @@ testEnum ::
   -> FilePath
   -> (UCD.CodePoint -> e)
   -> Test
-testEnum name file f =
-  TestLabel name $
-  TestCase $ do
-    reference <- readFullTable enumP $ "generated/test_data/" ++ file ++ ".txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      assertEqual (show cp) ref $ f cp
+testEnum = mkTest enumP
+
+testMayEnum ::
+     (Enum e, Show e, Bounded e, Eq e)
+  => String
+  -> FilePath
+  -> (UCD.CodePoint -> Maybe e)
+  -> Test
+testMayEnum = mkTest mayEnumP
 
 testCP :: String -> FilePath -> (UCD.CodePoint -> UCD.CodePoint) -> Test
-testCP name file f =
+testCP = mkTest $ toEnum <$> A.decimal
+
+mkTest ::
+     (Show a, Eq a)
+  => A.Parser a
+  -> String
+  -> FilePath
+  -> (UCD.CodePoint -> a)
+  -> Test
+mkTest = mkTestConditional (const False)
+
+mkTestConditional ::
+     (Show a, Eq a)
+  => (UCD.CodePoint -> Bool)
+  -> A.Parser a
+  -> String
+  -> FilePath
+  -> (UCD.CodePoint -> a)
+  -> Test
+mkTestConditional exclude parser name file f =
   TestLabel name $
   TestCase $ do
-    reference <-
-      readFullTable A.decimal $ "generated/test_data/" ++ file ++ ".txt"
+    reference <- readFullTable parser $ "generated/test_data/" ++ file ++ ".txt"
     for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      assertEqual (show cp) (toEnum ref) $ f cp
+      unless (exclude cp) $ assertEqual (show cp) ref $ f cp
 
 maxCp :: UCD.CodePoint
 maxCp = maxBound
