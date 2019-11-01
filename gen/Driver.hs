@@ -17,7 +17,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory, toUpper)
 import Data.Foldable (fold, for_)
 import Data.Functor.Identity (Identity)
-import Data.Int (Int64)
+import Data.Int (Int32, Int64)
 import Data.Maybe (fromMaybe)
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
@@ -191,6 +191,12 @@ instance TableValue ByteString where
 instance TableValue (V.Vector Word8) where
   type BottomType (V.Vector Word8) = (IntegralType, V.Vector Word8)
   type BottomVal (V.Vector Word8) = Int
+  typeVals = typeContainer
+  generateModule = generateMonoContainer
+
+instance TableValue (V.Vector Int32) where
+  type BottomType (V.Vector Int32) = (IntegralType, V.Vector Int32)
+  type BottomVal (V.Vector Int32) = Int
   typeVals = typeContainer
   generateModule = generateMonoContainer
 

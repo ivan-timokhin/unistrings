@@ -22,6 +22,18 @@ scriptExtensionsLength cp = length (UCD.scriptExtensionsRaw cp)
 
 inspect $ 'scriptExtensionsLength `hasNoType` ''[]
 
+nontrivialCanonicalDecompositionLength :: UCD.CodePoint -> Int
+nontrivialCanonicalDecompositionLength cp =
+  length (UCD.nontrivialCanonicalDecomposition cp)
+
+inspect $ 'nontrivialCanonicalDecompositionLength `hasNoType` ''[]
+
+nontrivialCompatibilityDecompositionLength :: UCD.CodePoint -> Int
+nontrivialCompatibilityDecompositionLength cp =
+  length (UCD.nontrivialCompatibilityDecomposition cp)
+
+inspect $ 'nontrivialCompatibilityDecompositionLength `hasNoType` ''[]
+
 --------------------------------------------------------------------------------
 -- Maybe elimination
 --------------------------------------------------------------------------------

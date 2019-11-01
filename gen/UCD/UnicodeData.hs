@@ -4,6 +4,7 @@
 module UCD.UnicodeData
   ( tableToVector
   , tableToNames
+  , tableToDecompositionVector
   , unicodeTableSize
   , Properties(..)
   , Name(Name, Unnamed)
@@ -18,6 +19,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Char as C
 import Data.Functor (void)
+import Data.Int (Int32)
 import Data.Maybe (mapMaybe)
 import Data.Ratio (Rational, (%))
 import qualified Data.Vector as V
@@ -56,6 +58,31 @@ tableToNames table =
        Single cp (Name n) _ -> Just (fromIntegral cp, n)
        _ -> Nothing)
     (getTable table)
+
+-- Note that the resulting vectors has empty entries for codepoints
+-- with trivial decompositions (to itself), so that we don't end up
+-- storing all 0x110000 decompositions in the database
+tableToDecompositionVector ::
+     Bool -> Table annS annR Properties -> V.Vector (V.Vector Int32)
+tableToDecompositionVector compat table = decompositions
+  where
+    decompositions =
+      flip V.map mappings $ \case
+        Nothing -> V.empty
+        Just mapping ->
+          foldMap
+            (\i ->
+               let d = decompositions V.! fromIntegral i
+                in if V.null d
+                     then V.singleton $ fromIntegral i
+                     else d)
+            mapping
+    mappings =
+      flip V.map (tableToVector Nothing $ fmap propDecompositionMapping table) $ \case
+        Nothing -> Nothing
+        Just (ty, mapping)
+          | compat || ty == Canonical -> Just mapping
+          | otherwise -> Nothing
 
 unicodeTableSize :: Int
 unicodeTableSize = 0x110000

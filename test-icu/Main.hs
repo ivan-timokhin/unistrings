@@ -4,7 +4,9 @@ import Control.Monad (when)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (ord)
 import Data.Foldable (for_)
+import qualified Data.Text as T
 import qualified Data.Text.ICU.Char as ICU
+import qualified Data.Text.ICU.Normalize as ICU
 import Numeric (showHex)
 import System.Exit (exitFailure)
 import Test.HUnit
@@ -22,6 +24,8 @@ main = do
           , derivedCoreProps
           , numeric
           , decompositionType
+          , canonicalDecomposition
+          , compatibilityDecomposition
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -207,6 +211,31 @@ decompositionType =
         ICU.Vertical -> UCD.VerticalLayout
         ICU.Wide -> UCD.Wide
         ICU.Count -> error "'Count' is not actually a decomposition type"
+
+canonicalDecomposition :: Test
+canonicalDecomposition =
+  mkDecompositionTest
+    "Canonical decomposition"
+    ICU.NFD
+    UCD.canonicalDecomposition
+
+compatibilityDecomposition :: Test
+compatibilityDecomposition =
+  mkDecompositionTest
+    "Compatibility decomposition"
+    ICU.NFKD
+    UCD.compatibilityDecomposition
+
+mkDecompositionTest ::
+     String -> ICU.NormalizationMode -> (Char -> [UCD.CodePoint]) -> Test
+mkDecompositionTest name mode =
+  compareForAll
+    name
+    (\c ->
+       map UCD.toCodePoint $
+       case ICU.property ICU.GeneralCategory c of
+         ICU.Surrogate -> [c]
+         _ -> T.unpack . ICU.normalize mode $ T.singleton c)
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest name prop = compareForAll name (ICU.property prop)

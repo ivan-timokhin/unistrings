@@ -294,6 +294,24 @@ main = do
     , processTable fullPartitionings "decomposition_type" $
       UCD.Common.tableToVector Nothing $
       fmap fst . UCD.UnicodeData.propDecompositionMapping <$> records
+    , let canonicalDecomposition =
+            UCD.UnicodeData.tableToDecompositionVector False records
+       in concurrently_
+            (generateSources
+               fullPartitionings
+               "canonical_decomposition_ptr"
+               canonicalDecomposition)
+            (generateSources fullPartitionings "canonical_decomposition_len" $
+             fmap V.length canonicalDecomposition)
+    , let compatibilityDecomposition =
+            UCD.UnicodeData.tableToDecompositionVector True records
+       in concurrently_
+            (generateSources
+               fullPartitionings
+               "compatibility_decomposition_ptr"
+               compatibilityDecomposition)
+            (generateSources fullPartitionings "compatibility_decomposition_len" $
+             fmap V.length compatibilityDecomposition)
     ]
 
 printLong :: Show a => [a] -> IO ()

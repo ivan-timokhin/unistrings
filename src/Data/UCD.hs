@@ -75,6 +75,10 @@ module Data.UCD
   , Numeric(..)
   , decompositionType
   , DecompositionType(..)
+  , canonicalDecomposition
+  , compatibilityDecomposition
+  , nontrivialCanonicalDecomposition
+  , nontrivialCompatibilityDecomposition
   , EnumeratedProperty(..)
   ) where
 
@@ -93,6 +97,8 @@ import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
+import qualified Data.UCD.Internal.CanonicalDecompositionLen as CDLen
+import qualified Data.UCD.Internal.CanonicalDecompositionPtr as CDPtr
 import qualified Data.UCD.Internal.CaseIgnorable as CI
 import qualified Data.UCD.Internal.Cased as Cs
 import qualified Data.UCD.Internal.ChangesWhenCasefolded as CWCF
@@ -100,6 +106,8 @@ import qualified Data.UCD.Internal.ChangesWhenCasemapped as CWCM
 import qualified Data.UCD.Internal.ChangesWhenLowercased as CWL
 import qualified Data.UCD.Internal.ChangesWhenTitlecased as CWT
 import qualified Data.UCD.Internal.ChangesWhenUppercased as CWU
+import qualified Data.UCD.Internal.CompatibilityDecompositionLen as KDLen
+import qualified Data.UCD.Internal.CompatibilityDecompositionPtr as KDPtr
 import qualified Data.UCD.Internal.Dash as Da
 import qualified Data.UCD.Internal.DecompositionType as DT
 import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
@@ -199,15 +207,9 @@ name cp
         tjsn = mkByteString (JSNLen.retrieve tpart) (JSNPtr.retrieve tpart)
         vpart = vbase + vindex
         tpart = tbase + tindex
-        (lindex, vtindex) = sindex `divMod` ncount
-        (vindex, tindex) = vtindex `divMod` tcount
-        sindex = icp - sbase
-        sbase = 0xAC00
         vbase = 0x61
         tbase = 0xA7
-        vcount = 21
-        tcount = 28
-        ncount = vcount * tcount
+        (lindex, vindex, tindex) = splitHangulSyllable icp
     prefix
       | (0x3400 <= icp && icp <= 0x4DB5) ||
           (0x4E00 <= icp && icp <= 0x9FEF) ||
@@ -564,6 +566,68 @@ decompositionType =
     if 0xac00 <= icp && icp <= 0xd7a3
       then Just Canonical
       else DT.retrieve icp
+
+--- TODO: handle hangul characters
+nontrivialCanonicalDecomposition :: IsCodePoint cp => cp -> [CodePoint]
+{-# INLINE nontrivialCanonicalDecomposition #-}
+nontrivialCanonicalDecomposition =
+  withCP $ \cp ->
+    if 0xAC00 <= cp && cp <= 0xD7A3
+      then hangulSyllableDecomposition cp
+      else let ptr = CDPtr.retrieve cp
+               len = CDLen.retrieve cp
+            in map (CodePoint . fromIntegral . unsafeReadPtr ptr) [0 .. len - 1]
+
+canonicalDecomposition :: IsCodePoint cp => cp -> [CodePoint]
+canonicalDecomposition cp =
+  case nontrivialCanonicalDecomposition cp of
+    [] -> [toCodePoint cp]
+    d -> d
+
+nontrivialCompatibilityDecomposition :: IsCodePoint cp => cp -> [CodePoint]
+{-# INLINE nontrivialCompatibilityDecomposition #-}
+nontrivialCompatibilityDecomposition =
+  withCP $ \cp ->
+    if 0xAC00 <= cp && cp <= 0xD7A3
+      then hangulSyllableDecomposition cp
+      else let ptr = KDPtr.retrieve cp
+               len = KDLen.retrieve cp
+            in map (CodePoint . fromIntegral . unsafeReadPtr ptr) [0 .. len - 1]
+
+compatibilityDecomposition :: IsCodePoint cp => cp -> [CodePoint]
+compatibilityDecomposition cp =
+  case nontrivialCompatibilityDecomposition cp of
+    [] -> [toCodePoint cp]
+    d -> d
+
+hangulSyllableDecomposition :: Int -> [CodePoint]
+{-# INLINE hangulSyllableDecomposition #-}
+hangulSyllableDecomposition cp =
+  let (lindex, vindex, tindex) = splitHangulSyllable cp
+      lbase = 0x1100
+      vbase = 0x1161
+      tbase = 0x11a7
+      lpart = lbase + lindex
+      vpart = vbase + vindex
+      tpart = tbase + tindex
+   in if tindex > 0
+        then [ CodePoint (fromIntegral lpart)
+             , CodePoint (fromIntegral vpart)
+             , CodePoint (fromIntegral tpart)
+             ]
+        else [CodePoint (fromIntegral lpart), CodePoint (fromIntegral vpart)]
+
+splitHangulSyllable :: Int -> (Int, Int, Int)
+{-# INLINE splitHangulSyllable #-}
+splitHangulSyllable icp = (lindex, vindex, tindex)
+  where
+    (lindex, vtindex) = sindex `divMod` ncount
+    (vindex, tindex) = vtindex `divMod` tcount
+    sindex = icp - sbase
+    sbase = 0xAC00
+    vcount = 21
+    tcount = 28
+    ncount = vcount * tcount
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

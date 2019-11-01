@@ -56,6 +56,9 @@ instance SizedTy (IntegralType, ByteString) where
 instance SizedTy (IntegralType, V.Vector Word8) where
   sizeInBytes (it, v) n = itSize it * n + V.length v
 
+instance SizedTy (IntegralType, V.Vector Int32) where
+  sizeInBytes (it, v) n = itSize it * n + 4 * V.length v
+
 class Show a =>
       FFIIntegralType a
   where
@@ -63,6 +66,9 @@ class Show a =>
 
 instance FFIIntegralType Word8 where
   itypeOf = word8
+
+instance FFIIntegralType Int32 where
+  itypeOf = int32
 
 typeEnum :: Enum a => V.Vector a -> IntegralType
 typeEnum = findTypeForTable fromEnum

@@ -26,7 +26,7 @@ import qualified Data.Vector as V
 import Numeric (showHex)
 
 import qualified Gen.Mono as Mono
-import Gen.Type (FFIIntegralType(itypeOf), IntegralType(itC, itHaskell))
+import Gen.Type (FFIIntegralType(itypeOf), IntegralType(itC, itHaskell, itSize))
 import Trie (TrieDesc(Bottom, Layer))
 
 data Module =
@@ -152,13 +152,17 @@ generateMonoContainer = generateGeneric . mkGenericSpec
         , gsHsType = "Ptr " <> itHaskell itype
         , gsHsImports = ["import Foreign.Ptr (plusPtr)"]
         , gsHsFFI = [renderHsCBinding valName "values" (itHaskell itype)]
-        , gsHsConvert = ("plusPtr values . fromEnum $ " <>)
+        , gsHsConvert =
+            (("plusPtr values " <> scaleOffset <> " . fromEnum $ ") <>)
         , gsHsIntegralType = fst
         , gsConvert = toInteger
         }
       where
         valName = prefix <> "_values"
     itype = itypeOf @(Mono.Elem c)
+    scaleOffset
+      | itSize itype == 1 = ""
+      | otherwise = ". (* " <> B.pack (show $ itSize itype) <> ")"
 
 data GenericSpec ann a =
   GSpec

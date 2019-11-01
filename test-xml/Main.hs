@@ -6,7 +6,7 @@ module Main where
 import Codec.Archive.Zip (mkEntrySelector, sourceEntry, withArchive)
 import Control.Applicative ((<|>), liftA2)
 import Control.Monad (when)
-import Data.Char (toUpper)
+import Data.Char (chr, toUpper)
 import Data.Foldable (for_, traverse_)
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
@@ -303,6 +303,28 @@ testCP children getAttr cp =
                       assertFailure $
                       "Unrecognised decomposition type: " ++ show str
           assertEqual "Decomposition type" decompType $ UCD.decompositionType cp
+          decompMap <-
+            case getAttr "dm" of
+              Nothing -> assertFailure "Can't find decomposition mapping"
+              Just str -> pure $ map readHex $ T.words str
+          case decompType of
+            Just UCD.Canonical ->
+              assertEqual
+                "Canonical decomposition"
+                (foldMap (UCD.canonicalDecomposition . chr) decompMap) $
+              UCD.nontrivialCanonicalDecomposition cp
+            _ ->
+              assertEqual "Canonical decomposition" [] $
+              UCD.nontrivialCanonicalDecomposition cp
+          case decompType of
+            Nothing ->
+              assertEqual "Compatibility decomposition" [] $
+              UCD.nontrivialCompatibilityDecomposition cp
+            _ ->
+              assertEqual
+                "Compatibility decomposition"
+                (foldMap (UCD.compatibilityDecomposition . chr) decompMap) $
+              UCD.nontrivialCompatibilityDecomposition cp
           pure ())
     ]
   where
