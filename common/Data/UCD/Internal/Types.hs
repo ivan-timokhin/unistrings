@@ -12,7 +12,16 @@ module Data.UCD.Internal.Types
   ) where
 
 import Data.ByteString.Char8 (ByteString)
-import Data.Char (GeneralCategory(..))
+import Data.Char
+  ( GeneralCategory(ClosePunctuation, ConnectorPunctuation, Control,
+                CurrencySymbol, DashPunctuation, DecimalNumber, EnclosingMark,
+                FinalQuote, Format, InitialQuote, LetterNumber, LineSeparator,
+                LowercaseLetter, MathSymbol, ModifierLetter, ModifierSymbol,
+                NonSpacingMark, NotAssigned, OpenPunctuation, OtherLetter,
+                OtherNumber, OtherPunctuation, OtherSymbol, ParagraphSeparator,
+                PrivateUse, Space, SpacingCombiningMark, Surrogate,
+                TitlecaseLetter, UppercaseLetter)
+  )
 
 class (Enum p, Bounded p) =>
       EnumeratedProperty p

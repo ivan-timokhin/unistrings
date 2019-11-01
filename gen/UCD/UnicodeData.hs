@@ -21,7 +21,7 @@ import qualified Data.Char as C
 import Data.Functor (void)
 import Data.Int (Int32)
 import Data.Maybe (mapMaybe)
-import Data.Ratio (Rational, (%))
+import Data.Ratio ((%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 

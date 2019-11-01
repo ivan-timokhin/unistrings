@@ -128,7 +128,7 @@ integralType ::
      Integral a => ByteString -> ByteString -> a -> a -> Int -> IntegralType
 integralType h c mi ma = IntegralType h c (fromIntegral mi) (fromIntegral ma)
 
-int8, word8, int16, word16, int32 :: IntegralType
+int8, word8, int16, word16, int32, int64 :: IntegralType
 int8 = integralType "Int8" "HsInt8" (minBound :: Int8) maxBound 1
 
 word8 = integralType "Word8" "HsWord8" (minBound :: Word8) maxBound 1
