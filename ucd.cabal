@@ -16,6 +16,12 @@ category:            Data
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
+flag Werror
+  description:         Turn all warnings into errors
+                       (for use in development and CI only)
+  default:             False
+  manual:              True
+
 library
   exposed-modules:     Data.UCD
                      , Data.UCD.Internal
@@ -100,6 +106,8 @@ library
                        -Wincomplete-record-updates
                        -Widentities
                        -Wcompat
+  if flag(Werror)
+    ghc-options:       -Werror
   c-sources:           generated/cbits/general_category.c
                      , generated/cbits/canonical_combining_class.c
                      , generated/cbits/name_len.c
@@ -183,6 +191,8 @@ test-suite ucd-test
   main-is:             Main.hs
   ghc-options:         -Wall
                        -Wcompat
+  if flag(Werror)
+    ghc-options:       -Werror
   build-depends:       base
                      , HUnit
                      , ucd
@@ -196,6 +206,8 @@ test-suite ucd-test-icu
   main-is:             Main.hs
   ghc-options:         -Wall
                        -Wcompat
+  if flag(Werror)
+    ghc-options:       -Werror
   build-depends:       base
                      , HUnit
                      , ucd
@@ -210,6 +222,8 @@ test-suite ucd-test-xml
   main-is:             Main.hs
   ghc-options:         -Wall
                        -Wcompat
+  if flag(Werror)
+    ghc-options:       -Werror
   build-depends:       base
                      , HUnit
                      , ucd
@@ -226,6 +240,8 @@ test-suite ucd-test-inspection
   main-is:             Main.hs
   ghc-options:         -Wall
                        -Wcompat
+  if flag(Werror)
+    ghc-options:       -Werror
   build-depends:       base
                      , inspection-testing
                      , ucd
@@ -238,6 +254,8 @@ benchmark ucd-bench
   ghc-options:         -Wall
                        -Wcompat
                        -O2
+  if flag(Werror)
+    ghc-options:       -Werror
   build-depends:       base
                      , criterion
                      , ucd
@@ -258,6 +276,8 @@ executable ucd-gen
                        -threaded
                        -rtsopts
                        -with-rtsopts "-N -A256m"
+  if flag(Werror)
+    ghc-options:       -Werror
   other-modules:       UCD.UnicodeData
                      , UCD.Jamo
                      , UCD.NameAliases
