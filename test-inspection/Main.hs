@@ -62,5 +62,10 @@ hasDecomposition cp = isJust (UCD.decompositionType cp)
 
 inspect $ 'hasDecomposition `hasNoType` ''Maybe
 
+areComposable :: UCD.CodePoint -> UCD.CodePoint -> Bool
+areComposable c1 c2 = isJust (UCD.canonicalComposition c1 c2)
+
+inspect $ 'areComposable `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()

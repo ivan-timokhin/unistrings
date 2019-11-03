@@ -79,6 +79,10 @@ module Data.UCD
   , compatibilityDecomposition
   , nontrivialCanonicalDecomposition
   , nontrivialCompatibilityDecomposition
+  , canonicalComposition
+  , canonicalCompositionStart
+  , canonicalCompositionFinish
+  , CompositionToken
   , EnumeratedProperty(..)
   ) where
 
@@ -97,6 +101,8 @@ import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
+import qualified Data.UCD.Internal.CanonicalCompositionBottom as CCB
+import qualified Data.UCD.Internal.CanonicalCompositionTop as CCT
 import qualified Data.UCD.Internal.CanonicalDecompositionLen as CDLen
 import qualified Data.UCD.Internal.CanonicalDecompositionPtr as CDPtr
 import qualified Data.UCD.Internal.CaseIgnorable as CI
@@ -628,6 +634,49 @@ splitHangulSyllable icp = (lindex, vindex, tindex)
     vcount = 21
     tcount = 28
     ncount = vcount * tcount
+
+canonicalComposition ::
+     (IsCodePoint cp1, IsCodePoint cp2) => cp1 -> cp2 -> Maybe CodePoint
+{-# INLINE canonicalComposition #-}
+canonicalComposition cp1 cp2 =
+  canonicalCompositionStart cp1 >>= flip canonicalCompositionFinish cp2
+
+canonicalCompositionStart :: IsCodePoint cp => cp -> Maybe CompositionToken
+{-# INLINE canonicalCompositionStart #-}
+canonicalCompositionStart =
+  withCP $ \icp ->
+    if 0x1100 <= icp && icp <= 0x1112
+      then Just $ HangulL (icp - 0x1100)
+      else let offset = icp - 0xAC00
+            in if 0 <= offset && offset <= 0x2B88 && offset `mod` 28 == 00
+                 then Just $ HangulLV icp
+                 else Generic . (* 0x110000) <$> CCT.retrieve icp
+
+canonicalCompositionFinish ::
+     IsCodePoint cp => CompositionToken -> cp -> Maybe CodePoint
+{-# INLINE canonicalCompositionFinish #-}
+canonicalCompositionFinish (Generic offset) =
+  withCP $ \cp ->
+    let result = CCB.retrieve (offset + cp)
+     in if result == 0
+          then Nothing
+          else Just $ CodePoint result
+canonicalCompositionFinish (HangulL lindex) =
+  withCP $ \cp ->
+    if 0x1161 <= cp && cp <= 0x1175
+      then Just $
+           CodePoint $ fromIntegral $ 0xAC00 + lindex * 588 + (cp - 0x1161) * 28
+      else Nothing
+canonicalCompositionFinish (HangulLV lvpart) =
+  withCP $ \cp ->
+    if 0x11A8 <= cp && cp <= 0x11C2
+      then Just $ CodePoint $ fromIntegral $ lvpart + (cp - 0x11A7)
+      else Nothing
+
+data CompositionToken
+  = Generic {-# UNPACK #-}!Int
+  | HangulL {-# UNPACK #-}!Int
+  | HangulLV {-# UNPACK #-}!Int
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

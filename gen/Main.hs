@@ -311,6 +311,17 @@ main = do
                compatibilityDecomposition)
             (generateSources fullPartitionings "compatibility_decomposition_len" $
              fmap V.length compatibilityDecomposition)
+    , let (topCompositionTable, bottomCompositionTable) =
+            UCD.UnicodeData.tableToCompositionTables records
+       in concurrently_
+            (generateSources
+               fullPartitionings
+               "canonical_composition_top"
+               topCompositionTable)
+            (generateSources
+               fullPartitionings
+               "canonical_composition_bottom"
+               bottomCompositionTable)
     ]
 
 printLong :: Show a => [a] -> IO ()

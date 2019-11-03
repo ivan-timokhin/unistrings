@@ -5,6 +5,7 @@ module UCD.UnicodeData
   ( tableToVector
   , tableToNames
   , tableToDecompositionVector
+  , tableToCompositionTables
   , unicodeTableSize
   , Properties(..)
   , Name(Name, Unnamed)
@@ -18,8 +19,11 @@ import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Char as C
+import Data.Foldable (foldl')
 import Data.Functor (void)
 import Data.Int (Int32)
+import qualified Data.IntMap.Strict as IM
+import Data.IntMap.Strict (IntMap)
 import Data.Maybe (mapMaybe)
 import Data.Ratio ((%))
 import qualified Data.Vector as V
@@ -33,6 +37,7 @@ import Data.UCD.Internal.Types
                   Small, Squared, Subscript, Superscript, VerticalLayout,
                   VulgarFraction, Wide)
   )
+import Trie (deduplicate)
 import UCD.Common
   ( Range(Range, Single)
   , Table(Table, getTable)
@@ -83,6 +88,40 @@ tableToDecompositionVector compat table = decompositions
         Just (ty, mapping)
           | compat || ty == Canonical -> Just mapping
           | otherwise -> Nothing
+
+tableToCompositionTables ::
+     Table annS annR Properties -> (V.Vector (Maybe Int), V.Vector Word32)
+tableToCompositionTables = nestedMapToTables 0 . tableToCompositionMap
+
+nestedMapToTables ::
+     Ord a => a -> IntMap (IntMap a) -> (V.Vector (Maybe Int), V.Vector a)
+nestedMapToTables def nmap = (topVec, bottomVec)
+  where
+    (topMap, bottomVecMap) = deduplicate nmap
+    topVec =
+      V.replicate unicodeTableSize Nothing V.// IM.toList (fmap Just topMap)
+    bottomVec =
+      V.concatMap
+        (\m -> V.replicate unicodeTableSize def V.// IM.toList m)
+        bottomVecMap
+
+tableToCompositionMap :: Table annS annR Properties -> IntMap (IntMap Word32)
+tableToCompositionMap = foldl' insert IM.empty . mapMaybe getSingle . getTable
+  where
+    insert ::
+         IntMap (IntMap Word32)
+      -> (Word32, Properties)
+      -> IntMap (IntMap Word32)
+    insert table (cp, Properties {propDecompositionMapping = Just (Canonical, [d1, d2])}) =
+      IM.insertWith
+        IM.union
+        (fromIntegral d1)
+        (IM.singleton (fromIntegral d2) cp)
+        table
+    insert table _ = table
+    getSingle :: Range annS annR a -> Maybe (Word32, a)
+    getSingle (Single cp _ a) = Just (cp, a)
+    getSingle _ = Nothing
 
 unicodeTableSize :: Int
 unicodeTableSize = 0x110000

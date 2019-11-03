@@ -174,6 +174,14 @@ instance TableValue Int64 where
   generateModule prefix =
     generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Int64"}
 
+instance TableValue (Maybe Int) where
+  type BottomType (Maybe Int) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        {esCPrefix = prefix, esHsType = "Int", esHsTypeModule = "Data.Int"}
+
 instance TableValue Int where
   type BottomType Int = IntegralType
   typeVals_ = typeEnum

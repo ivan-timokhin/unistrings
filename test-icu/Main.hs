@@ -1,8 +1,10 @@
 module Main where
 
+import Control.Exception (try)
 import Control.Monad (when)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (ord)
+import Data.Either (isLeft)
 import Data.Foldable (for_)
 import qualified Data.Text as T
 import qualified Data.Text.ICU.Char as ICU
@@ -10,6 +12,7 @@ import qualified Data.Text.ICU.Normalize as ICU
 import Numeric (showHex)
 import System.Exit (exitFailure)
 import Test.HUnit
+import Test.HUnit.Lang (HUnitFailure)
 
 import qualified Data.UCD as UCD
 
@@ -26,6 +29,7 @@ main = do
           , decompositionType
           , canonicalDecomposition
           , compatibilityDecomposition
+          , canonicalComposition
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -236,6 +240,29 @@ mkDecompositionTest name mode =
        case ICU.property ICU.GeneralCategory c of
          ICU.Surrogate -> [c]
          _ -> T.unpack . ICU.normalize mode $ T.singleton c)
+
+canonicalComposition :: Test
+canonicalComposition =
+  TestLabel "Canonical composition" $
+  TestCase $
+  expectFailure $
+  for_ [minBound .. maxBound] $ \cp1 ->
+    for_ (UCD.canonicalCompositionStart cp1) $ \token ->
+      for_ [minBound .. maxBound] $ \cp2 ->
+        for_ (UCD.canonicalCompositionFinish token cp2) $ \composed ->
+          assertEqual
+            (showHex (ord cp1) $ ' ' : showHex (ord cp2) "")
+            (map UCD.toCodePoint $
+             T.unpack $ ICU.normalize ICU.NFC $ T.pack [cp1, cp2])
+            [composed]
+
+expectFailure :: IO a -> IO ()
+expectFailure assertion = do
+  result <- getFailure assertion
+  assertBool "Test unexpectedly succeeded" $ isLeft result
+  where
+    getFailure :: IO a -> IO (Either HUnitFailure a)
+    getFailure = try
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest name prop = compareForAll name (ICU.property prop)
