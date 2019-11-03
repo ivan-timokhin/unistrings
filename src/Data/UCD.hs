@@ -573,7 +573,6 @@ decompositionType =
       then Just Canonical
       else DT.retrieve icp
 
---- TODO: handle hangul characters
 nontrivialCanonicalDecomposition :: IsCodePoint cp => cp -> [CodePoint]
 {-# INLINE nontrivialCanonicalDecomposition #-}
 nontrivialCanonicalDecomposition =
