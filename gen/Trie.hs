@@ -7,8 +7,6 @@
 module Trie
   ( TrieDesc(Bottom, Layer)
   , mkTrie
-  , mkTrieM
-  , partitioning
   , deduplicate
   ) where
 
@@ -43,10 +41,6 @@ deriving instance
          (Show (t (V.Vector Int)), Show (t (V.Vector a)), Show a,
           Show layerAnnotation, Show bottomAnnotation) =>
          Show (TrieDesc t layerAnnotation bottomAnnotation a)
-
-partitioning :: TrieDesc f la ba a -> [Int]
-partitioning (Bottom _ _) = []
-partitioning (Layer _ b _ rest) = b : partitioning rest
 
 mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc Identity () () a
 mkTrie xs bits = runIdentity $ mkTrieM xs (fromList bits)

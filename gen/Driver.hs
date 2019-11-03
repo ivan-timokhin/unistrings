@@ -18,7 +18,6 @@ import Data.Char (GeneralCategory, toUpper)
 import Data.Foldable (fold, for_)
 import Data.Functor.Identity (Identity)
 import Data.Int (Int32, Int64)
-import Data.Maybe (fromMaybe)
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
@@ -41,9 +40,10 @@ import Gen
   , generateMayEnum
   , generateMonoContainer
   )
-import Gen.Cost (SizedTy, pickBest, totalCost)
+import Gen.Cost (SizedTy(sizeInBytes))
 import Gen.Type
-  ( IntegralType
+  ( IntegralType(itSize)
+  , findTypeForRange
   , int64
   , typeASCII
   , typeContainer
@@ -53,8 +53,8 @@ import Gen.Type
   , typeMEnum
   , word8
   )
-import ListM (ListM)
-import Trie (TrieDesc, mkTrieM, partitioning)
+import Trie (TrieDesc, mkTrie)
+import TrieOpt (findOptimalPartitioning)
 
 class (SizedTy (BottomType a), Ord (BottomVal a), Show a) =>
       TableValue a
@@ -202,7 +202,7 @@ instance TableValue (V.Vector Int32) where
 
 processTable ::
      forall a. TableValue a
-  => [ListM [] Int]
+  => (Int, Int)
   -> ByteString
   -> V.Vector a
   -> IO ()
@@ -212,7 +212,7 @@ processTable partitionings snakeName values = do
   generateTests snakeName values
 
 generateASCIITableSources ::
-     [ListM [] Int] -> ByteString -> V.Vector ByteString -> IO ()
+     (Int, Int) -> ByteString -> V.Vector ByteString -> IO ()
 generateASCIITableSources partitionings snakeName values =
   concurrently_
     (generateSources partitionings (snakeName <> "_ptr") values)
@@ -221,7 +221,7 @@ generateASCIITableSources partitionings snakeName values =
 -- This assumes that the total length of all strings in a single
 -- element is <= 255
 generateASCIIVectorTableSources ::
-     [ListM [] Int] -> ByteString -> V.Vector (V.Vector ByteString) -> IO ()
+     (Int, Int) -> ByteString -> V.Vector (V.Vector ByteString) -> IO ()
 generateASCIIVectorTableSources partitionings snakeName values =
   concurrently_
     (generateSources partitionings (snakeName <> "_len") (fmap V.length values)) $
@@ -240,14 +240,14 @@ generateASCIIVectorTableSources partitionings snakeName values =
 
 generateSources ::
      forall a. TableValue a
-  => [ListM [] Int]
+  => (Int, Int)
   -> ByteString
   -> V.Vector a
   -> IO ()
 {-# INLINEABLE generateSources #-}
-generateSources partitionings snakeName values = do
-  putStrLn $ show snakeName ++ " " ++ show (partitioning trie)
-  putStrLn $ show snakeName ++ " " ++ show (totalCost trie)
+generateSources (maxLayers, maxBits) snakeName values = do
+  putStrLn $ show snakeName ++ " " ++ show p
+  putStrLn $ show snakeName ++ " " ++ show cost
   let hsFile = "generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
   B.writeFile (B.unpack hsFile) $
     B.unlines $
@@ -261,9 +261,17 @@ generateSources partitionings snakeName values = do
     hsModuleName = snake2camel snakeName
     modul = generateModule @a cprefix trie
     cprefix = "_hs__ucd__" <> snakeName
-    trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
-    candidates =
-      map (first (const bty) . typeLayers) $ partitionings >>= mkTrieM bvals
+    trie = first (const bty) $ typeLayers $ mkTrie bvals p
+    (cost, p) =
+      findOptimalPartitioning
+        (itSize . findTypeForRange)
+        (sizeInBytes bty)
+        maxBits
+        maxLayers
+        bvals
+    -- trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
+    -- candidates =
+    --   map (first (const bty) . typeLayers) $ partitionings >>= mkTrieM bvals
     (bty, bvals) = typeVals values
 
 generateTests :: Show a => ByteString -> V.Vector a -> IO ()

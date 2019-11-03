@@ -29,7 +29,6 @@ import Driver
   , generateTests
   , processTable
   )
-import ListM (ListM(Nil), generatePartitionings)
 import qualified UCD.Age
 import qualified UCD.Blocks
 import qualified UCD.CaseFolding
@@ -57,7 +56,7 @@ main = do
   createDirectoryIfMissing True "generated/cbits"
   createDirectoryIfMissing True "generated/hs/Data/UCD/Internal"
   createDirectoryIfMissing True "generated/test_data"
-  let fullPartitionings = generatePartitionings 4 0 16
+  let fullPartitionings = (4, 16)
   mapConcurrently_
     id
     [ processTable fullPartitionings "general_category" $
@@ -161,7 +160,7 @@ main = do
          [0x17000 .. 0x187F7] ++
          [0xF900 .. 0xFA6D] ++ [0xFA70 .. 0xFAD9] ++ [0x2F800 .. 0x2FA1D])
     , do shortNames <- UCD.Jamo.fetch
-         generateASCIITableSources [Nil] "jamo_short_name" shortNames
+         generateASCIITableSources (0, 0) "jamo_short_name" shortNames
     , do aliases <- tableToVector V.empty <$> UCD.NameAliases.fetch
          concurrently_ (generateTests "name_aliases" aliases) $
            concurrently_
@@ -174,7 +173,7 @@ main = do
                 "name_aliases_types"
                 (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
     , do blocks <- UCD.Blocks.fetch
-         generateSources (generatePartitionings 4 0 12) "blocks" blocks
+         generateSources (4, 12) "blocks" blocks
     , do ages <- UCD.Common.tableToVector Nothing . fmap Just <$> UCD.Age.fetch
          processTable fullPartitionings "age" ages
     , do scripts <- UCD.Common.tableToVector UnknownScript <$> UCD.Scripts.fetch

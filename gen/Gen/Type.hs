@@ -14,6 +14,7 @@ module Gen.Type
   , typeContainer
   , typeContainerDedup
   , typeLayers
+  , findTypeForRange
   , int8
   , word8
   , int16

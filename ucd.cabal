@@ -293,6 +293,7 @@ executable ucd-gen
                      , UCD.Unihan.NumericValues
                      , UCD.Common
                      , Trie
+                     , TrieOpt
                      , Gen
                      , Gen.Type
                      , Gen.Mono
