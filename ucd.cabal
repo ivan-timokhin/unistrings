@@ -301,7 +301,6 @@ executable ucd-gen
                      , Gen
                      , Gen.Type
                      , Gen.Mono
-                     , ListM
                      , Gen.Cost
                      , Data.UCD.Internal.Types
                      , Driver
