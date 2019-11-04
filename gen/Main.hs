@@ -40,6 +40,7 @@ import UCD.Common
   , unicodeTableSize
   )
 import qualified UCD.DerivedCoreProperties as UCD.DCP
+import qualified UCD.DerivedNormalizationProps as UCD.DNP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
 import qualified UCD.NameAliases
@@ -311,17 +312,24 @@ main = do
                compatibilityDecomposition)
             (generateSources fullPartitionings "compatibility_decomposition_len" $
              fmap V.length compatibilityDecomposition)
-    , let (topCompositionTable, bottomCompositionTable) =
-            UCD.UnicodeData.tableToCompositionTables records
-       in concurrently_
-            (generateSources
-               fullPartitionings
-               "canonical_composition_top"
-               topCompositionTable)
-            (generateSources
-               fullPartitionings
-               "canonical_composition_bottom"
-               bottomCompositionTable)
+    , do nps <- UCD.DNP.fetch
+         let fullCompositionExclusion =
+               UCD.Common.tableToVector
+                 False
+                 (UCD.DNP.fullCompositionExclusion nps)
+             (topCompositionTable, bottomCompositionTable) =
+               UCD.UnicodeData.tableToCompositionTables
+                 (\i -> fullCompositionExclusion V.! fromIntegral i)
+                 records
+         concurrently_
+           (generateSources
+              fullPartitionings
+              "canonical_composition_top"
+              topCompositionTable)
+           (generateSources
+              fullPartitionings
+              "canonical_composition_bottom"
+              bottomCompositionTable)
     ]
 
 printLong :: Show a => [a] -> IO ()

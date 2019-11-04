@@ -1,4 +1,4 @@
-* Unicode Properties [67/99]
+* Unicode Properties [68/97]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -51,14 +51,12 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Numeric_Type
   - [X] Hex_Digit
   - [X] ASCII_Hex_Digit
-- [-] Normalization [2/11]
+- [-] Normalization [3/9]
   - [X] Canonical_Combining_Class
-  - [ ] Decomposition_Mapping.  This one, and the next two, are not
+  - [X] Decomposition_Mapping.  This one, and the next two, are not
     recommended for exposure in public APIs, so I may need to stuff
     them into some internal module or some such.  Also, this probably
     has to take Hangul decomposition rules into account.
-  - [ ] Composition_Exclusion
-  - [ ] Full_Composition_Exclusion
   - [X] Decomposition_Type.  Also Hangul-sensitive
   - [ ] NFC_Quick_Check
   - [ ] NFKC_Quick_Check

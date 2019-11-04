@@ -295,6 +295,7 @@ executable ucd-gen
                      , UCD.SpecialCasing
                      , UCD.CaseFolding
                      , UCD.Unihan.NumericValues
+                     , UCD.DerivedNormalizationProps
                      , UCD.Common
                      , Trie
                      , TrieOpt

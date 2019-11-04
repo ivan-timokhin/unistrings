@@ -90,8 +90,11 @@ tableToDecompositionVector compat table = decompositions
           | otherwise -> Nothing
 
 tableToCompositionTables ::
-     Table annS annR Properties -> (V.Vector (Maybe Int), V.Vector Word32)
-tableToCompositionTables = nestedMapToTables 0 . tableToCompositionMap
+     (Word32 -> Bool)
+  -> Table annS annR Properties
+  -> (V.Vector (Maybe Int), V.Vector Word32)
+tableToCompositionTables exclude =
+  nestedMapToTables 0 . tableToCompositionMap exclude
 
 nestedMapToTables ::
      Ord a => a -> IntMap (IntMap a) -> (V.Vector (Maybe Int), V.Vector a)
@@ -105,19 +108,22 @@ nestedMapToTables def nmap = (topVec, bottomVec)
         (\m -> V.replicate unicodeTableSize def V.// IM.toList m)
         bottomVecMap
 
-tableToCompositionMap :: Table annS annR Properties -> IntMap (IntMap Word32)
-tableToCompositionMap = foldl' insert IM.empty . mapMaybe getSingle . getTable
+tableToCompositionMap ::
+     (Word32 -> Bool) -> Table annS annR Properties -> IntMap (IntMap Word32)
+tableToCompositionMap exclude =
+  foldl' insert IM.empty . mapMaybe getSingle . getTable
   where
     insert ::
          IntMap (IntMap Word32)
       -> (Word32, Properties)
       -> IntMap (IntMap Word32)
-    insert table (cp, Properties {propDecompositionMapping = Just (Canonical, [d1, d2])}) =
-      IM.insertWith
-        IM.union
-        (fromIntegral d1)
-        (IM.singleton (fromIntegral d2) cp)
-        table
+    insert table (cp, Properties {propDecompositionMapping = Just (Canonical, [d1, d2])})
+      | not (exclude cp) =
+        IM.insertWith
+          IM.union
+          (fromIntegral d1)
+          (IM.singleton (fromIntegral d2) cp)
+          table
     insert table _ = table
     getSingle :: Range annS annR a -> Maybe (Word32, a)
     getSingle (Single cp _ a) = Just (cp, a)

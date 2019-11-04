@@ -90,11 +90,13 @@ enumeratedP :: (Enum a, Bounded a) => (a -> ByteString) -> A.Parser a
 enumeratedP f = tableP $ flip map [minBound .. maxBound] $ \p -> (f p, p)
 
 fetchSimple :: Show a => FilePath -> A.Parser a -> IO (Table () () a)
-fetchSimple file p = fetchGeneral file (fmap Table parser)
+fetchSimple file = fetchGeneral file . tableParser
+
+tableParser :: A.Parser a -> A.Parser (Table () () a)
+tableParser p = do
+  comments
+  Table <$> many record
   where
-    parser = do
-      comments
-      many record
     record = do
       rng <- range
       v <- p
