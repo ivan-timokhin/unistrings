@@ -101,6 +101,10 @@ library
                      , Data.UCD.Internal.CompatibilityDecompositionPtr
                      , Data.UCD.Internal.CanonicalCompositionTop
                      , Data.UCD.Internal.CanonicalCompositionBottom
+                     , Data.UCD.Internal.NfdQuickCheck
+                     , Data.UCD.Internal.NfcQuickCheck
+                     , Data.UCD.Internal.NfkdQuickCheck
+                     , Data.UCD.Internal.NfkcQuickCheck
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -183,6 +187,10 @@ library
                      , generated/cbits/compatibility_decomposition_ptr.c
                      , generated/cbits/canonical_composition_top.c
                      , generated/cbits/canonical_composition_bottom.c
+                     , generated/cbits/nfd_quick_check.c
+                     , generated/cbits/nfc_quick_check.c
+                     , generated/cbits/nfkd_quick_check.c
+                     , generated/cbits/nfkc_quick_check.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src

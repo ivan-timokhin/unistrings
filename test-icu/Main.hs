@@ -272,8 +272,22 @@ canonicalComposition =
         Just c -> ucdCompose (c : cs')
         Nothing -> c1 : ucdCompose cs
 
+normalFormQuickCheck :: Test
+normalFormQuickCheck =
+  TestLabel "Quick check" $
+  TestList
+    [ mkPropertyTest "NFD" ICU.NFDQuickCheck (Just . UCD.nfdQuickCheck)
+    , mkPropertyTest "NFC" ICU.NFCQuickCheck UCD.nfcQuickCheck
+    , mkPropertyTest "NFKD" ICU.NFKDQuickCheck (Just . UCD.nfkdQuickCheck)
+    , mkPropertyTest "NFKC" ICU.NFKCQuickCheck UCD.nfkcQuickCheck
+    ]
+
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
-mkBoolTest name prop = compareForAll name (ICU.property prop)
+mkBoolTest = mkPropertyTest
+
+mkPropertyTest ::
+     (ICU.Property p v, Show v, Eq v) => String -> p -> (Char -> v) -> Test
+mkPropertyTest name prop = compareForAll name (ICU.property prop)
 
 compareForAll :: (Show a, Eq a) => String -> (Char -> a) -> (Char -> a) -> Test
 compareForAll name icuQuery ucdQuery =

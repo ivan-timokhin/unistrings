@@ -162,6 +162,14 @@ instance TableValue Bool where
       EnumSpec
         {esCPrefix = prefix, esHsType = "Bool", esHsTypeModule = "Data.Bool"}
 
+instance TableValue (Maybe Bool) where
+  type BottomType (Maybe Bool) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        {esCPrefix = prefix, esHsType = "Bool", esHsTypeModule = "Data.Bool"}
+
 instance TableValue Word8 where
   type BottomType Word8 = IntegralType
   typeVals_ = const word8

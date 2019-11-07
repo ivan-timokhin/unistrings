@@ -36,6 +36,7 @@ main = do
               , simpleCaseMappings
               , caseMappings
               , decompositionType
+              , normalFormQuickCheck
               ]
           , TestLabel "Names" $
             TestList
@@ -246,6 +247,16 @@ decompositionType =
     "Decomposition type"
     "decomposition_type"
     UCD.decompositionType
+
+normalFormQuickCheck :: Test
+normalFormQuickCheck =
+  TestLabel "Quick checks for normal form" $
+  TestList
+    [ testEnum "NFD" "nfd_quick_check" UCD.nfdQuickCheck
+    , testMayEnum "NFC" "nfc_quick_check" UCD.nfcQuickCheck
+    , testEnum "NFKD" "nfkd_quick_check" UCD.nfkdQuickCheck
+    , testMayEnum "NFKC" "nfkc_quick_check" UCD.nfkcQuickCheck
+    ]
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

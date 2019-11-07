@@ -325,6 +325,20 @@ testCP children getAttr cp =
                 "Compatibility decomposition"
                 (foldMap (UCD.compatibilityDecomposition . chr) decompMap) $
               UCD.nontrivialCompatibilityDecomposition cp
+          let getQuickCheck attr =
+                case getAttr attr of
+                  Just "Y" -> pure $ Just True
+                  Just "N" -> pure $ Just False
+                  Just "M" -> pure Nothing
+                  _ -> assertFailure "Can't parse quick check attribute"
+          nfdQC <- getQuickCheck "NFD_QC"
+          assertEqual "NFD quick check" nfdQC $ Just $ UCD.nfdQuickCheck cp
+          nfcQC <- getQuickCheck "NFC_QC"
+          assertEqual "NFC quick check" nfcQC $ UCD.nfcQuickCheck cp
+          nfkdQC <- getQuickCheck "NFKD_QC"
+          assertEqual "NFKD quick check" nfkdQC $ Just $ UCD.nfkdQuickCheck cp
+          nfkcQC <- getQuickCheck "NFKC_QC"
+          assertEqual "NFKC quick check" nfkcQC $ UCD.nfkcQuickCheck cp
           pure ())
     ]
   where

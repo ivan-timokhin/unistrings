@@ -67,5 +67,15 @@ areComposable c1 c2 = isJust (UCD.canonicalComposition c1 c2)
 
 inspect $ 'areComposable `hasNoType` ''Maybe
 
+nfcQC :: UCD.CodePoint -> Bool
+nfcQC c = isJust (UCD.nfcQuickCheck c)
+
+inspect $ 'nfcQC `hasNoType` ''Maybe
+
+nfkcQC :: UCD.CodePoint -> Bool
+nfkcQC c = isJust (UCD.nfkcQuickCheck c)
+
+inspect $ 'nfkcQC `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()

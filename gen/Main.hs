@@ -330,6 +330,17 @@ main = do
               fullPartitionings
               "canonical_composition_bottom"
               bottomCompositionTable)
+         mapConcurrently_
+           id
+           [ processTable fullPartitionings "nfd_quick_check" $
+             UCD.DNP.nfdQuickCheck nps
+           , processTable fullPartitionings "nfc_quick_check" $
+             UCD.DNP.nfcQuickCheck nps
+           , processTable fullPartitionings "nfkd_quick_check" $
+             UCD.DNP.nfkdQuickCheck nps
+           , processTable fullPartitionings "nfkc_quick_check" $
+             UCD.DNP.nfkcQuickCheck nps
+           ]
     ]
 
 printLong :: Show a => [a] -> IO ()

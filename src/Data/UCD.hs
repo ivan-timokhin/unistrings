@@ -83,6 +83,10 @@ module Data.UCD
   , canonicalCompositionStart
   , canonicalCompositionFinish
   , CompositionToken
+  , nfdQuickCheck
+  , nfcQuickCheck
+  , nfkdQuickCheck
+  , nfkcQuickCheck
   , EnumeratedProperty(..)
   ) where
 
@@ -141,6 +145,10 @@ import qualified Data.UCD.Internal.NameAliasesAliasesSublens as NAASublens
 import qualified Data.UCD.Internal.NameAliasesTypes as NAT
 import qualified Data.UCD.Internal.NameLen as NameLen
 import qualified Data.UCD.Internal.NamePtr as NamePtr
+import qualified Data.UCD.Internal.NfcQuickCheck as NFCQC
+import qualified Data.UCD.Internal.NfdQuickCheck as NFDQC
+import qualified Data.UCD.Internal.NfkcQuickCheck as NFKCQC
+import qualified Data.UCD.Internal.NfkdQuickCheck as NFKDQC
 import qualified Data.UCD.Internal.NumericDenominator as ND
 import qualified Data.UCD.Internal.NumericNumerator as NN
 import qualified Data.UCD.Internal.NumericType as NT
@@ -676,6 +684,18 @@ data CompositionToken
   = Generic {-# UNPACK #-}!Int
   | HangulL {-# UNPACK #-}!Int
   | HangulLV {-# UNPACK #-}!Int
+
+nfdQuickCheck :: IsCodePoint cp => cp -> Bool
+nfdQuickCheck = withCP NFDQC.retrieve
+
+nfcQuickCheck :: IsCodePoint cp => cp -> Maybe Bool
+nfcQuickCheck = withCP NFCQC.retrieve
+
+nfkdQuickCheck :: IsCodePoint cp => cp -> Bool
+nfkdQuickCheck = withCP NFKDQC.retrieve
+
+nfkcQuickCheck :: IsCodePoint cp => cp -> Maybe Bool
+nfkcQuickCheck = withCP NFKCQC.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
