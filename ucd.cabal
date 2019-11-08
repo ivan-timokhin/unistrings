@@ -105,6 +105,9 @@ library
                      , Data.UCD.Internal.NfcQuickCheck
                      , Data.UCD.Internal.NfkdQuickCheck
                      , Data.UCD.Internal.NfkcQuickCheck
+                     , Data.UCD.Internal.SimpleNfkcCasefold
+                     , Data.UCD.Internal.ComplexNfkcCasefoldPtr
+                     , Data.UCD.Internal.ComplexNfkcCasefoldLen
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -191,6 +194,9 @@ library
                      , generated/cbits/nfc_quick_check.c
                      , generated/cbits/nfkd_quick_check.c
                      , generated/cbits/nfkc_quick_check.c
+                     , generated/cbits/simple_nfkc_casefold.c
+                     , generated/cbits/complex_nfkc_casefold_ptr.c
+                     , generated/cbits/complex_nfkc_casefold_len.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src

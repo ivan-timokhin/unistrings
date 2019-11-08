@@ -34,6 +34,14 @@ nontrivialCompatibilityDecompositionLength cp =
 
 inspect $ 'nontrivialCompatibilityDecompositionLength `hasNoType` ''[]
 
+nfkcCaseFoldLength :: UCD.CodePoint -> Int
+nfkcCaseFoldLength cp =
+  case UCD.nfkcCaseFold cp of
+    UCD.ShortCF _ -> 1
+    UCD.LongCF cs -> length cs
+
+inspect $ 'nfkcCaseFoldLength `hasNoType` ''[]
+
 --------------------------------------------------------------------------------
 -- Maybe elimination
 --------------------------------------------------------------------------------

@@ -339,7 +339,17 @@ testCP children getAttr cp =
           assertEqual "NFKD quick check" nfkdQC $ Just $ UCD.nfkdQuickCheck cp
           nfkcQC <- getQuickCheck "NFKC_QC"
           assertEqual "NFKC quick check" nfkcQC $ UCD.nfkcQuickCheck cp
-          pure ())
+          ------
+          nfkcCF <-
+            case getAttr "NFKC_CF" of
+              Just "#" -> pure [cp]
+              Just str -> pure $ map (toEnum . readHex) $ T.words str
+              Nothing -> assertFailure "Can't find NFKC_Casefold"
+          case UCD.nfkcCaseFold cp of
+            UCD.ShortCF c -> assertEqual "NFKC_CF" nfkcCF [c]
+            UCD.LongCF cs -> do
+              assert $ length cs /= 1
+              assertEqual "NFKC_CF" nfkcCF cs)
     ]
   where
     generalCategory =

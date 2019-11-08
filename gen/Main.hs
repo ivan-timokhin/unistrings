@@ -15,7 +15,8 @@ import Control.Concurrent.Async
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
-import Data.Int (Int64)
+import Data.Functor ((<&>))
+import Data.Int (Int32, Int64)
 import Data.Ratio (denominator, numerator)
 import qualified Data.Vector as V
 import Data.Word (Word8)
@@ -341,6 +342,35 @@ main = do
            , processTable fullPartitionings "nfkc_quick_check" $
              UCD.DNP.nfkcQuickCheck nps
            ]
+         let identityMapping = V.generate unicodeTableSize fromIntegral
+             simpleNFKCCF =
+               V.imap (\cp m -> fromIntegral m - cp) $
+               identityMapping `adjustWithM`
+               (UCD.DNP.nfkcCaseFold nps <&> \case
+                  [cp] -> Just cp
+                  _ -> Nothing)
+             complexNFKCCF =
+               tableToVector (V.empty :: V.Vector Int32) $
+               dropNothing $
+               UCD.DNP.nfkcCaseFold nps <&> \case
+                 [_] -> Nothing
+                 ws -> Just $ V.fromList $ map fromIntegral ws
+             allNFKCCFL =
+               tableToVector (1 :: Int) $ length <$> UCD.DNP.nfkcCaseFold nps
+         concurrently_
+           (generateSources
+              fullPartitionings
+              "simple_nfkc_casefold"
+              simpleNFKCCF)
+           (concurrently_
+              (generateSources
+                 fullPartitionings
+                 "complex_nfkc_casefold_ptr"
+                 complexNFKCCF)
+              (generateSources
+                 fullPartitionings
+                 "complex_nfkc_casefold_len"
+                 allNFKCCFL))
     ]
 
 printLong :: Show a => [a] -> IO ()

@@ -87,6 +87,8 @@ module Data.UCD
   , nfcQuickCheck
   , nfkdQuickCheck
   , nfkcQuickCheck
+  , nfkcCaseFold
+  , NFKCCaseFold(ShortCF, LongCF)
   , EnumeratedProperty(..)
   ) where
 
@@ -118,6 +120,8 @@ import qualified Data.UCD.Internal.ChangesWhenTitlecased as CWT
 import qualified Data.UCD.Internal.ChangesWhenUppercased as CWU
 import qualified Data.UCD.Internal.CompatibilityDecompositionLen as KDLen
 import qualified Data.UCD.Internal.CompatibilityDecompositionPtr as KDPtr
+import qualified Data.UCD.Internal.ComplexNfkcCasefoldLen as CNFKCCFLen
+import qualified Data.UCD.Internal.ComplexNfkcCasefoldPtr as CNFKCCFPtr
 import qualified Data.UCD.Internal.Dash as Da
 import qualified Data.UCD.Internal.DecompositionType as DT
 import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
@@ -162,6 +166,7 @@ import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
 import qualified Data.UCD.Internal.SentenceTerminal as ST
 import qualified Data.UCD.Internal.SimpleCaseFolding as SCF
 import qualified Data.UCD.Internal.SimpleLowercaseMapping as SLM
+import qualified Data.UCD.Internal.SimpleNfkcCasefold as SNFKCCF
 import qualified Data.UCD.Internal.SimpleTitlecaseMapping as STM
 import qualified Data.UCD.Internal.SimpleUppercaseMapping as SUM
 import qualified Data.UCD.Internal.SoftDotted as SD
@@ -696,6 +701,21 @@ nfkdQuickCheck = withCP NFKDQC.retrieve
 
 nfkcQuickCheck :: IsCodePoint cp => cp -> Maybe Bool
 nfkcQuickCheck = withCP NFKCQC.retrieve
+
+nfkcCaseFold :: IsCodePoint cp => cp -> NFKCCaseFold
+{-# INLINE nfkcCaseFold #-}
+nfkcCaseFold =
+  withCP $ \cp ->
+    case CNFKCCFLen.retrieve cp of
+      1 -> ShortCF $ CodePoint $ fromIntegral $ cp + SNFKCCF.retrieve cp
+      l ->
+        LongCF $
+        flip map [0 .. (l - 1)] $
+        CodePoint . fromIntegral . unsafeReadPtr (CNFKCCFPtr.retrieve cp)
+
+data NFKCCaseFold
+  = ShortCF {-# UNPACK #-}!CodePoint
+  | LongCF [CodePoint]
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
