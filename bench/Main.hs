@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Main where
 
 import Control.Exception (evaluate)
@@ -322,6 +324,21 @@ main =
                   udhr
                   (maybe 0 fromEnum . ICU.property ICU.Decomposition)
               ]
+          , C.bgroup
+              "Quick checks"
+              [ mkMBoolGroup
+                  udhr
+                  "NFD"
+                  ICU.NFDQuickCheck
+                  (Just . UCD.nfdQuickCheck)
+              , mkMBoolGroup udhr "NFC" ICU.NFCQuickCheck UCD.nfcQuickCheck
+              , mkMBoolGroup
+                  udhr
+                  "NFKD"
+                  ICU.NFKDQuickCheck
+                  (Just . UCD.nfkdQuickCheck)
+              , mkMBoolGroup udhr "NFKC" ICU.NFKCQuickCheck UCD.nfkcQuickCheck
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]
@@ -335,6 +352,21 @@ mkBoolGroup vals name mprop f =
   case mprop of
     Nothing -> []
     Just prop -> [C.bench "ICU" $ mkEnumBenchmark vals (ICU.property prop)]
+
+mkMBoolGroup ::
+     ICU.Property p (Maybe Bool)
+  => V.Vector Char
+  -> String
+  -> p
+  -> (Char -> Maybe Bool)
+  -> C.Benchmark
+{-# INLINE mkMBoolGroup #-}
+mkMBoolGroup vals name prop f =
+  C.bgroup
+    name
+    [ C.bench "UCD" $ mkBenchmark vals $ maybe 0 fromEnum . f
+    , C.bench "ICU" $ mkBenchmark vals $ maybe 0 fromEnum . ICU.property prop
+    ]
 
 mkEnumBenchmark :: Enum a => V.Vector Char -> (Char -> a) -> C.Benchmarkable
 {-# INLINE mkEnumBenchmark #-}
