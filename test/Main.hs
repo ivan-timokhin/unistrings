@@ -37,6 +37,7 @@ main = do
               , caseMappings
               , decompositionType
               , normalFormQuickCheck
+              , changesWhenNFKCCaseFolded
               ]
           , TestLabel "Names" $
             TestList
@@ -257,6 +258,13 @@ normalFormQuickCheck =
     , testEnum "NFKD" "nfkd_quick_check" UCD.nfkdQuickCheck
     , testMayEnum "NFKC" "nfkc_quick_check" UCD.nfkcQuickCheck
     ]
+
+changesWhenNFKCCaseFolded :: Test
+changesWhenNFKCCaseFolded =
+  testEnum
+    "Changes when NFKC casefolded"
+    "changes_when_nfkc_casefolded"
+    UCD.changesWhenNFKCCasefolded
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

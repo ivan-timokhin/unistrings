@@ -89,6 +89,7 @@ module Data.UCD
   , nfkcQuickCheck
   , nfkcCaseFold
   , NFKCCaseFold(ShortCF, LongCF)
+  , changesWhenNFKCCasefolded
   , EnumeratedProperty(..)
   ) where
 
@@ -116,6 +117,7 @@ import qualified Data.UCD.Internal.Cased as Cs
 import qualified Data.UCD.Internal.ChangesWhenCasefolded as CWCF
 import qualified Data.UCD.Internal.ChangesWhenCasemapped as CWCM
 import qualified Data.UCD.Internal.ChangesWhenLowercased as CWL
+import qualified Data.UCD.Internal.ChangesWhenNfkcCasefolded as CWNC
 import qualified Data.UCD.Internal.ChangesWhenTitlecased as CWT
 import qualified Data.UCD.Internal.ChangesWhenUppercased as CWU
 import qualified Data.UCD.Internal.CompatibilityDecompositionLen as KDLen
@@ -716,6 +718,9 @@ nfkcCaseFold =
 data NFKCCaseFold
   = ShortCF {-# UNPACK #-}!CodePoint
   | LongCF [CodePoint]
+
+changesWhenNFKCCasefolded :: IsCodePoint cp => cp -> Bool
+changesWhenNFKCCasefolded = withCP CWNC.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

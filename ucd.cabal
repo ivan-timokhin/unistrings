@@ -108,6 +108,7 @@ library
                      , Data.UCD.Internal.SimpleNfkcCasefold
                      , Data.UCD.Internal.ComplexNfkcCasefoldPtr
                      , Data.UCD.Internal.ComplexNfkcCasefoldLen
+                     , Data.UCD.Internal.ChangesWhenNfkcCasefolded
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -197,6 +198,7 @@ library
                      , generated/cbits/simple_nfkc_casefold.c
                      , generated/cbits/complex_nfkc_casefold_ptr.c
                      , generated/cbits/complex_nfkc_casefold_len.c
+                     , generated/cbits/changes_when_nfkc_casefolded.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src

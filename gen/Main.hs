@@ -371,6 +371,9 @@ main = do
                  fullPartitionings
                  "complex_nfkc_casefold_len"
                  allNFKCCFL))
+         processTable fullPartitionings "changes_when_nfkc_casefolded" $
+           UCD.Common.tableToVector False $
+           UCD.DNP.changesWhenNFKCCaseFolded nps
     ]
 
 printLong :: Show a => [a] -> IO ()

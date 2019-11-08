@@ -339,6 +339,11 @@ main =
                   (Just . UCD.nfkdQuickCheck)
               , mkMBoolGroup udhr "NFKC" ICU.NFKCQuickCheck UCD.nfkcQuickCheck
               ]
+          , mkBoolGroup
+              udhr
+              "Changes when NFKC casefolded"
+              Nothing
+              UCD.changesWhenNFKCCasefolded
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

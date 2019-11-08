@@ -1,4 +1,4 @@
-* Unicode Properties [73/97]
+* Unicode Properties [75/97]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -51,7 +51,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Numeric_Type
   - [X] Hex_Digit
   - [X] ASCII_Hex_Digit
-- [-] Normalization [8/9]
+- [X] Normalization [9/9]
   - [X] Canonical_Combining_Class
   - [X] Decomposition_Mapping.  This one, and the next two, are not
     recommended for exposure in public APIs, so I may need to stuff
@@ -63,7 +63,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] NFD_Quick_Check
   - [X] NFKD_Quick_Check
   - [X] NFKC_Casefold
-  - [ ] Changes_When_NFKC_Casefolded
+  - [X] Changes_When_NFKC_Casefolded
 - [-] Shaping and Rendering [2/10]
   - [X] Join_Control
   - [ ] Joining_Group

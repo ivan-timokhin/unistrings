@@ -169,6 +169,9 @@ testCP children getAttr cp =
             , ("Default ignorable", "DI", UCD.defaultIgnorableCodePoint)
             , ("Grapheme extend", "Gr_Ext", UCD.graphemeExtend)
             , ("Grapheme base", "Gr_Base", UCD.graphemeBase)
+            , ( "Changes when NFKC casefolded"
+              , "CWKCF"
+              , UCD.changesWhenNFKCCasefolded)
             ]
           hst <-
             case getAttr "hst" of
