@@ -27,6 +27,7 @@ main = do
           , canonicalDecomposition
           , compatibilityDecomposition
           , canonicalComposition
+          , joiningType
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -281,6 +282,22 @@ normalFormQuickCheck =
     , mkPropertyTest "NFKD" ICU.NFKDQuickCheck (Just . UCD.nfkdQuickCheck)
     , mkPropertyTest "NFKC" ICU.NFKCQuickCheck UCD.nfkcQuickCheck
     ]
+
+joiningType :: Test
+joiningType =
+  compareForAll
+    "Joining type"
+    (toUCD . ICU.property ICU.JoiningType)
+    UCD.joiningType
+  where
+    toUCD (Just jt) =
+      case jt of
+        ICU.JoinCausing -> UCD.JoinCausing
+        ICU.DualJoining -> UCD.DualJoining
+        ICU.LeftJoining -> UCD.LeftJoining
+        ICU.RightJoining -> UCD.RightJoining
+        ICU.Transparent -> UCD.Transparent
+    toUCD Nothing = UCD.NonJoining
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest = mkPropertyTest

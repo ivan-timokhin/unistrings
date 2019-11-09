@@ -38,6 +38,8 @@ main = do
               , decompositionType
               , normalFormQuickCheck
               , changesWhenNFKCCaseFolded
+              , joiningType
+              , joiningGroup
               ]
           , TestLabel "Names" $
             TestList
@@ -265,6 +267,12 @@ changesWhenNFKCCaseFolded =
     "Changes when NFKC casefolded"
     "changes_when_nfkc_casefolded"
     UCD.changesWhenNFKCCasefolded
+
+joiningType :: Test
+joiningType = testEnum "Joining type" "joining_type" UCD.joiningType
+
+joiningGroup :: Test
+joiningGroup = testMayEnum "Joining group" "joining_group" UCD.joiningGroup
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

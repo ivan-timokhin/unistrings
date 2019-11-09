@@ -109,6 +109,8 @@ library
                      , Data.UCD.Internal.ComplexNfkcCasefoldPtr
                      , Data.UCD.Internal.ComplexNfkcCasefoldLen
                      , Data.UCD.Internal.ChangesWhenNfkcCasefolded
+                     , Data.UCD.Internal.JoiningType
+                     , Data.UCD.Internal.JoiningGroup
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -199,6 +201,8 @@ library
                      , generated/cbits/complex_nfkc_casefold_ptr.c
                      , generated/cbits/complex_nfkc_casefold_len.c
                      , generated/cbits/changes_when_nfkc_casefolded.c
+                     , generated/cbits/joining_type.c
+                     , generated/cbits/joining_group.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -312,6 +316,8 @@ executable ucd-gen
                      , UCD.CaseFolding
                      , UCD.Unihan.NumericValues
                      , UCD.DerivedNormalizationProps
+                     , UCD.DerivedJoiningType
+                     , UCD.DerivedJoiningGroup
                      , UCD.Common
                      , Trie
                      , TrieOpt

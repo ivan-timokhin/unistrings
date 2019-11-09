@@ -352,7 +352,36 @@ testCP children getAttr cp =
             UCD.ShortCF c -> assertEqual "NFKC_CF" nfkcCF [c]
             UCD.LongCF cs -> do
               assert $ length cs /= 1
-              assertEqual "NFKC_CF" nfkcCF cs)
+              assertEqual "NFKC_CF" nfkcCF cs
+          -----
+          joiningType <-
+            case getAttr "jt" of
+              Nothing -> assertFailure "Can't find joining type"
+              Just jtStr ->
+                let jtStr8 = TE.encodeUtf8 jtStr
+                 in case find
+                           ((== jtStr8) . UCD.abbreviatedPropertyValueName)
+                           [minBound .. maxBound] of
+                      Nothing ->
+                        assertFailure $
+                        "Can't parse joining type " ++ show jtStr
+                      Just p -> pure p
+          assertEqual "Joining type" joiningType $ UCD.joiningType cp
+          ------
+          joiningGroup <-
+            case getAttr "jg" of
+              Nothing -> assertFailure "Can't find joining group"
+              Just "No_Joining_Group" -> pure Nothing
+              Just jtStr ->
+                let jtStr8 = TE.encodeUtf8 jtStr
+                 in case find
+                           ((== jtStr8) . UCD.abbreviatedPropertyValueName)
+                           [minBound .. maxBound] of
+                      Nothing ->
+                        assertFailure $
+                        "Can't parse joining type " ++ show jtStr
+                      Just p -> pure $ Just p
+          assertEqual "Joining group" joiningGroup $ UCD.joiningGroup cp)
     ]
   where
     generalCategory =

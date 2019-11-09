@@ -9,6 +9,8 @@ module Data.UCD.Internal.Types
   , Script(..)
   , EnumeratedProperty(..)
   , DecompositionType(..)
+  , JoiningGroup(..)
+  , JoiningType(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -1700,3 +1702,241 @@ data DecompositionType
   | VulgarFraction
   | Compatibility
   deriving (Eq, Ord, Show, Enum, Bounded, Read)
+
+data JoiningGroup
+  = AfricanFeh
+  | AfricanNoon
+  | AfricanQaf
+  | Ain
+  | Alaph
+  | Alef
+  | Beh
+  | Beth
+  | BurushaskiYehBarree
+  | Dal
+  | DalathRish
+  | E
+  | FarsiYeh
+  | Fe
+  | Feh
+  | FinalSemkath
+  | Gaf
+  | Gamal
+  | Hah
+  | HanifiRohingyaKinnaYa
+  | HanifiRohingyaPa
+  | He
+  | Heh
+  | HehGoal
+  | Heth
+  | Kaf
+  | Kaph
+  | Khaph
+  | KnottedHeh
+  | Lam
+  | Lamadh
+  | MalayalamBha
+  | MalayalamJa
+  | MalayalamLla
+  | MalayalamLlla
+  | MalayalamNga
+  | MalayalamNna
+  | MalayalamNnna
+  | MalayalamNya
+  | MalayalamRa
+  | MalayalamSsa
+  | MalayalamTta
+  | ManichaeanAleph
+  | ManichaeanAyin
+  | ManichaeanBeth
+  | ManichaeanDaleth
+  | ManichaeanDhamedh
+  | ManichaeanFive
+  | ManichaeanGimel
+  | ManichaeanHeth
+  | ManichaeanHundred
+  | ManichaeanKaph
+  | ManichaeanLamedh
+  | ManichaeanMem
+  | ManichaeanNun
+  | ManichaeanOne
+  | ManichaeanPe
+  | ManichaeanQoph
+  | ManichaeanResh
+  | ManichaeanSadhe
+  | ManichaeanSamekh
+  | ManichaeanTaw
+  | ManichaeanTen
+  | ManichaeanTeth
+  | ManichaeanThamedh
+  | ManichaeanTwenty
+  | ManichaeanWaw
+  | ManichaeanYodh
+  | ManichaeanZayin
+  | Meem
+  | Mim
+  | Noon
+  | Nun
+  | Nya
+  | Pe
+  | Qaf
+  | Qaph
+  | Reh
+  | ReversedPe
+  | RohingyaYeh
+  | Sad
+  | Sadhe
+  | Seen
+  | Semkath
+  | Shin
+  | StraightWaw
+  | SwashKaf
+  | SyriacWaw
+  | Tah
+  | Taw
+  | TehMarbuta
+  | TehMarbutaGoal
+  | Teth
+  | Waw
+  | Yeh
+  | YehBarree
+  | YehWithTail
+  | Yudh
+  | YudhHe
+  | Zain
+  | Zhain
+  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+
+instance EnumeratedProperty JoiningGroup where
+  abbreviatedPropertyValueName jg =
+    case jg of
+      AfricanFeh -> "African_Feh"
+      AfricanNoon -> "African_Noon"
+      AfricanQaf -> "African_Qaf"
+      Ain -> "Ain"
+      Alaph -> "Alaph"
+      Alef -> "Alef"
+      Beh -> "Beh"
+      Beth -> "Beth"
+      BurushaskiYehBarree -> "Burushaski_Yeh_Barree"
+      Dal -> "Dal"
+      DalathRish -> "Dalath_Rish"
+      E -> "E"
+      FarsiYeh -> "Farsi_Yeh"
+      Fe -> "Fe"
+      Feh -> "Feh"
+      FinalSemkath -> "Final_Semkath"
+      Gaf -> "Gaf"
+      Gamal -> "Gamal"
+      Hah -> "Hah"
+      HanifiRohingyaKinnaYa -> "Hanifi_Rohingya_Kinna_Ya"
+      HanifiRohingyaPa -> "Hanifi_Rohingya_Pa"
+      He -> "He"
+      Heh -> "Heh"
+      HehGoal -> "Heh_Goal"
+      Heth -> "Heth"
+      Kaf -> "Kaf"
+      Kaph -> "Kaph"
+      Khaph -> "Khaph"
+      KnottedHeh -> "Knotted_Heh"
+      Lam -> "Lam"
+      Lamadh -> "Lamadh"
+      MalayalamBha -> "Malayalam_Bha"
+      MalayalamJa -> "Malayalam_Ja"
+      MalayalamLla -> "Malayalam_Lla"
+      MalayalamLlla -> "Malayalam_Llla"
+      MalayalamNga -> "Malayalam_Nga"
+      MalayalamNna -> "Malayalam_Nna"
+      MalayalamNnna -> "Malayalam_Nnna"
+      MalayalamNya -> "Malayalam_Nya"
+      MalayalamRa -> "Malayalam_Ra"
+      MalayalamSsa -> "Malayalam_Ssa"
+      MalayalamTta -> "Malayalam_Tta"
+      ManichaeanAleph -> "Manichaean_Aleph"
+      ManichaeanAyin -> "Manichaean_Ayin"
+      ManichaeanBeth -> "Manichaean_Beth"
+      ManichaeanDaleth -> "Manichaean_Daleth"
+      ManichaeanDhamedh -> "Manichaean_Dhamedh"
+      ManichaeanFive -> "Manichaean_Five"
+      ManichaeanGimel -> "Manichaean_Gimel"
+      ManichaeanHeth -> "Manichaean_Heth"
+      ManichaeanHundred -> "Manichaean_Hundred"
+      ManichaeanKaph -> "Manichaean_Kaph"
+      ManichaeanLamedh -> "Manichaean_Lamedh"
+      ManichaeanMem -> "Manichaean_Mem"
+      ManichaeanNun -> "Manichaean_Nun"
+      ManichaeanOne -> "Manichaean_One"
+      ManichaeanPe -> "Manichaean_Pe"
+      ManichaeanQoph -> "Manichaean_Qoph"
+      ManichaeanResh -> "Manichaean_Resh"
+      ManichaeanSadhe -> "Manichaean_Sadhe"
+      ManichaeanSamekh -> "Manichaean_Samekh"
+      ManichaeanTaw -> "Manichaean_Taw"
+      ManichaeanTen -> "Manichaean_Ten"
+      ManichaeanTeth -> "Manichaean_Teth"
+      ManichaeanThamedh -> "Manichaean_Thamedh"
+      ManichaeanTwenty -> "Manichaean_Twenty"
+      ManichaeanWaw -> "Manichaean_Waw"
+      ManichaeanYodh -> "Manichaean_Yodh"
+      ManichaeanZayin -> "Manichaean_Zayin"
+      Meem -> "Meem"
+      Mim -> "Mim"
+      Noon -> "Noon"
+      Nun -> "Nun"
+      Nya -> "Nya"
+      Pe -> "Pe"
+      Qaf -> "Qaf"
+      Qaph -> "Qaph"
+      Reh -> "Reh"
+      ReversedPe -> "Reversed_Pe"
+      RohingyaYeh -> "Rohingya_Yeh"
+      Sad -> "Sad"
+      Sadhe -> "Sadhe"
+      Seen -> "Seen"
+      Semkath -> "Semkath"
+      Shin -> "Shin"
+      StraightWaw -> "Straight_Waw"
+      SwashKaf -> "Swash_Kaf"
+      SyriacWaw -> "Syriac_Waw"
+      Tah -> "Tah"
+      Taw -> "Taw"
+      TehMarbuta -> "Teh_Marbuta"
+      TehMarbutaGoal -> "Teh_Marbuta_Goal"
+      Teth -> "Teth"
+      Waw -> "Waw"
+      Yeh -> "Yeh"
+      YehBarree -> "Yeh_Barree"
+      YehWithTail -> "Yeh_With_Tail"
+      Yudh -> "Yudh"
+      YudhHe -> "Yudh_He"
+      Zain -> "Zain"
+      Zhain -> "Zhain"
+  fullPropertyValueName TehMarbutaGoal = "Hamza_On_Heh_Goal"
+  fullPropertyValueName jg = abbreviatedPropertyValueName jg
+
+data JoiningType
+  = JoinCausing
+  | DualJoining
+  | LeftJoining
+  | RightJoining
+  | Transparent
+  | NonJoining
+  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+
+instance EnumeratedProperty JoiningType where
+  fullPropertyValueName jg =
+    case jg of
+      JoinCausing -> "Join_Causing"
+      DualJoining -> "Dual_Joining"
+      LeftJoining -> "Left_Joining"
+      RightJoining -> "Right_Joining"
+      Transparent -> "Transparent"
+      NonJoining -> "Non_Joining"
+  abbreviatedPropertyValueName jg =
+    case jg of
+      JoinCausing -> "C"
+      DualJoining -> "D"
+      LeftJoining -> "L"
+      RightJoining -> "R"
+      Transparent -> "T"
+      NonJoining -> "U"

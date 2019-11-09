@@ -22,7 +22,7 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
-import Data.UCD.Internal.Types (Script(UnknownScript))
+import Data.UCD.Internal.Types (JoiningType(NonJoining), Script(UnknownScript))
 import Driver
   ( generateASCIITableSources
   , generateASCIIVectorTableSources
@@ -41,6 +41,8 @@ import UCD.Common
   , unicodeTableSize
   )
 import qualified UCD.DerivedCoreProperties as UCD.DCP
+import qualified UCD.DerivedJoiningGroup
+import qualified UCD.DerivedJoiningType
 import qualified UCD.DerivedNormalizationProps as UCD.DNP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -374,6 +376,12 @@ main = do
          processTable fullPartitionings "changes_when_nfkc_casefolded" $
            UCD.Common.tableToVector False $
            UCD.DNP.changesWhenNFKCCaseFolded nps
+    , do joiningType <- UCD.DerivedJoiningType.fetch
+         processTable fullPartitionings "joining_type" $
+           UCD.Common.tableToVector NonJoining joiningType
+    , do joiningGroup <- UCD.DerivedJoiningGroup.fetch
+         processTable fullPartitionings "joining_group" $
+           UCD.Common.tableToVector Nothing $ Just <$> joiningGroup
     ]
 
 printLong :: Show a => [a] -> IO ()

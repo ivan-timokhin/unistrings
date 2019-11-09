@@ -27,6 +27,8 @@ import Data.UCD.Internal.Types
   , Block
   , DecompositionType
   , HangulSyllableType
+  , JoiningGroup
+  , JoiningType
   , Script
   )
 import Gen
@@ -137,6 +139,28 @@ instance TableValue (Maybe DecompositionType) where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "DecompositionType"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue JoiningType where
+  type BottomType JoiningType = IntegralType
+  typeVals_ = typeEnum
+  generateModule prefix =
+    generateEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "JoiningType"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue (Maybe JoiningGroup) where
+  type BottomType (Maybe JoiningGroup) = IntegralType
+  typeVals_ = typeMEnum
+  generateModule prefix =
+    generateMayEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "JoiningGroup"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

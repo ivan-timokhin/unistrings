@@ -38,7 +38,6 @@ data/latest/ucd/USourceData.txt
 data/latest/ucd/Unihan.zip
 data/latest/ucd/VerticalOrientation.txt
 data/latest/ucd/auxiliary/
-data/latest/ucd/extracted/
 generated/
 /data/latest/ucdxml/ucdxml.readme.txt
 /data/latest/ucdxml/ucd.unihan.grouped.zip
@@ -54,3 +53,13 @@ generated/
 /data/latest/ucd/Unihan_RadicalStrokeCounts.txt
 /data/latest/ucd/Unihan_Readings.txt
 /data/latest/ucd/Unihan_Variants.txt
+/data/latest/ucd/extracted/DerivedBidiClass.txt
+/data/latest/ucd/extracted/DerivedBinaryProperties.txt
+/data/latest/ucd/extracted/DerivedCombiningClass.txt
+/data/latest/ucd/extracted/DerivedDecompositionType.txt
+/data/latest/ucd/extracted/DerivedEastAsianWidth.txt
+/data/latest/ucd/extracted/DerivedGeneralCategory.txt
+/data/latest/ucd/extracted/DerivedLineBreak.txt
+/data/latest/ucd/extracted/DerivedName.txt
+/data/latest/ucd/extracted/DerivedNumericType.txt
+/data/latest/ucd/extracted/DerivedNumericValues.txt

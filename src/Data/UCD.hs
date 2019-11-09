@@ -90,6 +90,10 @@ module Data.UCD
   , nfkcCaseFold
   , NFKCCaseFold(ShortCF, LongCF)
   , changesWhenNFKCCasefolded
+  , joiningType
+  , JoiningType(..)
+  , joiningGroup
+  , JoiningGroup(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -142,6 +146,8 @@ import qualified Data.UCD.Internal.IdStart as IS
 import qualified Data.UCD.Internal.Ideographic as Ide
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
+import qualified Data.UCD.Internal.JoiningGroup as JG
+import qualified Data.UCD.Internal.JoiningType as JT
 import qualified Data.UCD.Internal.LogicalOrderException as LOE
 import qualified Data.UCD.Internal.Lowercase as LC
 import qualified Data.UCD.Internal.Math as M
@@ -187,6 +193,8 @@ import Data.UCD.Internal.Types
   , DecompositionType(..)
   , EnumeratedProperty(..)
   , HangulSyllableType(..)
+  , JoiningGroup(..)
+  , JoiningType(..)
   , NameAliasType(..)
   , Script(..)
   )
@@ -721,6 +729,12 @@ data NFKCCaseFold
 
 changesWhenNFKCCasefolded :: IsCodePoint cp => cp -> Bool
 changesWhenNFKCCasefolded = withCP CWNC.retrieve
+
+joiningType :: IsCodePoint cp => cp -> JoiningType
+joiningType = withCP JT.retrieve
+
+joiningGroup :: IsCodePoint cp => cp -> Maybe JoiningGroup
+joiningGroup = withCP JG.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

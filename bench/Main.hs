@@ -344,6 +344,19 @@ main =
               "Changes when NFKC casefolded"
               Nothing
               UCD.changesWhenNFKCCasefolded
+          , C.bgroup
+              "Joining type"
+              [ C.bench "UCD" $ mkEnumBenchmark udhr UCD.joiningType
+              , C.bench "ICU" $
+                mkBenchmark
+                  udhr
+                  (maybe 0 fromEnum . ICU.property ICU.JoiningType)
+              ]
+          , C.bgroup
+              "Joining group"
+              [ C.bench "UCD" $
+                mkBenchmark udhr (maybe 0 fromEnum . UCD.joiningGroup)
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

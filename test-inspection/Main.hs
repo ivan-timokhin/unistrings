@@ -85,5 +85,10 @@ nfkcQC c = isJust (UCD.nfkcQuickCheck c)
 
 inspect $ 'nfkcQC `hasNoType` ''Maybe
 
+joiningGroup :: UCD.CodePoint -> Bool
+joiningGroup c = isJust (UCD.joiningGroup c)
+
+inspect $ 'joiningGroup `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()
