@@ -96,6 +96,8 @@ module Data.UCD
   , JoiningGroup(..)
   , verticalOrientation
   , VerticalOrientation(..)
+  , lineBreak
+  , LineBreak(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -150,6 +152,7 @@ import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
 import qualified Data.UCD.Internal.JoiningGroup as JG
 import qualified Data.UCD.Internal.JoiningType as JT
+import qualified Data.UCD.Internal.LineBreak as LB
 import qualified Data.UCD.Internal.LogicalOrderException as LOE
 import qualified Data.UCD.Internal.Lowercase as LC
 import qualified Data.UCD.Internal.Math as M
@@ -197,6 +200,7 @@ import Data.UCD.Internal.Types
   , HangulSyllableType(..)
   , JoiningGroup(..)
   , JoiningType(..)
+  , LineBreak(..)
   , NameAliasType(..)
   , Script(..)
   , VerticalOrientation(..)
@@ -742,6 +746,9 @@ joiningGroup = withCP JG.retrieve
 
 verticalOrientation :: IsCodePoint cp => cp -> VerticalOrientation
 verticalOrientation = withCP VO.retrieve
+
+lineBreak :: IsCodePoint cp => cp -> LineBreak
+lineBreak = withCP LB.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

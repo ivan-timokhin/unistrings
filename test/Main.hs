@@ -41,6 +41,7 @@ main = do
               , joiningType
               , joiningGroup
               , verticalOrientation
+              , lineBreak
               ]
           , TestLabel "Names" $
             TestList
@@ -278,6 +279,9 @@ joiningGroup = testMayEnum "Joining group" "joining_group" UCD.joiningGroup
 verticalOrientation :: Test
 verticalOrientation =
   testEnum "Vertical orientation" "vertical_orientation" UCD.verticalOrientation
+
+lineBreak :: Test
+lineBreak = testEnum "Line break" "line_break" UCD.lineBreak
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

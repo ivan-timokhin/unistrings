@@ -12,6 +12,7 @@ module Data.UCD.Internal.Types
   , JoiningGroup(..)
   , JoiningType(..)
   , VerticalOrientation(..)
+  , LineBreak(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -1962,3 +1963,141 @@ instance EnumeratedProperty VerticalOrientation where
       Rotated -> "R"
       TransformedUpright -> "Tu"
       TransformedRotated -> "Tr"
+
+data LineBreak
+  = AmbiguousLB
+  | AlphabeticLB
+  | BreakBothLB
+  | BreakAfterLB
+  | BreakBeforeLB
+  | MandatoryBreakLB
+  | ContingentBreakLB
+  | ConditionalJapaneseStarterLB
+  | ClosePunctuationLB
+  | CombiningMarkLB
+  | CloseParenthesisLB
+  | CarriageReturnLB
+  | EBaseLB
+  | EModifierLB
+  | ExclamationLB
+  | GlueLB
+  | H2LB
+  | H3LB
+  | HebrewLetterLB
+  | HyphenLB
+  | IdeographicLB
+  | InseparableLB
+  | InfixNumericLB
+  | JLLB
+  | JTLB
+  | JVLB
+  | LineFeedLB
+  | NextLineLB
+  | NonstarterLB
+  | NumericLB
+  | OpenPunctuationLB
+  | PostfixNumericLB
+  | PrefixNumericLB
+  | QuotationLB
+  | RegionalIndicatorLB
+  | ComplexContextLB
+  | SurrogateLB
+  | SpaceLB
+  | BreakSymbolsLB
+  | WordJoinerLB
+  | UnknownLB
+  | ZWSpaceLB
+  | ZWJLB
+  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+
+instance EnumeratedProperty LineBreak where
+  fullPropertyValueName lb =
+    case lb of
+      AmbiguousLB -> "Ambiguous"
+      AlphabeticLB -> "Alphabetic"
+      BreakBothLB -> "Break_Both"
+      BreakAfterLB -> "Break_After"
+      BreakBeforeLB -> "Break_Before"
+      MandatoryBreakLB -> "Mandatory_Break"
+      ContingentBreakLB -> "Contingent_Break"
+      ConditionalJapaneseStarterLB -> "Conditional_Japanese_Starter"
+      ClosePunctuationLB -> "Close_Punctuation"
+      CombiningMarkLB -> "Combining_Mark"
+      CloseParenthesisLB -> "Close_Parenthesis"
+      CarriageReturnLB -> "Carriage_Return"
+      EBaseLB -> "E_Base"
+      EModifierLB -> "E_Modifier"
+      ExclamationLB -> "Exclamation"
+      GlueLB -> "Glue"
+      H2LB -> "H2"
+      H3LB -> "H3"
+      HebrewLetterLB -> "Hebrew_Letter"
+      HyphenLB -> "Hyphen"
+      IdeographicLB -> "Ideographic"
+      InseparableLB -> "Inseparable"
+      InfixNumericLB -> "Infix_Numeric"
+      JLLB -> "JL"
+      JTLB -> "JT"
+      JVLB -> "JV"
+      LineFeedLB -> "Line_Feed"
+      NextLineLB -> "Next_Line"
+      NonstarterLB -> "Nonstarter"
+      NumericLB -> "Numeric"
+      OpenPunctuationLB -> "Open_Punctuation"
+      PostfixNumericLB -> "Postfix_Numeric"
+      PrefixNumericLB -> "Prefix_Numeric"
+      QuotationLB -> "Quotation"
+      RegionalIndicatorLB -> "Regional_Indicator"
+      ComplexContextLB -> "Complex_Context"
+      SurrogateLB -> "Surrogate"
+      SpaceLB -> "Space"
+      BreakSymbolsLB -> "Break_Symbols"
+      WordJoinerLB -> "Word_Joiner"
+      UnknownLB -> "Unknown"
+      ZWSpaceLB -> "ZWSpace"
+      ZWJLB -> "ZWJ"
+  abbreviatedPropertyValueName lb =
+    case lb of
+      AmbiguousLB -> "AI"
+      AlphabeticLB -> "AL"
+      BreakBothLB -> "B2"
+      BreakAfterLB -> "BA"
+      BreakBeforeLB -> "BB"
+      MandatoryBreakLB -> "BK"
+      ContingentBreakLB -> "CB"
+      ConditionalJapaneseStarterLB -> "CJ"
+      ClosePunctuationLB -> "CL"
+      CombiningMarkLB -> "CM"
+      CloseParenthesisLB -> "CP"
+      CarriageReturnLB -> "CR"
+      EBaseLB -> "EB"
+      EModifierLB -> "EM"
+      ExclamationLB -> "EX"
+      GlueLB -> "GL"
+      H2LB -> "H2"
+      H3LB -> "H3"
+      HebrewLetterLB -> "HL"
+      HyphenLB -> "HY"
+      IdeographicLB -> "ID"
+      InseparableLB -> "IN"
+      InfixNumericLB -> "IS"
+      JLLB -> "JL"
+      JTLB -> "JT"
+      JVLB -> "JV"
+      LineFeedLB -> "LF"
+      NextLineLB -> "NL"
+      NonstarterLB -> "NS"
+      NumericLB -> "NU"
+      OpenPunctuationLB -> "OP"
+      PostfixNumericLB -> "PO"
+      PrefixNumericLB -> "PR"
+      QuotationLB -> "QU"
+      RegionalIndicatorLB -> "RI"
+      ComplexContextLB -> "SA"
+      SurrogateLB -> "SG"
+      SpaceLB -> "SP"
+      BreakSymbolsLB -> "SY"
+      WordJoinerLB -> "WJ"
+      UnknownLB -> "XX"
+      ZWSpaceLB -> "ZW"
+      ZWJLB -> "ZWJ"

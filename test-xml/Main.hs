@@ -396,7 +396,20 @@ testCP children getAttr cp =
                         "Can't parse joining type " ++ show voStr
                       Just p -> pure p
           assertEqual "Vertical orientation" verticalOrientation $
-            UCD.verticalOrientation cp)
+            UCD.verticalOrientation cp
+          -----
+          lineBreak <-
+            case getAttr "lb" of
+              Nothing -> assertFailure "Can't find line break"
+              Just lbStr ->
+                let lbStr8 = TE.encodeUtf8 lbStr
+                 in case find
+                           ((== lbStr8) . UCD.abbreviatedPropertyValueName)
+                           [minBound .. maxBound] of
+                      Nothing ->
+                        assertFailure $ "Can't parse line break " ++ show lbStr
+                      Just lb -> pure lb
+          assertEqual "Line break" lineBreak $ UCD.lineBreak cp)
     ]
   where
     generalCategory =

@@ -112,6 +112,7 @@ library
                      , Data.UCD.Internal.JoiningType
                      , Data.UCD.Internal.JoiningGroup
                      , Data.UCD.Internal.VerticalOrientation
+                     , Data.UCD.Internal.LineBreak
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -205,6 +206,7 @@ library
                      , generated/cbits/joining_type.c
                      , generated/cbits/joining_group.c
                      , generated/cbits/vertical_orientation.c
+                     , generated/cbits/line_break.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -321,6 +323,7 @@ executable ucd-gen
                      , UCD.DerivedJoiningType
                      , UCD.DerivedJoiningGroup
                      , UCD.VerticalOrientation
+                     , UCD.LineBreak
                      , UCD.Common
                      , Trie
                      , TrieOpt

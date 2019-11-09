@@ -360,6 +360,9 @@ main =
           , C.bgroup
               "Vertical orientation"
               [C.bench "UCD" $ mkEnumBenchmark udhr UCD.verticalOrientation]
+          , C.bgroup
+              "Line break"
+              [C.bench "UCD" $ mkEnumBenchmark udhr UCD.lineBreak]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

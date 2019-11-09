@@ -29,6 +29,7 @@ import Data.UCD.Internal.Types
   , HangulSyllableType
   , JoiningGroup
   , JoiningType
+  , LineBreak
   , Script
   , VerticalOrientation
   )
@@ -173,6 +174,17 @@ instance TableValue VerticalOrientation where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "VerticalOrientation"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue LineBreak where
+  type BottomType LineBreak = IntegralType
+  typeVals_ = typeEnum
+  generateModule prefix =
+    generateEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "LineBreak"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

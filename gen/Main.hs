@@ -24,6 +24,7 @@ import System.Directory (createDirectoryIfMissing)
 
 import Data.UCD.Internal.Types
   ( JoiningType(NonJoining)
+  , LineBreak(UnknownLB)
   , Script(UnknownScript)
   , VerticalOrientation(Rotated)
   )
@@ -50,6 +51,7 @@ import qualified UCD.DerivedJoiningType
 import qualified UCD.DerivedNormalizationProps as UCD.DNP
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
+import qualified UCD.LineBreak
 import qualified UCD.NameAliases
 import qualified UCD.PropList
 import qualified UCD.ScriptExtensions
@@ -390,6 +392,9 @@ main = do
     , do verticalOrientation <- UCD.VerticalOrientation.fetch
          processTable fullPartitionings "vertical_orientation" $
            UCD.Common.tableToVector Rotated verticalOrientation
+    , do lineBreak <- UCD.LineBreak.fetch
+         processTable fullPartitionings "line_break" $
+           UCD.Common.tableToVector UnknownLB lineBreak
     ]
 
 printLong :: Show a => [a] -> IO ()
