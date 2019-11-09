@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Data.UCD.Internal.Types
   ( Age(..)
@@ -26,6 +28,9 @@ import Data.Char
                 PrivateUse, Space, SpacingCombiningMark, Surrogate,
                 TitlecaseLetter, UppercaseLetter)
   )
+import Data.Data (Data)
+import Data.Ix (Ix)
+import GHC.Generics (Generic)
 
 class (Enum p, Bounded p) =>
       EnumeratedProperty p
@@ -122,7 +127,7 @@ data Age
   | V11_0
   | V12_0
   | V12_1
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Age where
   fullPropertyValueName a =
@@ -198,7 +203,7 @@ data BidiClass
   | RightToLeftIsolateBC
   | FirstStrongIsolateBC
   | PopDirectionalIsolateBC
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty BidiClass where
   fullPropertyValueName b =
@@ -258,7 +263,7 @@ data HangulSyllableType
   | TrailingJamo
   | LVSyllable
   | LVTSyllable
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty HangulSyllableType where
   fullPropertyValueName h =
@@ -282,7 +287,7 @@ data NameAliasType
   | AlternateAlias
   | FigmentAlias
   | AbbreviationAlias
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 data Block
   = BasicLatinBlock
@@ -585,7 +590,7 @@ data Block
   | VariationSelectorsSupplementBlock
   | SupplementaryPrivateUseAreaABlock
   | SupplementaryPrivateUseAreaBBlock
-  deriving (Eq, Ord, Show, Bounded, Enum)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Block where
   fullPropertyValueName b =
@@ -1371,7 +1376,7 @@ data Script
   | WarangCitiScript
   | YiScript
   | ZanabazarSquareScript
-  deriving (Eq, Ord, Show, Read, Bounded, Enum)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Script where
   fullPropertyValueName s =
@@ -1703,7 +1708,7 @@ data DecompositionType
   | Squared
   | VulgarFraction
   | Compatibility
-  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 data JoiningGroup
   = AfricanFeh
@@ -1807,7 +1812,7 @@ data JoiningGroup
   | YudhHe
   | Zain
   | Zhain
-  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty JoiningGroup where
   abbreviatedPropertyValueName jg =
@@ -1923,7 +1928,7 @@ data JoiningType
   | RightJoining
   | Transparent
   | NonJoining
-  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty JoiningType where
   fullPropertyValueName jg =
@@ -1948,7 +1953,7 @@ data VerticalOrientation
   | Rotated
   | TransformedUpright
   | TransformedRotated
-  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty VerticalOrientation where
   fullPropertyValueName vo =
@@ -2008,7 +2013,7 @@ data LineBreak
   | UnknownLB
   | ZWSpaceLB
   | ZWJLB
-  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty LineBreak where
   fullPropertyValueName lb =

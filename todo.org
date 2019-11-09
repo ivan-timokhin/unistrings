@@ -111,10 +111,14 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Regional_Indicator
   - [ ] Indic_Positional_Category
   - [ ] Indic_Syllabic_Category
-* Miscellaneous code tasks [4/6]
+* Miscellaneous code tasks [5/6]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
-** TODO Add missing instances to enums
+** DONE Add missing instances to enums
+CLOSED: [2019-11-09 Сб 22:51]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2019-11-09 Сб 22:51]
+:END:
 Eq, Ord, Show, Read, Enum, Bounded, Data, Generic, Ix.
 ** DONE Pretty-print C code
 This can be done either manually, by splitting long arrays, or using
