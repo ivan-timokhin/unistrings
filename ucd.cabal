@@ -111,6 +111,7 @@ library
                      , Data.UCD.Internal.ChangesWhenNfkcCasefolded
                      , Data.UCD.Internal.JoiningType
                      , Data.UCD.Internal.JoiningGroup
+                     , Data.UCD.Internal.VerticalOrientation
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -203,6 +204,7 @@ library
                      , generated/cbits/changes_when_nfkc_casefolded.c
                      , generated/cbits/joining_type.c
                      , generated/cbits/joining_group.c
+                     , generated/cbits/vertical_orientation.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -318,6 +320,7 @@ executable ucd-gen
                      , UCD.DerivedNormalizationProps
                      , UCD.DerivedJoiningType
                      , UCD.DerivedJoiningGroup
+                     , UCD.VerticalOrientation
                      , UCD.Common
                      , Trie
                      , TrieOpt

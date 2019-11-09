@@ -11,6 +11,7 @@ module Data.UCD.Internal.Types
   , DecompositionType(..)
   , JoiningGroup(..)
   , JoiningType(..)
+  , VerticalOrientation(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -1940,3 +1941,24 @@ instance EnumeratedProperty JoiningType where
       RightJoining -> "R"
       Transparent -> "T"
       NonJoining -> "U"
+
+data VerticalOrientation
+  = Upright
+  | Rotated
+  | TransformedUpright
+  | TransformedRotated
+  deriving (Eq, Ord, Show, Enum, Bounded, Read)
+
+instance EnumeratedProperty VerticalOrientation where
+  fullPropertyValueName vo =
+    case vo of
+      Upright -> "Upright"
+      Rotated -> "Rotated"
+      TransformedUpright -> "Transformed_Upright"
+      TransformedRotated -> "Transformed_Rotated"
+  abbreviatedPropertyValueName vo =
+    case vo of
+      Upright -> "U"
+      Rotated -> "R"
+      TransformedUpright -> "Tu"
+      TransformedRotated -> "Tr"

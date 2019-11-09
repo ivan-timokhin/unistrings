@@ -357,6 +357,9 @@ main =
               [ C.bench "UCD" $
                 mkBenchmark udhr (maybe 0 fromEnum . UCD.joiningGroup)
               ]
+          , C.bgroup
+              "Vertical orientation"
+              [C.bench "UCD" $ mkEnumBenchmark udhr UCD.verticalOrientation]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

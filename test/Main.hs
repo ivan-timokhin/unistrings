@@ -40,6 +40,7 @@ main = do
               , changesWhenNFKCCaseFolded
               , joiningType
               , joiningGroup
+              , verticalOrientation
               ]
           , TestLabel "Names" $
             TestList
@@ -273,6 +274,10 @@ joiningType = testEnum "Joining type" "joining_type" UCD.joiningType
 
 joiningGroup :: Test
 joiningGroup = testMayEnum "Joining group" "joining_group" UCD.joiningGroup
+
+verticalOrientation :: Test
+verticalOrientation =
+  testEnum "Vertical orientation" "vertical_orientation" UCD.verticalOrientation
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

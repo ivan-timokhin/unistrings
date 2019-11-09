@@ -381,7 +381,22 @@ testCP children getAttr cp =
                         assertFailure $
                         "Can't parse joining type " ++ show jtStr
                       Just p -> pure $ Just p
-          assertEqual "Joining group" joiningGroup $ UCD.joiningGroup cp)
+          assertEqual "Joining group" joiningGroup $ UCD.joiningGroup cp
+          ------
+          verticalOrientation <-
+            case getAttr "vo" of
+              Nothing -> assertFailure "Can't find joining group"
+              Just voStr ->
+                let voStr8 = TE.encodeUtf8 voStr
+                 in case find
+                           ((== voStr8) . UCD.abbreviatedPropertyValueName)
+                           [minBound .. maxBound] of
+                      Nothing ->
+                        assertFailure $
+                        "Can't parse joining type " ++ show voStr
+                      Just p -> pure p
+          assertEqual "Vertical orientation" verticalOrientation $
+            UCD.verticalOrientation cp)
     ]
   where
     generalCategory =

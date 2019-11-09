@@ -30,6 +30,7 @@ import Data.UCD.Internal.Types
   , JoiningGroup
   , JoiningType
   , Script
+  , VerticalOrientation
   )
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
@@ -161,6 +162,17 @@ instance TableValue (Maybe JoiningGroup) where
       EnumSpec
         { esCPrefix = prefix
         , esHsType = "JoiningGroup"
+        , esHsTypeModule = "Data.UCD.Internal.Types"
+        }
+
+instance TableValue VerticalOrientation where
+  type BottomType VerticalOrientation = IntegralType
+  typeVals_ = typeEnum
+  generateModule prefix =
+    generateEnum
+      EnumSpec
+        { esCPrefix = prefix
+        , esHsType = "VerticalOrientation"
         , esHsTypeModule = "Data.UCD.Internal.Types"
         }
 

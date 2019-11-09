@@ -22,7 +22,11 @@ import qualified Data.Vector as V
 import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
-import Data.UCD.Internal.Types (JoiningType(NonJoining), Script(UnknownScript))
+import Data.UCD.Internal.Types
+  ( JoiningType(NonJoining)
+  , Script(UnknownScript)
+  , VerticalOrientation(Rotated)
+  )
 import Driver
   ( generateASCIITableSources
   , generateASCIIVectorTableSources
@@ -53,6 +57,7 @@ import qualified UCD.Scripts
 import qualified UCD.SpecialCasing
 import qualified UCD.UnicodeData
 import qualified UCD.Unihan.NumericValues
+import qualified UCD.VerticalOrientation
 
 main :: IO ()
 main = do
@@ -382,6 +387,9 @@ main = do
     , do joiningGroup <- UCD.DerivedJoiningGroup.fetch
          processTable fullPartitionings "joining_group" $
            UCD.Common.tableToVector Nothing $ Just <$> joiningGroup
+    , do verticalOrientation <- UCD.VerticalOrientation.fetch
+         processTable fullPartitionings "vertical_orientation" $
+           UCD.Common.tableToVector Rotated verticalOrientation
     ]
 
 printLong :: Show a => [a] -> IO ()

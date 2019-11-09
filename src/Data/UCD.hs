@@ -94,6 +94,8 @@ module Data.UCD
   , JoiningType(..)
   , joiningGroup
   , JoiningGroup(..)
+  , verticalOrientation
+  , VerticalOrientation(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -197,9 +199,11 @@ import Data.UCD.Internal.Types
   , JoiningType(..)
   , NameAliasType(..)
   , Script(..)
+  , VerticalOrientation(..)
   )
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
 import qualified Data.UCD.Internal.Uppercase as UC
+import qualified Data.UCD.Internal.VerticalOrientation as VO
 import qualified Data.UCD.Internal.XidContinue as XIC
 import qualified Data.UCD.Internal.XidStart as XIS
 
@@ -735,6 +739,9 @@ joiningType = withCP JT.retrieve
 
 joiningGroup :: IsCodePoint cp => cp -> Maybe JoiningGroup
 joiningGroup = withCP JG.retrieve
+
+verticalOrientation :: IsCodePoint cp => cp -> VerticalOrientation
+verticalOrientation = withCP VO.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
