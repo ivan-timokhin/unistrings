@@ -6,6 +6,11 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Driver where
 
@@ -15,9 +20,18 @@ import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory, toUpper)
+import Data.Coerce (coerce)
 import Data.Foldable (fold, for_)
 import Data.Functor.Identity (Identity)
 import Data.Int (Int32, Int64)
+import Data.Typeable
+  ( Proxy(Proxy)
+  , Typeable
+  , tyConModule
+  , tyConName
+  , typeRep
+  , typeRepTyCon
+  )
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
@@ -78,129 +92,81 @@ class (SizedTy (BottomType a), Ord (BottomVal a), Show a) =>
     -> TrieDesc Identity IntegralType (BottomType a) (BottomVal a)
     -> Module
 
-instance TableValue GeneralCategory where
-  type BottomType GeneralCategory = IntegralType
-  typeVals_ = typeEnum
+typeName ::
+     forall a. Typeable a
+  => ByteString
+typeName = B.pack $ tyConName $ typeRepTyCon $ typeRep $ Proxy @a
+
+moduleName ::
+     forall a. Typeable a
+  => ByteString
+moduleName = B.pack $ tyConModule $ typeRepTyCon $ typeRep $ Proxy @a
+
+newtype TableEnum e =
+  TableEnum e
+  deriving (Show, Eq, Ord)
+
+instance (Enum e, Ord e, Show e, Typeable e) => TableValue (TableEnum e) where
+  type BottomType (TableEnum e) = IntegralType
+  type BottomVal (TableEnum e) = e
+  typeVals vals = (typeEnum evals, evals)
+    where
+      evals = coerce vals
   generateModule prefix =
     generateEnum
       EnumSpec
         { esCPrefix = prefix
-        , esHsType = "GeneralCategory"
-        , esHsTypeModule = "Data.Char"
+        , esHsType = typeName @e
+        , esHsTypeModule = moduleName @e
         }
 
-instance TableValue (Maybe Block) where
-  type BottomType (Maybe Block) = IntegralType
-  typeVals_ = typeMEnum
+deriving via TableEnum Script instance TableValue Script
+
+deriving via TableEnum JoiningType instance TableValue JoiningType
+
+deriving via TableEnum VerticalOrientation instance
+         TableValue VerticalOrientation
+
+deriving via TableEnum LineBreak instance TableValue LineBreak
+
+deriving via TableEnum GeneralCategory instance
+         TableValue GeneralCategory
+
+deriving via TableEnum Word32 instance TableValue Word32
+
+newtype TableMayEnum e =
+  TableMayEnum
+    { getTableMayEnum :: Maybe e
+    }
+  deriving (Show, Eq, Ord)
+
+instance (Enum e, Show e, Ord e, Typeable e) =>
+         TableValue (TableMayEnum e) where
+  type BottomType (TableMayEnum e) = IntegralType
+  type BottomVal (TableMayEnum e) = Maybe e
+  typeVals vals = (typeMEnum evals, evals)
+    where
+      evals = coerce vals
   generateModule prefix =
     generateMayEnum
       EnumSpec
         { esCPrefix = prefix
-        , esHsType = "Block"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
+        , esHsType = typeName @e
+        , esHsTypeModule = moduleName @e
         }
 
-instance TableValue Script where
-  type BottomType Script = IntegralType
-  typeVals_ = typeEnum
-  generateModule prefix =
-    generateEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "Script"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
+deriving via TableMayEnum Block instance TableValue (Maybe Block)
 
-instance TableValue (Maybe Age) where
-  type BottomType (Maybe Age) = IntegralType
-  typeVals_ = typeMEnum
-  generateModule prefix =
-    generateMayEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "Age"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
+deriving via TableMayEnum Age instance TableValue (Maybe Age)
 
-instance TableValue (Maybe HangulSyllableType) where
-  type BottomType (Maybe HangulSyllableType) = IntegralType
-  typeVals_ = typeMEnum
-  generateModule prefix =
-    generateMayEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "HangulSyllableType"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
+deriving via TableMayEnum HangulSyllableType instance
+         TableValue (Maybe HangulSyllableType)
 
-instance TableValue (Maybe DecompositionType) where
-  type BottomType (Maybe DecompositionType) = IntegralType
-  typeVals_ = typeMEnum
-  generateModule prefix =
-    generateMayEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "DecompositionType"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
+deriving via TableMayEnum DecompositionType instance
+         TableValue (Maybe DecompositionType)
 
-instance TableValue JoiningType where
-  type BottomType JoiningType = IntegralType
-  typeVals_ = typeEnum
-  generateModule prefix =
-    generateEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "JoiningType"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
-
-instance TableValue (Maybe JoiningGroup) where
-  type BottomType (Maybe JoiningGroup) = IntegralType
-  typeVals_ = typeMEnum
-  generateModule prefix =
-    generateMayEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "JoiningGroup"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
-
-instance TableValue VerticalOrientation where
-  type BottomType VerticalOrientation = IntegralType
-  typeVals_ = typeEnum
-  generateModule prefix =
-    generateEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "VerticalOrientation"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
-
-instance TableValue LineBreak where
-  type BottomType LineBreak = IntegralType
-  typeVals_ = typeEnum
-  generateModule prefix =
-    generateEnum
-      EnumSpec
-        { esCPrefix = prefix
-        , esHsType = "LineBreak"
-        , esHsTypeModule = "Data.UCD.Internal.Types"
-        }
-
-instance TableValue Word32 where
-  type BottomType Word32 = IntegralType
-  typeVals_ = typeEnum
-  generateModule prefix =
-    generateEnum
-      EnumSpec
-        {esCPrefix = prefix, esHsType = "Word32", esHsTypeModule = "Data.Word"}
-
-instance TableValue (V.Vector Script) where
-  type BottomType (V.Vector Script) = (IntegralType, V.Vector Word8)
-  type BottomVal (V.Vector Script) = Int
-  typeVals = first (second $ V.map $ toEnum . fromEnum) . typeContainerDedup
-  generateModule = generateMonoContainer
+deriving via TableMayEnum JoiningGroup instance
+         TableValue (Maybe JoiningGroup)
 
 instance TableValue Bool where
   type BottomType Bool = IntegralType
@@ -217,6 +183,12 @@ instance TableValue (Maybe Bool) where
     generateMayEnum
       EnumSpec
         {esCPrefix = prefix, esHsType = "Bool", esHsTypeModule = "Data.Bool"}
+
+instance TableValue (V.Vector Script) where
+  type BottomType (V.Vector Script) = (IntegralType, V.Vector Word8)
+  type BottomVal (V.Vector Script) = Int
+  typeVals = first (second $ V.map $ toEnum . fromEnum) . typeContainerDedup
+  generateModule = generateMonoContainer
 
 instance TableValue Word8 where
   type BottomType Word8 = IntegralType
