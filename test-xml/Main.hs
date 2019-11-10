@@ -15,7 +15,6 @@ import Data.Ratio ((%), denominator, numerator)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
-import Data.Traversable (for)
 import Numeric (showHex)
 import System.Exit (exitFailure)
 import Test.HUnit
@@ -100,28 +99,22 @@ testCP children getAttr cp =
   TestList
     [ "Name aliases" ~: testCPAliases children cp
     , "Properties" ~:
-      (do xmlGC <- generalCategory
-          assertEqual "General category" xmlGC $ UCD.generalCategory cp
+      (do testEnumerated "General category" "gc" UCD.generalCategory
           xmlCCC <- canonicalCombiningClass
           assertEqual "Canonical combining class" xmlCCC $
             UCD.canonicalCombiningClass cp
           xmlName <- name
           assertEqual "Name" xmlName $ UCD.name cp
-          xmlAge <- age
-          assertEqual "Age" xmlAge $ UCD.age cp
-          xmlScript <- script
-          assertEqual "Script" xmlScript $ UCD.script cp
-          xmlBlock <- block
-          assertEqual "Block" xmlBlock $ UCD.block cp
+          testMayEnumerated "Age" "age" "unassigned" UCD.age
+          testEnumerated "Script" "sc" UCD.script
+          testMayEnumerated "Block" "blk" "NB" UCD.block
           xmlScriptExts <- scriptExts
           assertEqual "Script extensions" (sort xmlScriptExts) $
             sort $ UCD.scriptExtensions cp
-          let testBoolean testName attrName f =
-                case getAttr attrName of
-                  Nothing -> assertFailure $ "Can't locate " ++ show testName
-                  Just attr -> do
-                    b <- readBoolean attr
-                    assertEqual testName b (f cp)
+          let testBoolean testName attrName f = do
+                attr <- requireAttr attrName
+                b <- readBoolean attr
+                assertEqual testName b (f cp)
           traverse_
             (\(tn, an, f) -> testBoolean tn an f)
             [ ("White space", "WSpace", UCD.whiteSpace)
@@ -173,29 +166,18 @@ testCP children getAttr cp =
               , "CWKCF"
               , UCD.changesWhenNFKCCasefolded)
             ]
-          hst <-
-            case getAttr "hst" of
-              Nothing -> assertFailure "Can't locate hangul syllable type"
-              Just "NA" -> pure Nothing
-              Just hsStr ->
-                let hsStr8 = TE.encodeUtf8 hsStr
-                 in case find
-                           ((== hsStr8) . UCD.abbreviatedPropertyValueName)
-                           [minBound .. maxBound] of
-                      Just p -> pure $ Just p
-                      Nothing ->
-                        assertFailure $
-                        "Can't recognise hangul syllable type " ++ show hsStr
-          assertEqual "Hangul syllable type" hst $ UCD.hangulSyllableType cp
-          let testCPProp testName attrName f =
-                case getAttr attrName of
-                  Nothing -> assertFailure $ "Can't locate " ++ show testName
-                  Just attr -> do
-                    expected <-
-                      if attr == "#"
-                        then pure (fromEnum cp)
-                        else pure $ readHex attr
-                    assertEqual testName expected $ fromEnum $ f cp
+          testMayEnumerated
+            "Hangul syllable type"
+            "hst"
+            "NA"
+            UCD.hangulSyllableType
+          let testCPProp testName attrName f = do
+                attr <- requireAttr attrName
+                expected <-
+                  if attr == "#"
+                    then pure (fromEnum cp)
+                    else pure $ readHex attr
+                assertEqual testName expected $ fromEnum $ f cp
           traverse_
             (\(tn, an, f) -> testCPProp tn an f)
             [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
@@ -203,21 +185,19 @@ testCP children getAttr cp =
             , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
             , ("Simple case folding", "scf", UCD.simpleCaseFolding)
             ]
-          let testCaseMappingProp testName attrName f =
-                case getAttr attrName of
-                  Nothing -> assertFailure $ "Can't locate " ++ show testName
-                  Just attr ->
-                    let expected =
-                          if attr == "#"
-                            then [fromEnum cp]
-                            else map readHex (T.words attr)
-                        actual =
-                          case f cp of
-                            UCD.SingleCM c1 -> [fromEnum c1]
-                            UCD.DoubleCM c1 c2 -> [fromEnum c1, fromEnum c2]
-                            UCD.TripleCM c1 c2 c3 ->
-                              [fromEnum c1, fromEnum c2, fromEnum c3]
-                     in assertEqual testName expected actual
+          let testCaseMappingProp testName attrName f = do
+                attr <- requireAttr attrName
+                let expected =
+                      if attr == "#"
+                        then [fromEnum cp]
+                        else map readHex (T.words attr)
+                    actual =
+                      case f cp of
+                        UCD.SingleCM c1 -> [fromEnum c1]
+                        UCD.DoubleCM c1 c2 -> [fromEnum c1, fromEnum c2]
+                        UCD.TripleCM c1 c2 c3 ->
+                          [fromEnum c1, fromEnum c2, fromEnum c3]
+                assertEqual testName expected actual
           traverse_
             (\(tn, an, f) -> testCaseMappingProp tn an f)
             [ ("Lowercase mapping", "lc", UCD.lowercaseMapping)
@@ -354,101 +334,16 @@ testCP children getAttr cp =
               assert $ length cs /= 1
               assertEqual "NFKC_CF" nfkcCF cs
           -----
-          joiningType <-
-            case getAttr "jt" of
-              Nothing -> assertFailure "Can't find joining type"
-              Just jtStr ->
-                let jtStr8 = TE.encodeUtf8 jtStr
-                 in case find
-                           ((== jtStr8) . UCD.abbreviatedPropertyValueName)
-                           [minBound .. maxBound] of
-                      Nothing ->
-                        assertFailure $
-                        "Can't parse joining type " ++ show jtStr
-                      Just p -> pure p
-          assertEqual "Joining type" joiningType $ UCD.joiningType cp
-          ------
-          joiningGroup <-
-            case getAttr "jg" of
-              Nothing -> assertFailure "Can't find joining group"
-              Just "No_Joining_Group" -> pure Nothing
-              Just jtStr ->
-                let jtStr8 = TE.encodeUtf8 jtStr
-                 in case find
-                           ((== jtStr8) . UCD.abbreviatedPropertyValueName)
-                           [minBound .. maxBound] of
-                      Nothing ->
-                        assertFailure $
-                        "Can't parse joining type " ++ show jtStr
-                      Just p -> pure $ Just p
-          assertEqual "Joining group" joiningGroup $ UCD.joiningGroup cp
-          ------
-          verticalOrientation <-
-            case getAttr "vo" of
-              Nothing -> assertFailure "Can't find joining group"
-              Just voStr ->
-                let voStr8 = TE.encodeUtf8 voStr
-                 in case find
-                           ((== voStr8) . UCD.abbreviatedPropertyValueName)
-                           [minBound .. maxBound] of
-                      Nothing ->
-                        assertFailure $
-                        "Can't parse joining type " ++ show voStr
-                      Just p -> pure p
-          assertEqual "Vertical orientation" verticalOrientation $
-            UCD.verticalOrientation cp
-          -----
-          lineBreak <-
-            case getAttr "lb" of
-              Nothing -> assertFailure "Can't find line break"
-              Just lbStr ->
-                let lbStr8 = TE.encodeUtf8 lbStr
-                 in case find
-                           ((== lbStr8) . UCD.abbreviatedPropertyValueName)
-                           [minBound .. maxBound] of
-                      Nothing ->
-                        assertFailure $ "Can't parse line break " ++ show lbStr
-                      Just lb -> pure lb
-          assertEqual "Line break" lineBreak $ UCD.lineBreak cp)
+          testEnumerated "Joining type" "jt" UCD.joiningType
+          testMayEnumerated
+            "Joining group"
+            "jg"
+            "No_Joining_Group"
+            UCD.joiningGroup
+          testEnumerated "Vertical orientation" "vo" UCD.verticalOrientation
+          testEnumerated "Line break" "lb" UCD.lineBreak)
     ]
   where
-    generalCategory =
-      case getAttr "gc" of
-        Just gc ->
-          case gc of
-            "Lu" -> pure UCD.UppercaseLetter
-            "Ll" -> pure UCD.LowercaseLetter
-            "Lt" -> pure UCD.TitlecaseLetter
-            "Lm" -> pure UCD.ModifierLetter
-            "Lo" -> pure UCD.OtherLetter
-            "Mn" -> pure UCD.NonSpacingMark
-            "Mc" -> pure UCD.SpacingCombiningMark
-            "Me" -> pure UCD.EnclosingMark
-            "Nd" -> pure UCD.DecimalNumber
-            "Nl" -> pure UCD.LetterNumber
-            "No" -> pure UCD.OtherNumber
-            "Pc" -> pure UCD.ConnectorPunctuation
-            "Pd" -> pure UCD.DashPunctuation
-            "Ps" -> pure UCD.OpenPunctuation
-            "Pe" -> pure UCD.ClosePunctuation
-            "Pi" -> pure UCD.InitialQuote
-            "Pf" -> pure UCD.FinalQuote
-            "Po" -> pure UCD.OtherPunctuation
-            "Sm" -> pure UCD.MathSymbol
-            "Sc" -> pure UCD.CurrencySymbol
-            "Sk" -> pure UCD.ModifierSymbol
-            "So" -> pure UCD.OtherSymbol
-            "Zs" -> pure UCD.Space
-            "Zl" -> pure UCD.LineSeparator
-            "Zp" -> pure UCD.ParagraphSeparator
-            "Cc" -> pure UCD.Control
-            "Cf" -> pure UCD.Format
-            "Cs" -> pure UCD.Surrogate
-            "Co" -> pure UCD.PrivateUse
-            "Cn" -> pure UCD.NotAssigned
-            _ ->
-              assertFailure $ "Unrecognised general category value: " ++ show gc
-        Nothing -> assertFailure "Can't locate general category"
     canonicalCombiningClass =
       case getAttr "ccc" of
         Just cccStr -> readIO $ T.unpack cccStr
@@ -463,49 +358,50 @@ testCP children getAttr cp =
        in if length raw < 4
             then replicate (4 - length raw) ' ' ++ raw
             else raw
-    age =
-      case getAttr "age" of
-        Nothing -> assertFailure "Can't locate age"
-        Just "unassigned" -> pure Nothing
-        Just rawAge ->
-          let rawAge8 = TE.encodeUtf8 rawAge
-           in case find
-                     ((== rawAge8) . UCD.abbreviatedPropertyValueName)
-                     [minBound .. maxBound] of
-                Nothing -> assertFailure $ "Can't parse age: " ++ show rawAge
-                Just a -> pure $ Just a
-    script =
-      case getAttr "sc" of
-        Nothing -> assertFailure "Can't locate script"
-        Just scStr ->
-          case find
-                 (\p ->
-                    scStr == TE.decodeUtf8 (UCD.abbreviatedPropertyValueName p))
-                 [minBound .. maxBound] of
-            Nothing -> assertFailure $ "Can't parse script: " ++ show scStr
-            Just sc -> pure sc
-    block =
-      case getAttr "blk" of
-        Nothing -> assertFailure "Can't locate block"
-        Just "NB" -> pure Nothing
-        Just blkStr ->
-          let blkStr8 = TE.encodeUtf8 blkStr
-           in case find
-                     ((== blkStr8) . UCD.abbreviatedPropertyValueName)
-                     [minBound .. maxBound] of
-                Nothing -> assertFailure $ "Can't parse block: " ++ show blkStr
-                Just blk -> pure (Just blk)
     scriptExts =
       case getAttr "scx" of
         Nothing -> assertFailure "Can't locate script extensions"
         Just scxStr ->
-          for (map TE.encodeUtf8 $ T.words scxStr) $ \bstr ->
-            case find
-                   ((== bstr) . UCD.abbreviatedPropertyValueName)
-                   [minBound .. maxBound] of
-              Nothing ->
-                assertFailure $ "Can't parse script extension: " ++ show bstr
-              Just sc -> pure sc
+          traverse (parseEnumerated "script extension") $ T.words scxStr
+    testEnumerated ::
+         (Show p, Eq p, UCD.EnumeratedProperty p)
+      => String
+      -> Name
+      -> (UCD.CodePoint -> p)
+      -> IO ()
+    testEnumerated testName attrName f = do
+      attr <- requireAttr attrName
+      xmlVal <- parseEnumerated testName attr
+      assertEqual testName xmlVal $ f cp
+    testMayEnumerated ::
+         (Show p, Eq p, UCD.EnumeratedProperty p)
+      => String
+      -> Name
+      -> T.Text
+      -> (UCD.CodePoint -> Maybe p)
+      -> IO ()
+    testMayEnumerated testName attrName absent f = do
+      attr <- requireAttr attrName
+      if attr == absent
+        then assertEqual (show attrName) Nothing $ f cp
+        else do
+          xmlVal <- parseEnumerated testName attr
+          assertEqual testName (Just xmlVal) $ f cp
+    requireAttr :: Name -> IO T.Text
+    requireAttr attrName =
+      case getAttr attrName of
+        Nothing -> assertFailure $ "Can't locate attribute " ++ show attrName
+        Just txt -> pure txt
+    parseEnumerated :: UCD.EnumeratedProperty p => String -> T.Text -> IO p
+    parseEnumerated propertyName txt =
+      case find
+             ((== txt8) . UCD.abbreviatedPropertyValueName)
+             [minBound .. maxBound] of
+        Just p -> pure p
+        Nothing ->
+          assertFailure $ "Can't parse " ++ propertyName ++ ": " ++ show txt
+      where
+        txt8 = TE.encodeUtf8 txt
 
 testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
 testCPAliases children cp = do
