@@ -1,4 +1,4 @@
-* Unicode Properties [79/97]
+* Unicode Properties [80/97]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -64,13 +64,13 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] NFKD_Quick_Check
   - [X] NFKC_Casefold
   - [X] Changes_When_NFKC_Casefolded
-- [-] Shaping and Rendering [6/10]
+- [-] Shaping and Rendering [7/10]
   - [X] Join_Control
   - [X] Joining_Group
   - [X] Joining_Type
   - [X] Vertical_Orientation
   - [X] Line_Break
-  - [ ] Grapheme_Cluster_Break
+  - [X] Grapheme_Cluster_Break
   - [ ] Sentence_Break
   - [ ] Word_Break
   - [ ] East_Asian_Width

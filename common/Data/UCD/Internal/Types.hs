@@ -15,6 +15,7 @@ module Data.UCD.Internal.Types
   , JoiningType(..)
   , VerticalOrientation(..)
   , LineBreak(..)
+  , GraphemeClusterBreak(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2146,3 +2147,54 @@ instance EnumeratedProperty LineBreak where
       UnknownLB -> "XX"
       ZWSpaceLB -> "ZW"
       ZWJLB -> "ZWJ"
+
+data GraphemeClusterBreak
+  = ControlGCB
+  | CRGCB
+  | ExtendGCB
+  | LGCB
+  | LFGCB
+  | LVGCB
+  | LVTGCB
+  | PrependGCB
+  | RegionalIndicatorGCB
+  | SpacingMarkGCB
+  | TGCB
+  | VGCB
+  | OtherGCB
+  | ZWJGCB
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty GraphemeClusterBreak where
+  abbreviatedPropertyValueName gcb =
+    case gcb of
+      ControlGCB -> "CN"
+      CRGCB -> "CR"
+      ExtendGCB -> "EX"
+      LGCB -> "L"
+      LFGCB -> "LF"
+      LVGCB -> "LV"
+      LVTGCB -> "LVT"
+      PrependGCB -> "PP"
+      RegionalIndicatorGCB -> "RI"
+      SpacingMarkGCB -> "SM"
+      TGCB -> "T"
+      VGCB -> "V"
+      OtherGCB -> "XX"
+      ZWJGCB -> "ZWJ"
+  fullPropertyValueName gcb =
+    case gcb of
+      ControlGCB -> "Control"
+      CRGCB -> "CR"
+      ExtendGCB -> "Extend"
+      LGCB -> "L"
+      LFGCB -> "LF"
+      LVGCB -> "LV"
+      LVTGCB -> "LVT"
+      PrependGCB -> "Prepend"
+      RegionalIndicatorGCB -> "Regional_Indicator"
+      SpacingMarkGCB -> "SpacingMark"
+      TGCB -> "T"
+      VGCB -> "V"
+      OtherGCB -> "Other"
+      ZWJGCB -> "ZWJ"

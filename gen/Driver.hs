@@ -40,6 +40,7 @@ import Data.UCD.Internal.Types
   ( Age
   , Block
   , DecompositionType
+  , GraphemeClusterBreak
   , HangulSyllableType
   , JoiningGroup
   , JoiningType
@@ -128,6 +129,9 @@ deriving via TableEnum VerticalOrientation instance
          TableValue VerticalOrientation
 
 deriving via TableEnum LineBreak instance TableValue LineBreak
+
+deriving via TableEnum GraphemeClusterBreak instance
+         TableValue GraphemeClusterBreak
 
 deriving via TableEnum GeneralCategory instance
          TableValue GeneralCategory

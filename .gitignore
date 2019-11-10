@@ -35,7 +35,6 @@ data/latest/ucd/TangutSources.txt
 data/latest/ucd/UCD.zip
 data/latest/ucd/USourceData.txt
 data/latest/ucd/Unihan.zip
-data/latest/ucd/auxiliary/
 generated/
 /data/latest/ucdxml/ucdxml.readme.txt
 /data/latest/ucdxml/ucd.unihan.grouped.zip
@@ -61,3 +60,9 @@ generated/
 /data/latest/ucd/extracted/DerivedName.txt
 /data/latest/ucd/extracted/DerivedNumericType.txt
 /data/latest/ucd/extracted/DerivedNumericValues.txt
+/data/latest/ucd/auxiliary/GraphemeBreakTest.txt
+/data/latest/ucd/auxiliary/LineBreakTest.txt
+/data/latest/ucd/auxiliary/SentenceBreakProperty.txt
+/data/latest/ucd/auxiliary/SentenceBreakTest.txt
+/data/latest/ucd/auxiliary/WordBreakProperty.txt
+/data/latest/ucd/auxiliary/WordBreakTest.txt

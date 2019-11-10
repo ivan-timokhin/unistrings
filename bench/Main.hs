@@ -363,6 +363,9 @@ main =
           , C.bgroup
               "Line break"
               [C.bench "UCD" $ mkEnumBenchmark udhr UCD.lineBreak]
+          , C.bgroup
+              "Grapheme cluster break"
+              [C.bench "UCD" $ mkEnumBenchmark udhr UCD.graphemeClusterBreak]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

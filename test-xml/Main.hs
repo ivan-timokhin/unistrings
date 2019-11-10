@@ -320,7 +320,8 @@ testCP children getAttr cp =
             "No_Joining_Group"
             UCD.joiningGroup
           testEnumerated "Vertical orientation" "vo" UCD.verticalOrientation
-          testEnumerated "Line break" "lb" UCD.lineBreak)
+          testEnumerated "Line break" "lb" UCD.lineBreak
+          testEnumerated "Grapheme cluster break" "GCB" UCD.graphemeClusterBreak)
     ]
   where
     canonicalCombiningClass =

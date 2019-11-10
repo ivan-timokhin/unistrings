@@ -42,6 +42,7 @@ main = do
               , joiningGroup
               , verticalOrientation
               , lineBreak
+              , graphemeCluster
               ]
           , TestLabel "Names" $
             TestList
@@ -282,6 +283,13 @@ verticalOrientation =
 
 lineBreak :: Test
 lineBreak = testEnum "Line break" "line_break" UCD.lineBreak
+
+graphemeCluster :: Test
+graphemeCluster =
+  testEnum
+    "Grapheme cluster break"
+    "grapheme_cluster_break"
+    UCD.graphemeClusterBreak
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

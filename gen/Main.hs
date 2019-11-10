@@ -23,7 +23,8 @@ import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
 import Data.UCD.Internal.Types
-  ( JoiningType(NonJoining)
+  ( GraphemeClusterBreak(OtherGCB)
+  , JoiningType(NonJoining)
   , LineBreak(UnknownLB)
   , Script(UnknownScript)
   , VerticalOrientation(Rotated)
@@ -49,6 +50,7 @@ import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.DerivedJoiningGroup
 import qualified UCD.DerivedJoiningType
 import qualified UCD.DerivedNormalizationProps as UCD.DNP
+import qualified UCD.GraphemeBreakProperty
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
 import qualified UCD.LineBreak
@@ -395,6 +397,9 @@ main = do
     , do lineBreak <- UCD.LineBreak.fetch
          processTable fullPartitionings "line_break" $
            UCD.Common.tableToVector UnknownLB lineBreak
+    , do graphemeClusterBreak <- UCD.GraphemeBreakProperty.fetch
+         processTable fullPartitionings "grapheme_cluster_break" $
+           UCD.Common.tableToVector OtherGCB graphemeClusterBreak
     ]
 
 printLong :: Show a => [a] -> IO ()

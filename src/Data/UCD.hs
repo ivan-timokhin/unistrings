@@ -98,6 +98,8 @@ module Data.UCD
   , VerticalOrientation(..)
   , lineBreak
   , LineBreak(..)
+  , graphemeClusterBreak
+  , GraphemeClusterBreak(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -143,6 +145,7 @@ import qualified Data.UCD.Internal.FullCaseFolding1 as FCF1
 import qualified Data.UCD.Internal.FullCaseFolding2 as FCF2
 import qualified Data.UCD.Internal.GeneralCategory as GC
 import qualified Data.UCD.Internal.GraphemeBase as GB
+import qualified Data.UCD.Internal.GraphemeClusterBreak as GCB
 import qualified Data.UCD.Internal.GraphemeExtend as GE
 import qualified Data.UCD.Internal.HangulSyllableType as HST
 import qualified Data.UCD.Internal.IdContinue as IC
@@ -197,6 +200,7 @@ import Data.UCD.Internal.Types
   , Block(..)
   , DecompositionType(..)
   , EnumeratedProperty(..)
+  , GraphemeClusterBreak(..)
   , HangulSyllableType(..)
   , JoiningGroup(..)
   , JoiningType(..)
@@ -749,6 +753,9 @@ verticalOrientation = withCP VO.retrieve
 
 lineBreak :: IsCodePoint cp => cp -> LineBreak
 lineBreak = withCP LB.retrieve
+
+graphemeClusterBreak :: IsCodePoint cp => cp -> GraphemeClusterBreak
+graphemeClusterBreak = withCP GCB.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
