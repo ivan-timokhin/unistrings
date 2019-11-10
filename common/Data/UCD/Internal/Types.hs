@@ -1692,23 +1692,63 @@ instance EnumeratedProperty Script where
 
 data DecompositionType
   = Canonical
+  | Compat
+  | Circle
+  | Final
   | Font
-  | NoBreak
-  | InitialPresentationForm
-  | MedialPresentationForm
-  | FinalPresentationForm
-  | IsolatedPresentationForm
-  | Encircled
-  | Superscript
-  | Subscript
-  | VerticalLayout
-  | Wide
+  | Fraction
+  | Initial
+  | Isolated
+  | Medial
   | Narrow
+  | NoBreak
   | Small
-  | Squared
-  | VulgarFraction
-  | Compatibility
+  | Square
+  | Sub
+  | Super
+  | Vertical
+  | Wide
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty DecompositionType where
+  abbreviatedPropertyValueName dt =
+    case dt of
+      Canonical -> "Can"
+      Compat -> "Com"
+      Circle -> "Enc"
+      Final -> "Fin"
+      Font -> "Font"
+      Fraction -> "Fra"
+      Initial -> "Init"
+      Isolated -> "Iso"
+      Medial -> "Med"
+      Narrow -> "Nar"
+      NoBreak -> "Nb"
+      Small -> "Sml"
+      Square -> "Sqr"
+      Sub -> "Sub"
+      Super -> "Sup"
+      Vertical -> "Vert"
+      Wide -> "Wide"
+  fullPropertyValueName dt =
+    case dt of
+      Canonical -> "Canonical"
+      Compat -> "Compat"
+      Circle -> "Circle"
+      Final -> "Final"
+      Font -> "Font"
+      Fraction -> "Fraction"
+      Initial -> "Initial"
+      Isolated -> "Isolated"
+      Medial -> "Medial"
+      Narrow -> "Narrow"
+      NoBreak -> "Nobreak"
+      Small -> "Small"
+      Square -> "Square"
+      Sub -> "Sub"
+      Super -> "Super"
+      Vertical -> "Vertical"
+      Wide -> "Wide"
 
 data JoiningGroup
   = AfricanFeh

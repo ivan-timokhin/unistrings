@@ -6,6 +6,8 @@ module Main where
 import Codec.Archive.Zip (mkEntrySelector, sourceEntry, withArchive)
 import Control.Applicative ((<|>), liftA2)
 import Control.Monad (when)
+import Data.Bits ((.|.))
+import qualified Data.ByteString as B
 import Data.Char (chr, toUpper)
 import Data.Foldable (for_, traverse_)
 import Data.List (find, sort)
@@ -257,35 +259,12 @@ testCP children getAttr cp =
                         _ ->
                           assertFailure $
                           "Unrecognised numeric type: " ++ show ntStr
-          decompType <-
-            case getAttr "dt" of
-              Nothing -> assertFailure "Can't find decomposition type"
-              Just str
-                | str == "none" -> pure Nothing
-                | otherwise ->
-                  Just <$>
-                  case str of
-                    "can" -> pure UCD.Canonical
-                    "com" -> pure UCD.Compatibility
-                    "enc" -> pure UCD.Encircled
-                    "fin" -> pure UCD.FinalPresentationForm
-                    "font" -> pure UCD.Font
-                    "fra" -> pure UCD.VulgarFraction
-                    "init" -> pure UCD.InitialPresentationForm
-                    "iso" -> pure UCD.IsolatedPresentationForm
-                    "med" -> pure UCD.MedialPresentationForm
-                    "nar" -> pure UCD.Narrow
-                    "nb" -> pure UCD.NoBreak
-                    "sml" -> pure UCD.Small
-                    "sqr" -> pure UCD.Squared
-                    "sub" -> pure UCD.Subscript
-                    "sup" -> pure UCD.Superscript
-                    "vert" -> pure UCD.VerticalLayout
-                    "wide" -> pure UCD.Wide
-                    _ ->
-                      assertFailure $
-                      "Unrecognised decomposition type: " ++ show str
-          assertEqual "Decomposition type" decompType $ UCD.decompositionType cp
+          testMayEnumerated
+            "Decomposition type"
+            "dt"
+            "none"
+            UCD.decompositionType
+          let decompType = UCD.decompositionType cp
           decompMap <-
             case getAttr "dm" of
               Nothing -> assertFailure "Can't find decomposition mapping"
@@ -395,13 +374,14 @@ testCP children getAttr cp =
     parseEnumerated :: UCD.EnumeratedProperty p => String -> T.Text -> IO p
     parseEnumerated propertyName txt =
       case find
-             ((== txt8) . UCD.abbreviatedPropertyValueName)
+             ((== txt8) . toUpper8 . UCD.abbreviatedPropertyValueName)
              [minBound .. maxBound] of
         Just p -> pure p
         Nothing ->
           assertFailure $ "Can't parse " ++ propertyName ++ ": " ++ show txt
       where
-        txt8 = TE.encodeUtf8 txt
+        txt8 = toUpper8 $ TE.encodeUtf8 txt
+    toUpper8 = B.map (.|. 0x20)
 
 testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
 testCPAliases children cp = do

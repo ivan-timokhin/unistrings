@@ -196,21 +196,21 @@ decompositionType =
     icu2ucd d =
       case d of
         ICU.Canonical -> UCD.Canonical
-        ICU.Compat -> UCD.Compatibility
-        ICU.Circle -> UCD.Encircled
-        ICU.Final -> UCD.FinalPresentationForm
+        ICU.Compat -> UCD.Compat
+        ICU.Circle -> UCD.Circle
+        ICU.Final -> UCD.Final
         ICU.Font -> UCD.Font
-        ICU.Fraction -> UCD.VulgarFraction
-        ICU.Initial -> UCD.InitialPresentationForm
-        ICU.Isolated -> UCD.IsolatedPresentationForm
-        ICU.Medial -> UCD.MedialPresentationForm
+        ICU.Fraction -> UCD.Fraction
+        ICU.Initial -> UCD.Initial
+        ICU.Isolated -> UCD.Isolated
+        ICU.Medial -> UCD.Medial
         ICU.Narrow -> UCD.Narrow
         ICU.NoBreak -> UCD.NoBreak
         ICU.Small -> UCD.Small
-        ICU.Square -> UCD.Squared
-        ICU.Sub -> UCD.Subscript
-        ICU.Super -> UCD.Superscript
-        ICU.Vertical -> UCD.VerticalLayout
+        ICU.Square -> UCD.Square
+        ICU.Sub -> UCD.Sub
+        ICU.Super -> UCD.Super
+        ICU.Vertical -> UCD.Vertical
         ICU.Wide -> UCD.Wide
         ICU.Count -> error "'Count' is not actually a decomposition type"
 

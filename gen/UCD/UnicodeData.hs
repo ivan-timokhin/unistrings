@@ -19,6 +19,7 @@ import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Char as C
+import Data.Char (toLower)
 import Data.Foldable (foldl')
 import Data.Functor (void)
 import Data.Int (Int32)
@@ -29,14 +30,7 @@ import Data.Ratio ((%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
 
-import Data.UCD.Internal.Types
-  ( BidiClass
-  , DecompositionType(Canonical, Compatibility, Encircled,
-                  FinalPresentationForm, Font, InitialPresentationForm,
-                  IsolatedPresentationForm, MedialPresentationForm, Narrow, NoBreak,
-                  Small, Squared, Subscript, Superscript, VerticalLayout,
-                  VulgarFraction, Wide)
-  )
+import Data.UCD.Internal.Types (BidiClass, DecompositionType(Canonical))
 import Trie (deduplicate)
 import UCD.Common
   ( Range(Range, Single)
@@ -261,30 +255,17 @@ pDecompositionMapping =
   (do tag <-
         (A.char '<' *>
          tableP
-           [ "font" ~> Font
-           , "noBreak" ~> NoBreak
-           , "initial" ~> InitialPresentationForm
-           , "medial" ~> MedialPresentationForm
-           , "final" ~> FinalPresentationForm
-           , "isolated" ~> IsolatedPresentationForm
-           , "circle" ~> Encircled
-           , "super" ~> Superscript
-           , "sub" ~> Subscript
-           , "vertical" ~> VerticalLayout
-           , "wide" ~> Wide
-           , "narrow" ~> Narrow
-           , "small" ~> Small
-           , "square" ~> Squared
-           , "fraction" ~> VulgarFraction
-           , "compat" ~> Compatibility
-           ] <*
+           (map
+              (\val -> (B.pack $ lowerFst $ show val, val))
+              [minBound .. maxBound]) <*
          A.string "> ") <|>
         pure Canonical
       decomposition <- A.hexadecimal `A.sepBy1` A.char ' '
       pure (tag, decomposition)) A.<?>
   "decomposition mapping"
   where
-    (~>) = (,)
+    lowerFst (c:cs) = toLower c : cs
+    lowerFst [] = []
 
 pNumericProperties :: A.Parser (Maybe NumericProperties)
 pNumericProperties =
