@@ -16,6 +16,7 @@ module Data.UCD.Internal.Types
   , VerticalOrientation(..)
   , LineBreak(..)
   , GraphemeClusterBreak(..)
+  , SentenceBreak(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2198,3 +2199,57 @@ instance EnumeratedProperty GraphemeClusterBreak where
       VGCB -> "V"
       OtherGCB -> "Other"
       ZWJGCB -> "ZWJ"
+
+data SentenceBreak
+  = ATermSB
+  | CloseSB
+  | CRSB
+  | ExtendSB
+  | FormatSB
+  | OLetterSB
+  | LFSB
+  | LowerSB
+  | NumericSB
+  | SContinueSB
+  | SepSB
+  | SpSB
+  | STermSB
+  | UpperSB
+  | OtherSB
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty SentenceBreak where
+  abbreviatedPropertyValueName sb =
+    case sb of
+      ATermSB -> "AT"
+      CloseSB -> "CL"
+      CRSB -> "CR"
+      ExtendSB -> "EX"
+      FormatSB -> "FO"
+      OLetterSB -> "LE"
+      LFSB -> "LF"
+      LowerSB -> "LO"
+      NumericSB -> "NU"
+      SContinueSB -> "SC"
+      SepSB -> "SE"
+      SpSB -> "SP"
+      STermSB -> "ST"
+      UpperSB -> "UP"
+      OtherSB -> "XX"
+  fullPropertyValueName sb =
+    case sb of
+      ATermSB -> "ATerm"
+      CloseSB -> "Close"
+      CRSB -> "CR"
+      ExtendSB -> "Extend"
+      FormatSB -> "Format"
+      OLetterSB -> "OLetter"
+      LFSB -> "LF"
+      LowerSB -> "Lower"
+      NumericSB -> "Numeric"
+      SContinueSB -> "SContinue"
+      SepSB -> "Sep"
+      SpSB -> "Sp"
+      STermSB -> "STerm"
+      UpperSB -> "Upper"
+      OtherSB -> "Other"

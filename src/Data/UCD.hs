@@ -100,6 +100,8 @@ module Data.UCD
   , LineBreak(..)
   , graphemeClusterBreak
   , GraphemeClusterBreak(..)
+  , sentenceBreak
+  , SentenceBreak(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -179,6 +181,7 @@ import qualified Data.UCD.Internal.QuotationMark as QM
 import qualified Data.UCD.Internal.Script as Script
 import qualified Data.UCD.Internal.ScriptExtsLen as SELen
 import qualified Data.UCD.Internal.ScriptExtsPtr as SEPtr
+import qualified Data.UCD.Internal.SentenceBreak as SB
 import qualified Data.UCD.Internal.SentenceTerminal as ST
 import qualified Data.UCD.Internal.SimpleCaseFolding as SCF
 import qualified Data.UCD.Internal.SimpleLowercaseMapping as SLM
@@ -207,6 +210,7 @@ import Data.UCD.Internal.Types
   , LineBreak(..)
   , NameAliasType(..)
   , Script(..)
+  , SentenceBreak(..)
   , VerticalOrientation(..)
   )
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
@@ -756,6 +760,9 @@ lineBreak = withCP LB.retrieve
 
 graphemeClusterBreak :: IsCodePoint cp => cp -> GraphemeClusterBreak
 graphemeClusterBreak = withCP GCB.retrieve
+
+sentenceBreak :: IsCodePoint cp => cp -> SentenceBreak
+sentenceBreak = withCP SB.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

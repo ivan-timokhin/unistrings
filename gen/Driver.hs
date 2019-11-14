@@ -46,6 +46,7 @@ import Data.UCD.Internal.Types
   , JoiningType
   , LineBreak
   , Script
+  , SentenceBreak
   , VerticalOrientation
   )
 import Gen
@@ -132,6 +133,9 @@ deriving via TableEnum LineBreak instance TableValue LineBreak
 
 deriving via TableEnum GraphemeClusterBreak instance
          TableValue GraphemeClusterBreak
+
+deriving via TableEnum SentenceBreak instance
+         TableValue SentenceBreak
 
 deriving via TableEnum GeneralCategory instance
          TableValue GeneralCategory

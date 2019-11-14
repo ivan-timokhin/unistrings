@@ -366,6 +366,14 @@ main =
           , C.bgroup
               "Grapheme cluster break"
               [C.bench "UCD" $ mkEnumBenchmark udhr UCD.graphemeClusterBreak]
+          , C.bgroup
+              "Sentence break"
+              [ C.bench "UCD" $ mkEnumBenchmark udhr UCD.sentenceBreak
+              , C.bench "ICU" $
+                mkBenchmark
+                  udhr
+                  (maybe 0 fromEnum . ICU.property ICU.SentenceBreak)
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

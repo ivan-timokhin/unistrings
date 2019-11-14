@@ -62,7 +62,6 @@ generated/
 /data/latest/ucd/extracted/DerivedNumericValues.txt
 /data/latest/ucd/auxiliary/GraphemeBreakTest.txt
 /data/latest/ucd/auxiliary/LineBreakTest.txt
-/data/latest/ucd/auxiliary/SentenceBreakProperty.txt
 /data/latest/ucd/auxiliary/SentenceBreakTest.txt
 /data/latest/ucd/auxiliary/WordBreakProperty.txt
 /data/latest/ucd/auxiliary/WordBreakTest.txt

@@ -27,6 +27,7 @@ import Data.UCD.Internal.Types
   , JoiningType(NonJoining)
   , LineBreak(UnknownLB)
   , Script(UnknownScript)
+  , SentenceBreak(OtherSB)
   , VerticalOrientation(Rotated)
   )
 import Driver
@@ -58,6 +59,7 @@ import qualified UCD.NameAliases
 import qualified UCD.PropList
 import qualified UCD.ScriptExtensions
 import qualified UCD.Scripts
+import qualified UCD.SentenceBreakProperty
 import qualified UCD.SpecialCasing
 import qualified UCD.UnicodeData
 import qualified UCD.Unihan.NumericValues
@@ -400,6 +402,9 @@ main = do
     , do graphemeClusterBreak <- UCD.GraphemeBreakProperty.fetch
          processTable fullPartitionings "grapheme_cluster_break" $
            UCD.Common.tableToVector OtherGCB graphemeClusterBreak
+    , do sentenceBreak <- UCD.SentenceBreakProperty.fetch
+         processTable fullPartitionings "sentence_break" $
+           UCD.Common.tableToVector OtherSB sentenceBreak
     ]
 
 printLong :: Show a => [a] -> IO ()

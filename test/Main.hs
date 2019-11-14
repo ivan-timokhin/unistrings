@@ -43,6 +43,7 @@ main = do
               , verticalOrientation
               , lineBreak
               , graphemeCluster
+              , sentenceBreak
               ]
           , TestLabel "Names" $
             TestList
@@ -290,6 +291,9 @@ graphemeCluster =
     "Grapheme cluster break"
     "grapheme_cluster_break"
     UCD.graphemeClusterBreak
+
+sentenceBreak :: Test
+sentenceBreak = testEnum "Sentence break" "sentence_break" UCD.sentenceBreak
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)

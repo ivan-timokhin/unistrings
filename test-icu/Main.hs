@@ -28,6 +28,7 @@ main = do
           , compatibilityDecomposition
           , canonicalComposition
           , joiningType
+          , sentenceBreak
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -298,6 +299,31 @@ joiningType =
         ICU.RightJoining -> UCD.RightJoining
         ICU.Transparent -> UCD.Transparent
     toUCD Nothing = UCD.NonJoining
+
+sentenceBreak :: Test
+sentenceBreak =
+  compareForAll
+    "Sentence break"
+    (toUCD . ICU.property ICU.SentenceBreak)
+    UCD.sentenceBreak
+  where
+    toUCD Nothing = UCD.OtherSB
+    toUCD (Just sb) =
+      case sb of
+        ICU.SBATerm -> UCD.ATermSB
+        ICU.SBClose -> UCD.CloseSB
+        ICU.SBCR -> UCD.CRSB
+        ICU.SBExtend -> UCD.ExtendSB
+        ICU.SBFormat -> UCD.FormatSB
+        ICU.SBOLetter -> UCD.OLetterSB
+        ICU.SBLF -> UCD.LFSB
+        ICU.SBLower -> UCD.LowerSB
+        ICU.SBNumeric -> UCD.NumericSB
+        ICU.SBSContinue -> UCD.SContinueSB
+        ICU.SBSep -> UCD.SepSB
+        ICU.SBSP -> UCD.SpSB
+        ICU.SBSTerm -> UCD.STermSB
+        ICU.SBUpper -> UCD.UpperSB
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest = mkPropertyTest
