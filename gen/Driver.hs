@@ -48,6 +48,7 @@ import Data.UCD.Internal.Types
   , Script
   , SentenceBreak
   , VerticalOrientation
+  , WordBreak
   )
 import Gen
   ( ASCIISpec(ASCIISpec, asCPrefix)
@@ -137,6 +138,8 @@ deriving via TableEnum GraphemeClusterBreak instance
 
 deriving via TableEnum SentenceBreak instance
          TableValue SentenceBreak
+
+deriving via TableEnum WordBreak instance TableValue WordBreak
 
 deriving via TableEnum GeneralCategory instance
          TableValue GeneralCategory

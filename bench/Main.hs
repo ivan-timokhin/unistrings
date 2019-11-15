@@ -374,6 +374,9 @@ main =
                   udhr
                   (maybe 0 fromEnum . ICU.property ICU.SentenceBreak)
               ]
+          , C.bgroup
+              "Word break"
+              [C.bench "UCD" $ mkEnumBenchmark udhr UCD.wordBreak]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

@@ -44,6 +44,7 @@ main = do
               , lineBreak
               , graphemeCluster
               , sentenceBreak
+              , testEnum "Word break" "word_break" UCD.wordBreak
               ]
           , TestLabel "Names" $
             TestList

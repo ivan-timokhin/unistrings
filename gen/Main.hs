@@ -29,6 +29,7 @@ import Data.UCD.Internal.Types
   , Script(UnknownScript)
   , SentenceBreak(OtherSB)
   , VerticalOrientation(Rotated)
+  , WordBreak(OtherWB)
   )
 import Driver
   ( generateASCIITableSources
@@ -64,6 +65,7 @@ import qualified UCD.SpecialCasing
 import qualified UCD.UnicodeData
 import qualified UCD.Unihan.NumericValues
 import qualified UCD.VerticalOrientation
+import qualified UCD.WordBreakProperty
 
 main :: IO ()
 main = do
@@ -405,6 +407,9 @@ main = do
     , do sentenceBreak <- UCD.SentenceBreakProperty.fetch
          processTable fullPartitionings "sentence_break" $
            UCD.Common.tableToVector OtherSB sentenceBreak
+    , do wordBreak <- UCD.WordBreakProperty.fetch
+         processTable fullPartitionings "word_break" $
+           UCD.Common.tableToVector OtherWB wordBreak
     ]
 
 printLong :: Show a => [a] -> IO ()

@@ -102,6 +102,8 @@ module Data.UCD
   , GraphemeClusterBreak(..)
   , sentenceBreak
   , SentenceBreak(..)
+  , wordBreak
+  , WordBreak(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -212,10 +214,12 @@ import Data.UCD.Internal.Types
   , Script(..)
   , SentenceBreak(..)
   , VerticalOrientation(..)
+  , WordBreak(..)
   )
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
 import qualified Data.UCD.Internal.Uppercase as UC
 import qualified Data.UCD.Internal.VerticalOrientation as VO
+import qualified Data.UCD.Internal.WordBreak as WB
 import qualified Data.UCD.Internal.XidContinue as XIC
 import qualified Data.UCD.Internal.XidStart as XIS
 
@@ -763,6 +767,9 @@ graphemeClusterBreak = withCP GCB.retrieve
 
 sentenceBreak :: IsCodePoint cp => cp -> SentenceBreak
 sentenceBreak = withCP SB.retrieve
+
+wordBreak :: IsCodePoint cp => cp -> WordBreak
+wordBreak = withCP WB.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

@@ -17,6 +17,7 @@ module Data.UCD.Internal.Types
   , LineBreak(..)
   , GraphemeClusterBreak(..)
   , SentenceBreak(..)
+  , WordBreak(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2253,3 +2254,69 @@ instance EnumeratedProperty SentenceBreak where
       STermSB -> "STerm"
       UpperSB -> "Upper"
       OtherSB -> "Other"
+
+data WordBreak
+  = CRWB
+  | DoubleQuoteWB
+  | ExtendNumLetWB
+  | ExtendWB
+  | FormatWB
+  | HebrewLetterWB
+  | KatakanaWB
+  | ALetterWB
+  | LFWB
+  | MidNumLetWB
+  | MidLetterWB
+  | MidNumWB
+  | NewlineWB
+  | NumericWB
+  | RegionalIndicatorWB
+  | SingleQuoteWB
+  | WSegSpaceWB
+  | OtherWB
+  | ZWJWB
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty WordBreak where
+  abbreviatedPropertyValueName wb =
+    case wb of
+      CRWB -> "CR"
+      DoubleQuoteWB -> "DQ"
+      ExtendNumLetWB -> "EX"
+      ExtendWB -> "Extend"
+      FormatWB -> "FO"
+      HebrewLetterWB -> "HL"
+      KatakanaWB -> "KA"
+      ALetterWB -> "LE"
+      LFWB -> "LF"
+      MidNumLetWB -> "MB"
+      MidLetterWB -> "ML"
+      MidNumWB -> "MN"
+      NewlineWB -> "NL"
+      NumericWB -> "NU"
+      RegionalIndicatorWB -> "RI"
+      SingleQuoteWB -> "SQ"
+      WSegSpaceWB -> "WSegSpace"
+      OtherWB -> "XX"
+      ZWJWB -> "ZWJ"
+  fullPropertyValueName wb =
+    case wb of
+      CRWB -> "CR"
+      DoubleQuoteWB -> "Double_Quote"
+      ExtendNumLetWB -> "ExtendNumLet"
+      ExtendWB -> "Extend"
+      FormatWB -> "Format"
+      HebrewLetterWB -> "Hebrew_Letter"
+      KatakanaWB -> "Katakana"
+      ALetterWB -> "ALetter"
+      LFWB -> "LF"
+      MidNumLetWB -> "MidNumLet"
+      MidLetterWB -> "MidLetter"
+      MidNumWB -> "MidNum"
+      NewlineWB -> "Newline"
+      NumericWB -> "Numeric"
+      RegionalIndicatorWB -> "Regional_Indicator"
+      SingleQuoteWB -> "Single_Quote"
+      WSegSpaceWB -> "WSegSpace"
+      OtherWB -> "Other"
+      ZWJWB -> "ZWJ"
