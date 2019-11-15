@@ -57,7 +57,7 @@ enumSpec2IntGSpec espec =
     , igsHsType = esHsType espec
     , igsHsImports =
         [B.concat ["import ", esHsTypeModule espec, " (", esHsType espec, ")"]]
-    , igsHsConvert = "toEnum . fromEnum $ "
+    , igsHsConvert = ("toEnum . fromEnum $ " <>)
     , igsConvert = toInteger . fromEnum
     }
 
@@ -75,7 +75,7 @@ generateMayEnum spec =
           [ B.concat ["import ", esHsTypeModule spec, " (", esHsType spec, ")"]
           , "import Data.UCD.Internal.Enum (toMEnum)"
           ]
-      , igsHsConvert = "toMEnum . fromEnum $ "
+      , igsHsConvert = ("toMEnum . fromEnum $ " <>)
       , igsConvert = maybe 0 (toInteger . succ . fromEnum)
       }
 
@@ -96,7 +96,7 @@ generateIntegral spec =
       { igsCPrefix = isCPrefix spec
       , igsHsType = isHsType spec
       , igsHsImports = []
-      , igsHsConvert = ""
+      , igsHsConvert = id
       , igsConvert = toInteger
       }
 
@@ -105,7 +105,7 @@ data IntGSpec a =
     { igsCPrefix :: ByteString
     , igsHsType :: ByteString
     , igsHsImports :: [ByteString]
-    , igsHsConvert :: ByteString
+    , igsHsConvert :: ByteString -> ByteString
     , igsConvert :: a -> Integer
     }
 
@@ -121,7 +121,7 @@ intGSpec2Generic ispec =
     , gsHsType = igsHsType ispec
     , gsHsImports = igsHsImports ispec
     , gsHsFFI = []
-    , gsHsConvert = \expr -> igsHsConvert ispec <> expr
+    , gsHsConvert = igsHsConvert ispec
     , gsHsIntegralType = id
     , gsConvert = igsConvert ispec
     }
