@@ -57,8 +57,12 @@ enumSpec2IntGSpec espec =
     { igsCPrefix = esCPrefix espec
     , igsHsType = esHsType espec
     , igsHsImports =
-        [B.concat ["import ", esHsTypeModule espec, " (", esHsType espec, ")"]]
-    , igsHsConvert = ("toEnum . fromEnum $ " <>)
+        [ B.concat ["import ", esHsTypeModule espec, " (", esHsType espec, ")"]
+        , "import Data.UCD.Internal.Int (toInt#)"
+        , "import GHC.Exts(tagToEnum#)"
+        ]
+    , igsHsConvert =
+        \v -> "tagToEnum# (toInt# (" <> v <> ")) :: " <> esHsType espec
     , igsConvert = toInteger . fromEnum
     }
 

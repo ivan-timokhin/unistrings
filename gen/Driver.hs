@@ -298,6 +298,7 @@ generateSources (maxLayers, maxBits) snakeName values = do
     B.unlines $
     "{-# OPTIONS_GHC -Wno-unused-imports -Wno-identities #-}" :
     "{- HLINT ignore -}" :
+    "{-# LANGUAGE MagicHash #-}" :
     ("module Data.UCD.Internal." <> hsModuleName <> " (retrieve) where\n") :
     moduleHs modul
   B.writeFile (B.unpack $ "generated/cbits/" <> snakeName <> ".c") $

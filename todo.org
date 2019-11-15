@@ -118,7 +118,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [ ] Emoji_Modifier_Base
 - [ ] Emoji_Component
 - [ ] Extended_Pictographic
-* Miscellaneous code tasks [5/7]
+* Miscellaneous code tasks [6/7]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
 ** DONE Add missing instances to enums
@@ -143,7 +143,11 @@ CLOSED: [2019-07-25 Чт 17:10]
 I am deeply worried that all of the actual property lookup is getting
 optimised away, and the perceived gains over ICU are all due to the
 fact that GHC can't actually do that for FFI.
-** TODO Investigate using ~tagToEnum#~ instead of ~toEnum~ in ~retrieve~ functions
+** DONE Investigate using ~tagToEnum#~ instead of ~toEnum~ in ~retrieve~ functions
+CLOSED: [2019-11-15 Пт 14:56]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2019-11-15 Пт 14:56]
+:END:
 This should omit redundant (if we set our tables up correctly) bounds
 checks and accelerate the whole thing somewhat.  Somewhat similar in
 spirit to using ~:%~ instead of ~%~ in numeric value property.
