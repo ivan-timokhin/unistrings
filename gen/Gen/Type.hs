@@ -11,6 +11,7 @@ module Gen.Type
   , typeEnum
   , typeMEnum
   , typeIntegral
+  , typeMIntegral
   , typeASCII
   , typeContainer
   , typeContainerDedup
@@ -80,6 +81,9 @@ typeMEnum = findTypeForTable $ maybe 0 (toInteger . succ . fromEnum)
 
 typeIntegral :: Integral a => V.Vector a -> IntegralType
 typeIntegral = findTypeForTable toInteger
+
+typeMIntegral :: Integral a => V.Vector (Maybe a) -> IntegralType
+typeMIntegral = findTypeForTable $ maybe 0 (succ . toInteger)
 
 typeASCII :: V.Vector ByteString -> ((IntegralType, ByteString), V.Vector Int)
 typeASCII = typeContainer

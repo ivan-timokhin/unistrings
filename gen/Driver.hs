@@ -58,6 +58,7 @@ import Gen
   , generateEnum
   , generateIntegral
   , generateMayEnum
+  , generateMayIntegral
   , generateMonoContainer
   )
 import Gen.Cost (SizedTy(sizeInBytes))
@@ -71,6 +72,7 @@ import Gen.Type
   , typeIntegral
   , typeLayers
   , typeMEnum
+  , typeMIntegral
   )
 import Trie (TrieDesc, mkTrie)
 import TrieOpt (findOptimalPartitioning)
@@ -221,11 +223,9 @@ instance TableValue (V.Vector Script) where
 
 instance TableValue (Maybe Int) where
   type BottomType (Maybe Int) = IntegralType
-  typeVals_ = typeMEnum
+  typeVals_ = typeMIntegral
   generateModule prefix =
-    generateMayEnum
-      EnumSpec
-        {esCPrefix = prefix, esHsType = "Int", esHsTypeModule = "Data.Int"}
+    generateMayIntegral IntSpec {isCPrefix = prefix, isHsType = "Int"}
 
 instance TableValue ByteString where
   type BottomType ByteString = (IntegralType, ByteString)

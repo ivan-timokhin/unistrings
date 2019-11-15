@@ -10,6 +10,7 @@ module Gen
   , generateMayEnum
   , EnumSpec(..)
   , generateIntegral
+  , generateMayIntegral
   , IntSpec(..)
   , generateASCII
   , ASCIISpec(..)
@@ -66,18 +67,7 @@ generateMayEnum ::
   => EnumSpec
   -> TrieDesc Identity IntegralType IntegralType (Maybe a)
   -> Module
-generateMayEnum spec =
-  generateIntG
-    IntGSpec
-      { igsCPrefix = esCPrefix spec
-      , igsHsType = "Maybe " <> esHsType spec
-      , igsHsImports =
-          [ B.concat ["import ", esHsTypeModule spec, " (", esHsType spec, ")"]
-          , "import Data.UCD.Internal.Enum (toMEnum)"
-          ]
-      , igsHsConvert = ("toMEnum . fromEnum $ " <>)
-      , igsConvert = maybe 0 (toInteger . succ . fromEnum)
-      }
+generateMayEnum = generateMayIntG . enumSpec2IntGSpec
 
 data IntSpec =
   IntSpec
@@ -90,15 +80,24 @@ generateIntegral ::
   => IntSpec
   -> TrieDesc Identity IntegralType IntegralType a
   -> Module
-generateIntegral spec =
-  generateIntG
-    IntGSpec
-      { igsCPrefix = isCPrefix spec
-      , igsHsType = isHsType spec
-      , igsHsImports = []
-      , igsHsConvert = ("fromIntegral $ " <>)
-      , igsConvert = toInteger
-      }
+generateIntegral = generateIntG . intSpec2IntGSpec
+
+generateMayIntegral ::
+     Integral a
+  => IntSpec
+  -> TrieDesc Identity IntegralType IntegralType (Maybe a)
+  -> Module
+generateMayIntegral = generateMayIntG . intSpec2IntGSpec
+
+intSpec2IntGSpec :: Integral a => IntSpec -> IntGSpec a
+intSpec2IntGSpec spec =
+  IntGSpec
+    { igsCPrefix = isCPrefix spec
+    , igsHsType = isHsType spec
+    , igsHsImports = []
+    , igsHsConvert = ("fromIntegral $ " <>)
+    , igsConvert = toInteger
+    }
 
 data IntGSpec a =
   IntGSpec
@@ -108,6 +107,12 @@ data IntGSpec a =
     , igsHsConvert :: ByteString -> ByteString
     , igsConvert :: a -> Integer
     }
+
+generateMayIntG ::
+     IntGSpec a
+  -> TrieDesc Identity IntegralType IntegralType (Maybe a)
+  -> Module
+generateMayIntG = generateMayGeneric . intGSpec2Generic
 
 generateIntG ::
      IntGSpec a -> TrieDesc Identity IntegralType IntegralType a -> Module
@@ -174,6 +179,23 @@ data GenericSpec ann a =
     , gsHsConvert :: ByteString -> ByteString
     , gsHsIntegralType :: ann -> IntegralType
     , gsConvert :: a -> Integer
+    }
+
+generateMayGeneric ::
+     GenericSpec ann a -> TrieDesc Identity IntegralType ann (Maybe a) -> Module
+generateMayGeneric = generateGeneric . specMaybe
+
+specMaybe :: GenericSpec ann a -> GenericSpec ann (Maybe a)
+specMaybe gs =
+  gs
+    { gsHsType = "Maybe " <> gsHsType gs
+    , gsHsConvert =
+        \val ->
+          "let v = (" <>
+          val <>
+          ") in if v == 0 then Nothing else Just (" <>
+          gsHsConvert gs "(v - 1)" <> ")"
+    , gsConvert = maybe 0 (succ . gsConvert gs)
     }
 
 generateGeneric ::
@@ -262,12 +284,15 @@ generateGenericHs spec trie =
         go depth prevBits (Bottom _ _) =
           [ B.concat
               [ "val = "
-              , gsHsConvert spec "unsafeReadPtr bottom $ i"
-              , B.pack $ show depth
-              , " `shiftL` "
-              , B.pack $ show prevBits
-              , " + cp .&. "
-              , mask prevBits
+              , gsHsConvert spec $
+                B.concat
+                  [ "unsafeReadPtr bottom $ i"
+                  , B.pack $ show depth
+                  , " `shiftL` "
+                  , B.pack $ show prevBits
+                  , " + cp .&. "
+                  , mask prevBits
+                  ]
               ]
           ]
         go depth prevBits (Layer _ bits _ rest) =
