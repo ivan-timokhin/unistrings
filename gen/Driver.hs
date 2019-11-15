@@ -314,9 +314,6 @@ generateSources (maxLayers, maxBits) snakeName values = do
         maxBits
         maxLayers
         bvals
-    -- trie = fromMaybe (error "Can't pick best trie") $ pickBest candidates
-    -- candidates =
-    --   map (first (const bty) . typeLayers) $ partitionings >>= mkTrieM bvals
     (bty, bvals) = typeVals values
 
 generateTests :: Show a => ByteString -> V.Vector a -> IO ()
