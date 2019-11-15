@@ -10,6 +10,7 @@ module Gen.Type
   , FFIIntegralType(itypeOf)
   , typeEnum
   , typeMEnum
+  , typeIntegral
   , typeASCII
   , typeContainer
   , typeContainerDedup
@@ -43,8 +44,8 @@ data IntegralType =
   IntegralType
     { itHaskell :: ByteString
     , itC :: ByteString
-    , itMin :: Int
-    , itMax :: Int
+    , itMin :: Integer
+    , itMax :: Integer
     , itSize :: Int
     }
 
@@ -72,17 +73,20 @@ instance FFIIntegralType Int32 where
   itypeOf = int32
 
 typeEnum :: Enum a => V.Vector a -> IntegralType
-typeEnum = findTypeForTable fromEnum
+typeEnum = findTypeForTable (toInteger . fromEnum)
 
 typeMEnum :: Enum a => V.Vector (Maybe a) -> IntegralType
-typeMEnum = findTypeForTable $ maybe 0 (succ . fromEnum)
+typeMEnum = findTypeForTable $ maybe 0 (toInteger . succ . fromEnum)
+
+typeIntegral :: Integral a => V.Vector a -> IntegralType
+typeIntegral = findTypeForTable toInteger
 
 typeASCII :: V.Vector ByteString -> ((IntegralType, ByteString), V.Vector Int)
 typeASCII = typeContainer
 
 typeContainer ::
      Mono.Container c => V.Vector c -> ((IntegralType, c), V.Vector Int)
-typeContainer cs = ((findTypeForTable id indices, collapsed), indices)
+typeContainer cs = ((findTypeForTable toInteger indices, collapsed), indices)
   where
     collapsed = fold cs
     indices =
@@ -99,7 +103,8 @@ typeContainerDedup ::
      (Ord (t a), Traversable t, Monoid (t a), Mono.Container (t a))
   => V.Vector (t a)
   -> ((IntegralType, t a), V.Vector Int)
-typeContainerDedup cs = ((findTypeForTable id indices, collapsed), csIndices)
+typeContainerDedup cs =
+  ((findTypeForTable toInteger indices, collapsed), csIndices)
   where
     (csDedup, values) = deduplicate cs
     collapsed = fold values
@@ -120,9 +125,9 @@ typeLayers ::
   -> TrieDesc f IntegralType bottomAnnotation a
 typeLayers (Bottom ann xs) = Bottom ann xs
 typeLayers (Layer _ nbits xs rest) =
-  Layer (findTypeForTable id (Compose xs)) nbits xs (typeLayers rest)
+  Layer (findTypeForTable toInteger (Compose xs)) nbits xs (typeLayers rest)
 
-findTypeForTable :: Foldable f => (a -> Int) -> f a -> IntegralType
+findTypeForTable :: Foldable f => (a -> Integer) -> f a -> IntegralType
 findTypeForTable f xs = findTypeForRange $ minMax 0 f xs
 
 integralType ::
@@ -143,9 +148,9 @@ int32 = integralType "Int32" "HsInt32" (minBound :: Int32) maxBound 4
 int64 = integralType "Int64" "HsInt64" (minBound :: Int64) maxBound 8
 
 ffiIntegralTypes :: [IntegralType]
-ffiIntegralTypes = [int8, word8, int16, word16, int32]
+ffiIntegralTypes = [int8, word8, int16, word16, int32, int64]
 
-findTypeForRange :: (Int, Int) -> IntegralType
+findTypeForRange :: (Integer, Integer) -> IntegralType
 findTypeForRange (lo, hi) =
   fromJust $ find (\ty -> itMin ty <= lo && itMax ty >= hi) ffiIntegralTypes
 

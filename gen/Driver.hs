@@ -64,14 +64,13 @@ import Gen.Cost (SizedTy(sizeInBytes))
 import Gen.Type
   ( IntegralType(itSize)
   , findTypeForRange
-  , int64
   , typeASCII
   , typeContainer
   , typeContainerDedup
   , typeEnum
+  , typeIntegral
   , typeLayers
   , typeMEnum
-  , word8
   )
 import Trie (TrieDesc, mkTrie)
 import TrieOpt (findOptimalPartitioning)
@@ -140,8 +139,6 @@ deriving via TableEnum SentenceBreak instance
 deriving via TableEnum GeneralCategory instance
          TableValue GeneralCategory
 
-deriving via TableEnum Word32 instance TableValue Word32
-
 newtype TableMayEnum e =
   TableMayEnum
     { getTableMayEnum :: Maybe e
@@ -176,6 +173,30 @@ deriving via TableMayEnum DecompositionType instance
 deriving via TableMayEnum JoiningGroup instance
          TableValue (Maybe JoiningGroup)
 
+newtype TableIntegral i =
+  TableIntegral
+    { getTableIntegral :: i
+    }
+  deriving (Show, Eq, Ord)
+
+instance (Integral i, Show i, Ord i, Typeable i) =>
+         TableValue (TableIntegral i) where
+  type BottomType (TableIntegral i) = IntegralType
+  type BottomVal (TableIntegral i) = i
+  typeVals vals = (typeIntegral ivals, ivals)
+    where
+      ivals = coerce vals
+  generateModule prefix =
+    generateIntegral IntSpec {isCPrefix = prefix, isHsType = typeName @i}
+
+deriving via TableIntegral Word32 instance TableValue Word32
+
+deriving via TableIntegral Word8 instance TableValue Word8
+
+deriving via TableIntegral Int64 instance TableValue Int64
+
+deriving via TableIntegral Int instance TableValue Int
+
 instance TableValue Bool where
   type BottomType Bool = IntegralType
   typeVals_ = typeEnum
@@ -198,31 +219,11 @@ instance TableValue (V.Vector Script) where
   typeVals = first (second $ V.map $ toEnum . fromEnum) . typeContainerDedup
   generateModule = generateMonoContainer
 
-instance TableValue Word8 where
-  type BottomType Word8 = IntegralType
-  typeVals_ = const word8
-  generateModule prefix =
-    generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Word8"}
-
-instance TableValue Int64 where
-  type BottomType Int64 = IntegralType
-  typeVals_ = const int64
-  generateModule prefix =
-    generateIntegral IntSpec {isCPrefix = prefix, isHsType = "Int64"}
-
 instance TableValue (Maybe Int) where
   type BottomType (Maybe Int) = IntegralType
   typeVals_ = typeMEnum
   generateModule prefix =
     generateMayEnum
-      EnumSpec
-        {esCPrefix = prefix, esHsType = "Int", esHsTypeModule = "Data.Int"}
-
-instance TableValue Int where
-  type BottomType Int = IntegralType
-  typeVals_ = typeEnum
-  generateModule prefix =
-    generateEnum
       EnumSpec
         {esCPrefix = prefix, esHsType = "Int", esHsTypeModule = "Data.Int"}
 
@@ -295,7 +296,7 @@ generateSources (maxLayers, maxBits) snakeName values = do
   let hsFile = "generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
   B.writeFile (B.unpack hsFile) $
     B.unlines $
-    "{-# OPTIONS_GHC -Wno-unused-imports #-}" :
+    "{-# OPTIONS_GHC -Wno-unused-imports -Wno-identities #-}" :
     "{- HLINT ignore -}" :
     ("module Data.UCD.Internal." <> hsModuleName <> " (retrieve) where\n") :
     moduleHs modul

@@ -23,7 +23,7 @@ data Layer a =
 
 findOptimalPartitioning ::
      Ord a
-  => ((Int, Int) -> Int)
+  => ((Integer, Integer) -> Int)
   -> (Int -> Int)
   -> Int
   -> Int
@@ -59,8 +59,9 @@ totalCost = go 0 0
         (baseN `shiftR` (lowBits l - baseBits))
         ls
 
-layerCost :: ((Int, Int) -> Int) -> Layer () -> Layer Int
-layerCost rangeCost l = l {annotation = rangeCost (0, classesCount l - 1)}
+layerCost :: ((Integer, Integer) -> Int) -> Layer () -> Layer Int
+layerCost rangeCost l =
+  l {annotation = rangeCost (0, toInteger (classesCount l) - 1)}
 
 bitLayers :: Ord a => Int -> V.Vector a -> [Layer ()]
 bitLayers maxBits xs =

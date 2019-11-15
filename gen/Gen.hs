@@ -96,7 +96,7 @@ generateIntegral spec =
       { igsCPrefix = isCPrefix spec
       , igsHsType = isHsType spec
       , igsHsImports = []
-      , igsHsConvert = id
+      , igsHsConvert = ("fromIntegral $ " <>)
       , igsConvert = toInteger
       }
 
@@ -236,7 +236,7 @@ generateGenericHs spec trie =
       "import Data.UCD.Internal.Ptr (Ptr, unsafeReadPtr)" :
       "import Data.Bits ((.&.), shiftR, shiftL)" :
       "import Data.Int (Int8, Int16, Int32, Int64)" :
-      "import Data.Word (Word8, Word16)" : gsHsImports spec
+      "import Data.Word (Word8, Word16, Word32)" : gsHsImports spec
     function :: [ByteString]
     function =
       sig :
