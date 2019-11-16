@@ -50,6 +50,7 @@ main = do
                   "east_asian_width"
                   UCD.eastAsianWidth
               , testEnum "Bidi Class" "bidi_class" UCD.bidiClass
+              , testEnum "Bidi mirrored" "bidi_mirrored" UCD.bidiMirrored
               ]
           , TestLabel "Names" $
             TestList

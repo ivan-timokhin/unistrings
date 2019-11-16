@@ -108,6 +108,7 @@ module Data.UCD
   , EastAsianWidth(..)
   , bidiClass
   , BidiClass(..)
+  , bidiMirrored
   , EnumeratedProperty(..)
   ) where
 
@@ -124,6 +125,7 @@ import qualified Data.UCD.Internal.Age as Age
 import qualified Data.UCD.Internal.Alphabetic as A
 import qualified Data.UCD.Internal.BidiClass as BCl
 import qualified Data.UCD.Internal.BidiControl as BC
+import qualified Data.UCD.Internal.BidiMirrored as BM
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
@@ -784,6 +786,9 @@ eastAsianWidth = withCP EAW.retrieve
 
 bidiClass :: IsCodePoint cp => cp -> BidiClass
 bidiClass = withCP BCl.retrieve
+
+bidiMirrored :: IsCodePoint cp => cp -> Bool
+bidiMirrored = withCP BM.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

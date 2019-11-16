@@ -386,6 +386,11 @@ main =
           , C.bgroup
               "Bidi Class"
               [C.bench "UCD" $ mkEnumBenchmark udhr UCD.bidiClass]
+          , mkBoolGroup
+              udhr
+              "Bidi Mirrored"
+              (Just ICU.BidiMirrored)
+              UCD.bidiMirrored
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

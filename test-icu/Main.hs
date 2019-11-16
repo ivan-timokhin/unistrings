@@ -30,6 +30,7 @@ main = do
           , joiningType
           , sentenceBreak
           , eastAsianWidth
+          , bidiMirrored
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -342,6 +343,9 @@ eastAsianWidth =
         ICU.EANarrow -> UCD.NarrowEAW
         ICU.EAWide -> UCD.WideEAW
         ICU.EACount -> error "'EACount' is not actually a valid property value"
+
+bidiMirrored :: Test
+bidiMirrored = mkBoolTest "Bidi Mirrored" ICU.BidiMirrored UCD.bidiMirrored
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest = mkPropertyTest

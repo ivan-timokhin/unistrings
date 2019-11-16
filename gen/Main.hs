@@ -420,6 +420,9 @@ main = do
     , do bc <- UCD.DerivedBidiClass.fetch
          processTable fullPartitionings "bidi_class" $
            UCD.Common.tableToVector LeftToRightBC bc
+    , processTable fullPartitionings "bidi_mirrored" $
+      UCD.Common.tableToVector False $
+      fmap UCD.UnicodeData.propBidiMirrored records
     ]
 
 printLong :: Show a => [a] -> IO ()

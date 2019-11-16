@@ -167,6 +167,7 @@ testCP children getAttr cp =
             , ( "Changes when NFKC casefolded"
               , "CWKCF"
               , UCD.changesWhenNFKCCasefolded)
+            , ("Bidi Mirrored", "Bidi_M", UCD.bidiMirrored)
             ]
           testMayEnumerated
             "Hangul syllable type"
