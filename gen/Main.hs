@@ -23,7 +23,8 @@ import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
 import Data.UCD.Internal.Types
-  ( EastAsianWidth(NeutralEAW)
+  ( BidiClass(LeftToRightBC)
+  , EastAsianWidth(NeutralEAW)
   , GraphemeClusterBreak(OtherGCB)
   , JoiningType(NonJoining)
   , LineBreak(UnknownLB)
@@ -49,6 +50,7 @@ import UCD.Common
   , tableToVector
   , unicodeTableSize
   )
+import qualified UCD.DerivedBidiClass
 import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.DerivedJoiningGroup
 import qualified UCD.DerivedJoiningType
@@ -415,6 +417,9 @@ main = do
     , do eaw <- UCD.EastAsianWidth.fetch
          processTable fullPartitionings "east_asian_width" $
            UCD.Common.tableToVector NeutralEAW eaw
+    , do bc <- UCD.DerivedBidiClass.fetch
+         processTable fullPartitionings "bidi_class" $
+           UCD.Common.tableToVector LeftToRightBC bc
     ]
 
 printLong :: Show a => [a] -> IO ()

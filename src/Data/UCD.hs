@@ -106,6 +106,8 @@ module Data.UCD
   , WordBreak(..)
   , eastAsianWidth
   , EastAsianWidth(..)
+  , bidiClass
+  , BidiClass(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -120,6 +122,7 @@ import GHC.Real (Ratio((:%)))
 import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.Age as Age
 import qualified Data.UCD.Internal.Alphabetic as A
+import qualified Data.UCD.Internal.BidiClass as BCl
 import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
@@ -205,6 +208,7 @@ import qualified Data.UCD.Internal.SpecialUppercaseMapping2 as SpUM2
 import qualified Data.UCD.Internal.TerminalPunctuation as TP
 import Data.UCD.Internal.Types
   ( Age(..)
+  , BidiClass(..)
   , Block(..)
   , DecompositionType(..)
   , EastAsianWidth(..)
@@ -777,6 +781,9 @@ wordBreak = withCP WB.retrieve
 
 eastAsianWidth :: IsCodePoint cp => cp -> EastAsianWidth
 eastAsianWidth = withCP EAW.retrieve
+
+bidiClass :: IsCodePoint cp => cp -> BidiClass
+bidiClass = withCP BCl.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

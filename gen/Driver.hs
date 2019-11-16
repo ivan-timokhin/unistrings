@@ -38,6 +38,7 @@ import System.IO (IOMode(WriteMode), hPrint, withFile)
 
 import Data.UCD.Internal.Types
   ( Age
+  , BidiClass
   , Block
   , DecompositionType
   , EastAsianWidth
@@ -147,6 +148,8 @@ deriving via TableEnum GeneralCategory instance
 
 deriving via TableEnum EastAsianWidth instance
          TableValue EastAsianWidth
+
+deriving via TableEnum BidiClass instance TableValue BidiClass
 
 newtype TableMayEnum e =
   TableMayEnum

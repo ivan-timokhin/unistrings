@@ -49,7 +49,6 @@ generated/
 /data/latest/ucd/Unihan_RadicalStrokeCounts.txt
 /data/latest/ucd/Unihan_Readings.txt
 /data/latest/ucd/Unihan_Variants.txt
-/data/latest/ucd/extracted/DerivedBidiClass.txt
 /data/latest/ucd/extracted/DerivedBinaryProperties.txt
 /data/latest/ucd/extracted/DerivedCombiningClass.txt
 /data/latest/ucd/extracted/DerivedDecompositionType.txt

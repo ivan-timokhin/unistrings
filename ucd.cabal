@@ -117,6 +117,7 @@ library
                      , Data.UCD.Internal.SentenceBreak
                      , Data.UCD.Internal.WordBreak
                      , Data.UCD.Internal.EastAsianWidth
+                     , Data.UCD.Internal.BidiClass
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -215,6 +216,7 @@ library
                      , generated/cbits/sentence_break.c
                      , generated/cbits/word_break.c
                      , generated/cbits/east_asian_width.c
+                     , generated/cbits/bidi_class.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -336,6 +338,7 @@ executable ucd-gen
                      , UCD.SentenceBreakProperty
                      , UCD.WordBreakProperty
                      , UCD.EastAsianWidth
+                     , UCD.DerivedBidiClass
                      , UCD.Common
                      , Trie
                      , TrieOpt

@@ -383,6 +383,9 @@ main =
               , C.bench "ICU" $
                 mkEnumBenchmark udhr (ICU.property ICU.EastAsianWidth)
               ]
+          , C.bgroup
+              "Bidi Class"
+              [C.bench "UCD" $ mkEnumBenchmark udhr UCD.bidiClass]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]
