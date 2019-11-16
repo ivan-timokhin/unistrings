@@ -377,6 +377,12 @@ main =
           , C.bgroup
               "Word break"
               [C.bench "UCD" $ mkEnumBenchmark udhr UCD.wordBreak]
+          , C.bgroup
+              "East Asian width"
+              [ C.bench "UCD" $ mkEnumBenchmark udhr UCD.eastAsianWidth
+              , C.bench "ICU" $
+                mkEnumBenchmark udhr (ICU.property ICU.EastAsianWidth)
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

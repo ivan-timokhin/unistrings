@@ -116,6 +116,7 @@ library
                      , Data.UCD.Internal.GraphemeClusterBreak
                      , Data.UCD.Internal.SentenceBreak
                      , Data.UCD.Internal.WordBreak
+                     , Data.UCD.Internal.EastAsianWidth
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -213,6 +214,7 @@ library
                      , generated/cbits/grapheme_cluster_break.c
                      , generated/cbits/sentence_break.c
                      , generated/cbits/word_break.c
+                     , generated/cbits/east_asian_width.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -333,6 +335,7 @@ executable ucd-gen
                      , UCD.GraphemeBreakProperty
                      , UCD.SentenceBreakProperty
                      , UCD.WordBreakProperty
+                     , UCD.EastAsianWidth
                      , UCD.Common
                      , Trie
                      , TrieOpt

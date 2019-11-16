@@ -18,6 +18,7 @@ module Data.UCD.Internal.Types
   , GraphemeClusterBreak(..)
   , SentenceBreak(..)
   , WordBreak(..)
+  , EastAsianWidth(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2320,3 +2321,30 @@ instance EnumeratedProperty WordBreak where
       WSegSpaceWB -> "WSegSpace"
       OtherWB -> "Other"
       ZWJWB -> "ZWJ"
+
+data EastAsianWidth
+  = AmbiguousEAW
+  | FullwidthEAW
+  | HalfwidthEAW
+  | NeutralEAW
+  | NarrowEAW
+  | WideEAW
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty EastAsianWidth where
+  abbreviatedPropertyValueName eaw =
+    case eaw of
+      AmbiguousEAW -> "A"
+      FullwidthEAW -> "F"
+      HalfwidthEAW -> "H"
+      NeutralEAW -> "N"
+      NarrowEAW -> "Na"
+      WideEAW -> "W"
+  fullPropertyValueName eaw =
+    case eaw of
+      AmbiguousEAW -> "Ambiguous"
+      FullwidthEAW -> "Fullwidth"
+      HalfwidthEAW -> "Halfwidth"
+      NeutralEAW -> "Neutral"
+      NarrowEAW -> "Narrow"
+      WideEAW -> "Wide"

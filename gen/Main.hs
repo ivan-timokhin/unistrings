@@ -23,7 +23,8 @@ import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
 import Data.UCD.Internal.Types
-  ( GraphemeClusterBreak(OtherGCB)
+  ( EastAsianWidth(NeutralEAW)
+  , GraphemeClusterBreak(OtherGCB)
   , JoiningType(NonJoining)
   , LineBreak(UnknownLB)
   , Script(UnknownScript)
@@ -52,6 +53,7 @@ import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.DerivedJoiningGroup
 import qualified UCD.DerivedJoiningType
 import qualified UCD.DerivedNormalizationProps as UCD.DNP
+import qualified UCD.EastAsianWidth
 import qualified UCD.GraphemeBreakProperty
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -410,6 +412,9 @@ main = do
     , do wordBreak <- UCD.WordBreakProperty.fetch
          processTable fullPartitionings "word_break" $
            UCD.Common.tableToVector OtherWB wordBreak
+    , do eaw <- UCD.EastAsianWidth.fetch
+         processTable fullPartitionings "east_asian_width" $
+           UCD.Common.tableToVector NeutralEAW eaw
     ]
 
 printLong :: Show a => [a] -> IO ()

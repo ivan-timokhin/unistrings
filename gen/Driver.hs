@@ -40,6 +40,7 @@ import Data.UCD.Internal.Types
   ( Age
   , Block
   , DecompositionType
+  , EastAsianWidth
   , GraphemeClusterBreak
   , HangulSyllableType
   , JoiningGroup
@@ -143,6 +144,9 @@ deriving via TableEnum WordBreak instance TableValue WordBreak
 
 deriving via TableEnum GeneralCategory instance
          TableValue GeneralCategory
+
+deriving via TableEnum EastAsianWidth instance
+         TableValue EastAsianWidth
 
 newtype TableMayEnum e =
   TableMayEnum

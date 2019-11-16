@@ -45,6 +45,10 @@ main = do
               , graphemeCluster
               , sentenceBreak
               , testEnum "Word break" "word_break" UCD.wordBreak
+              , testEnum
+                  "East Asian width"
+                  "east_asian_width"
+                  UCD.eastAsianWidth
               ]
           , TestLabel "Names" $
             TestList

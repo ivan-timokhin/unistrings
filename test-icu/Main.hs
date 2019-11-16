@@ -29,6 +29,7 @@ main = do
           , canonicalComposition
           , joiningType
           , sentenceBreak
+          , eastAsianWidth
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -324,6 +325,23 @@ sentenceBreak =
         ICU.SBSP -> UCD.SpSB
         ICU.SBSTerm -> UCD.STermSB
         ICU.SBUpper -> UCD.UpperSB
+
+eastAsianWidth :: Test
+eastAsianWidth =
+  compareForAll
+    "East Asian width"
+    (toUCD . ICU.property ICU.EastAsianWidth)
+    UCD.eastAsianWidth
+  where
+    toUCD eaw =
+      case eaw of
+        ICU.EANeutral -> UCD.NeutralEAW
+        ICU.EAAmbiguous -> UCD.AmbiguousEAW
+        ICU.EAHalf -> UCD.HalfwidthEAW
+        ICU.EAFull -> UCD.FullwidthEAW
+        ICU.EANarrow -> UCD.NarrowEAW
+        ICU.EAWide -> UCD.WideEAW
+        ICU.EACount -> error "'EACount' is not actually a valid property value"
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest = mkPropertyTest

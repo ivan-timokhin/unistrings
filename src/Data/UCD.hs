@@ -104,6 +104,8 @@ module Data.UCD
   , SentenceBreak(..)
   , wordBreak
   , WordBreak(..)
+  , eastAsianWidth
+  , EastAsianWidth(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -143,6 +145,7 @@ import qualified Data.UCD.Internal.DecompositionType as DT
 import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
 import qualified Data.UCD.Internal.Deprecated as De
 import qualified Data.UCD.Internal.Diacritic as Di
+import qualified Data.UCD.Internal.EastAsianWidth as EAW
 import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.FullCaseFolding0 as FCF0
 import qualified Data.UCD.Internal.FullCaseFolding1 as FCF1
@@ -204,6 +207,7 @@ import Data.UCD.Internal.Types
   ( Age(..)
   , Block(..)
   , DecompositionType(..)
+  , EastAsianWidth(..)
   , EnumeratedProperty(..)
   , GraphemeClusterBreak(..)
   , HangulSyllableType(..)
@@ -770,6 +774,9 @@ sentenceBreak = withCP SB.retrieve
 
 wordBreak :: IsCodePoint cp => cp -> WordBreak
 wordBreak = withCP WB.retrieve
+
+eastAsianWidth :: IsCodePoint cp => cp -> EastAsianWidth
+eastAsianWidth = withCP EAW.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

@@ -323,7 +323,8 @@ testCP children getAttr cp =
           testEnumerated "Line break" "lb" UCD.lineBreak
           testEnumerated "Grapheme cluster break" "GCB" UCD.graphemeClusterBreak
           testEnumerated "Sentence break" "SB" UCD.sentenceBreak
-          testEnumerated "Word break" "WB" UCD.wordBreak)
+          testEnumerated "Word break" "WB" UCD.wordBreak
+          testEnumerated "East Asian width" "ea" UCD.eastAsianWidth)
     ]
   where
     canonicalCombiningClass =
