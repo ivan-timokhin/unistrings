@@ -31,6 +31,7 @@ main = do
           , sentenceBreak
           , eastAsianWidth
           , bidiMirrored
+          , bidiMirroringGlyph
           ]
   results <- runTestTT tests
   when (errors results + failures results /= 0) exitFailure
@@ -346,6 +347,16 @@ eastAsianWidth =
 
 bidiMirrored :: Test
 bidiMirrored = mkBoolTest "Bidi Mirrored" ICU.BidiMirrored UCD.bidiMirrored
+
+bidiMirroringGlyph :: Test
+bidiMirroringGlyph =
+  compareForAll "Bidi mirroring glyph" icu UCD.bidiMirroringGlyph
+  where
+    icu c
+      | mc == c = Nothing
+      | otherwise = Just $ UCD.toCodePoint mc
+      where
+        mc = ICU.mirror c
 
 mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
 mkBoolTest = mkPropertyTest

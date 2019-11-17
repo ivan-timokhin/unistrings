@@ -391,6 +391,12 @@ main =
               "Bidi Mirrored"
               (Just ICU.BidiMirrored)
               UCD.bidiMirrored
+          , C.bgroup
+              "Bidi mirroring glyph"
+              [ C.bench "UCD" $
+                mkBenchmark udhr (maybe 0 fromEnum . UCD.bidiMirroringGlyph)
+              , C.bench "ICU" $ mkEnumBenchmark udhr ICU.mirror
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

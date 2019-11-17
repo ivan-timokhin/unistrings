@@ -41,6 +41,7 @@ import Driver
   , processTable
   )
 import qualified UCD.Age
+import qualified UCD.BidiMirroring
 import qualified UCD.Blocks
 import qualified UCD.CaseFolding
 import UCD.Common
@@ -423,6 +424,11 @@ main = do
     , processTable fullPartitionings "bidi_mirrored" $
       UCD.Common.tableToVector False $
       fmap UCD.UnicodeData.propBidiMirrored records
+    , do bm <- UCD.BidiMirroring.fetch
+         let identity = V.generate unicodeTableSize id
+             withMappings = identity `adjustWith` bm
+             diff = V.imap (flip (-)) withMappings
+         generateSources fullPartitionings "bidi_mirroring_glyph" diff
     ]
 
 printLong :: Show a => [a] -> IO ()

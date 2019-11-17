@@ -326,7 +326,14 @@ testCP children getAttr cp =
           testEnumerated "Sentence break" "SB" UCD.sentenceBreak
           testEnumerated "Word break" "WB" UCD.wordBreak
           testEnumerated "East Asian width" "ea" UCD.eastAsianWidth
-          testEnumerated "Bidi class" "bc" UCD.bidiClass)
+          testEnumerated "Bidi class" "bc" UCD.bidiClass
+          -------
+          bmg <-
+            case getAttr "bmg" of
+              Just "" -> pure Nothing
+              Just str -> pure $ Just $ toEnum $ readHex str
+              Nothing -> assertFailure "Can't locate bidi mirroring glyph"
+          assertEqual "Bidi mirroring glyph" bmg $ UCD.bidiMirroringGlyph cp)
     ]
   where
     canonicalCombiningClass =

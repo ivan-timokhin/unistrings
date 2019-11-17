@@ -109,6 +109,7 @@ module Data.UCD
   , bidiClass
   , BidiClass(..)
   , bidiMirrored
+  , bidiMirroringGlyph
   , EnumeratedProperty(..)
   ) where
 
@@ -126,6 +127,7 @@ import qualified Data.UCD.Internal.Alphabetic as A
 import qualified Data.UCD.Internal.BidiClass as BCl
 import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.BidiMirrored as BM
+import qualified Data.UCD.Internal.BidiMirroringGlyph as BMG
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
@@ -789,6 +791,14 @@ bidiClass = withCP BCl.retrieve
 
 bidiMirrored :: IsCodePoint cp => cp -> Bool
 bidiMirrored = withCP BM.retrieve
+
+bidiMirroringGlyph :: IsCodePoint cp => cp -> Maybe CodePoint
+bidiMirroringGlyph =
+  withCP $ \cp ->
+    let diff = BMG.retrieve cp
+     in if diff == 0
+          then Nothing
+          else Just $ CodePoint $ fromIntegral $ cp + diff
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

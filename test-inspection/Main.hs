@@ -90,5 +90,10 @@ joiningGroup c = isJust (UCD.joiningGroup c)
 
 inspect $ 'joiningGroup `hasNoType` ''Maybe
 
+bidiMirroringGlyph :: UCD.CodePoint -> Bool
+bidiMirroringGlyph c = isJust (UCD.bidiMirroringGlyph c)
+
+inspect $ 'bidiMirroringGlyph `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()

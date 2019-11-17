@@ -1,4 +1,4 @@
-* Unicode Properties [86/97]
+* Unicode Properties [87/97]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -75,11 +75,11 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Word_Break
   - [X] East_Asian_Width
   - [X] Prepended_Concatenation_Mark
-- [-] Bidirectional [3/6]
+- [-] Bidirectional [4/6]
   - [X] Bidi_Class
   - [X] Bidi_Control
   - [X] Bidi_Mirrored
-  - [ ] Bidi_Mirroring_Glyph
+  - [X] Bidi_Mirroring_Glyph
   - [ ] Bidi_Paired_Bracket
   - [ ] Bidi_Paired_Bracket_Type
 - [X] Identifiers [6/6]
