@@ -333,7 +333,19 @@ testCP children getAttr cp =
               Just "" -> pure Nothing
               Just str -> pure $ Just $ toEnum $ readHex str
               Nothing -> assertFailure "Can't locate bidi mirroring glyph"
-          assertEqual "Bidi mirroring glyph" bmg $ UCD.bidiMirroringGlyph cp)
+          assertEqual "Bidi mirroring glyph" bmg $ UCD.bidiMirroringGlyph cp
+          -------
+          testMayEnumerated
+            "Bidi Paired Bracket Type"
+            "bpt"
+            "n"
+            UCD.bidiPairedBracketType
+          bpbText <- requireAttr "bpb"
+          let bpbVal =
+                case bpbText of
+                  "#" -> cp
+                  _ -> toEnum $ readHex bpbText
+          assertEqual "Bidi Paired Bracket" bpbVal $ UCD.bidiPairedBracket cp)
     ]
   where
     canonicalCombiningClass =

@@ -39,6 +39,7 @@ import System.IO (IOMode(WriteMode), hPrint, withFile)
 import Data.UCD.Internal.Types
   ( Age
   , BidiClass
+  , BidiPairedBracketType
   , Block
   , DecompositionType
   , EastAsianWidth
@@ -184,6 +185,9 @@ deriving via TableMayEnum DecompositionType instance
 
 deriving via TableMayEnum JoiningGroup instance
          TableValue (Maybe JoiningGroup)
+
+deriving via TableMayEnum BidiPairedBracketType instance
+         TableValue (Maybe BidiPairedBracketType)
 
 newtype TableIntegral i =
   TableIntegral

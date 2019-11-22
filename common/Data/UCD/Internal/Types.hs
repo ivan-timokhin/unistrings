@@ -19,6 +19,7 @@ module Data.UCD.Internal.Types
   , SentenceBreak(..)
   , WordBreak(..)
   , EastAsianWidth(..)
+  , BidiPairedBracketType(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2348,3 +2349,18 @@ instance EnumeratedProperty EastAsianWidth where
       NeutralEAW -> "Neutral"
       NarrowEAW -> "Narrow"
       WideEAW -> "Wide"
+
+data BidiPairedBracketType
+  = Close
+  | Open
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty BidiPairedBracketType where
+  abbreviatedPropertyValueName bpbt =
+    case bpbt of
+      Open -> "o"
+      Close -> "c"
+  fullPropertyValueName bpbt =
+    case bpbt of
+      Open -> "Open"
+      Close -> "Close"

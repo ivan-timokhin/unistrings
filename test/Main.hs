@@ -51,6 +51,10 @@ main = do
                   UCD.eastAsianWidth
               , testEnum "Bidi Class" "bidi_class" UCD.bidiClass
               , testEnum "Bidi mirrored" "bidi_mirrored" UCD.bidiMirrored
+              , testMayEnum
+                  "Bidi Paired Bracket Type"
+                  "bidi_paired_bracket_type"
+                  UCD.bidiPairedBracketType
               ]
           , TestLabel "Names" $
             TestList

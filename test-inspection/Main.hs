@@ -95,5 +95,10 @@ bidiMirroringGlyph c = isJust (UCD.bidiMirroringGlyph c)
 
 inspect $ 'bidiMirroringGlyph `hasNoType` ''Maybe
 
+bidiPairedBracketType :: UCD.CodePoint -> Bool
+bidiPairedBracketType c = isJust (UCD.bidiPairedBracketType c)
+
+inspect $ 'bidiPairedBracketType `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()

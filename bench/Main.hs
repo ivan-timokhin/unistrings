@@ -397,6 +397,19 @@ main =
                 mkBenchmark udhr (maybe 0 fromEnum . UCD.bidiMirroringGlyph)
               , C.bench "ICU" $ mkEnumBenchmark udhr ICU.mirror
               ]
+          , C.bgroup
+              "Bidi Paired Bracket"
+              [ C.bgroup
+                  "Value"
+                  [C.bench "UCD" $ mkEnumBenchmark udhr UCD.bidiPairedBracket]
+              , C.bgroup
+                  "Type"
+                  [ C.bench "UCD" $
+                    mkBenchmark
+                      udhr
+                      (maybe 0 fromEnum . UCD.bidiPairedBracketType)
+                  ]
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

@@ -120,6 +120,8 @@ library
                      , Data.UCD.Internal.BidiClass
                      , Data.UCD.Internal.BidiMirrored
                      , Data.UCD.Internal.BidiMirroringGlyph
+                     , Data.UCD.Internal.BidiPairedBracketType
+                     , Data.UCD.Internal.BidiPairedBracket
                      , Data.UCD.Internal.Types
   -- other-extensions:
   ghc-options:         -Wall
@@ -221,6 +223,8 @@ library
                      , generated/cbits/bidi_class.c
                      , generated/cbits/bidi_mirrored.c
                      , generated/cbits/bidi_mirroring_glyph.c
+                     , generated/cbits/bidi_paired_bracket_type.c
+                     , generated/cbits/bidi_paired_bracket.c
   build-depends:       base >=4.12 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
@@ -343,6 +347,7 @@ executable ucd-gen
                      , UCD.WordBreakProperty
                      , UCD.EastAsianWidth
                      , UCD.DerivedBidiClass
+                     , UCD.BidiBrackets
                      , UCD.BidiMirroring
                      , UCD.Common
                      , Trie

@@ -41,6 +41,7 @@ import Driver
   , processTable
   )
 import qualified UCD.Age
+import qualified UCD.BidiBrackets
 import qualified UCD.BidiMirroring
 import qualified UCD.Blocks
 import qualified UCD.CaseFolding
@@ -429,6 +430,13 @@ main = do
              withMappings = identity `adjustWith` bm
              diff = V.imap (flip (-)) withMappings
          generateSources fullPartitionings "bidi_mirroring_glyph" diff
+    , do bb <- UCD.BidiBrackets.fetch
+         let types = tableToVector Nothing $ fmap (Just . snd) bb
+             pairs =
+               V.imap (flip (-)) $
+               V.generate unicodeTableSize id `adjustWith` fmap fst bb
+         processTable fullPartitionings "bidi_paired_bracket_type" types
+         generateSources fullPartitionings "bidi_paired_bracket" pairs
     ]
 
 printLong :: Show a => [a] -> IO ()

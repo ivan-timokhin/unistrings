@@ -110,6 +110,9 @@ module Data.UCD
   , BidiClass(..)
   , bidiMirrored
   , bidiMirroringGlyph
+  , bidiPairedBracket
+  , bidiPairedBracketType
+  , BidiPairedBracketType(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -128,6 +131,8 @@ import qualified Data.UCD.Internal.BidiClass as BCl
 import qualified Data.UCD.Internal.BidiControl as BC
 import qualified Data.UCD.Internal.BidiMirrored as BM
 import qualified Data.UCD.Internal.BidiMirroringGlyph as BMG
+import qualified Data.UCD.Internal.BidiPairedBracket as BPB
+import qualified Data.UCD.Internal.BidiPairedBracketType as BPBT
 import qualified Data.UCD.Internal.Blocks as Blocks
 import Data.UCD.Internal.ByteString (mkByteString, renderUnicodeInt)
 import qualified Data.UCD.Internal.CanonicalCombiningClass as CCC
@@ -213,6 +218,7 @@ import qualified Data.UCD.Internal.TerminalPunctuation as TP
 import Data.UCD.Internal.Types
   ( Age(..)
   , BidiClass(..)
+  , BidiPairedBracketType(..)
   , Block(..)
   , DecompositionType(..)
   , EastAsianWidth(..)
@@ -799,6 +805,15 @@ bidiMirroringGlyph =
      in if diff == 0
           then Nothing
           else Just $ CodePoint $ fromIntegral $ cp + diff
+
+bidiPairedBracket :: IsCodePoint cp => cp -> CodePoint
+bidiPairedBracket =
+  withCP $ \cp ->
+    let diff = BPB.retrieve cp
+     in CodePoint $ fromIntegral $ cp + diff
+
+bidiPairedBracketType :: IsCodePoint cp => cp -> Maybe BidiPairedBracketType
+bidiPairedBracketType = withCP $ \cp -> BPBT.retrieve cp
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
