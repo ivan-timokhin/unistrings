@@ -24,6 +24,7 @@ module Test.Yocto
   , with
   , with_
   , defaultMain
+  , testSuite
   ) where
 
 import Control.Exception (bracket)
@@ -105,6 +106,11 @@ with_ acq suite =
   Suite $ \report -> do
     a <- acq
     runSuite (suite a) report
+
+testSuite :: Test Suite -> Suite
+{-# INLINE testSuite #-}
+testSuite ts =
+  Suite $ \report -> runTest ts (report []) $ \suite -> runSuite suite report
 
 defaultMain :: Suite -> IO ()
 {-# INLINE defaultMain #-}

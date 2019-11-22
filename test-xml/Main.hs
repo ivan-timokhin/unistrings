@@ -8,11 +8,11 @@ import Control.Applicative ((<|>), liftA2)
 import Control.Monad.IO.Class (liftIO)
 import Data.Bits ((.|.))
 import qualified Data.ByteString as B
-import Data.Char (chr, toUpper)
+import Data.Char (toUpper)
 import Data.Foldable (for_, traverse_)
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
-import Data.Maybe (fromJust, fromMaybe, mapMaybe)
+import Data.Maybe (fromJust, mapMaybe)
 import Data.Ratio ((%), denominator, numerator)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -28,6 +28,7 @@ import Text.XML
   , documentRoot
   , sinkDoc
   )
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 
 import qualified Data.UCD as UCD
 
@@ -72,25 +73,27 @@ testGroup n elGroup = group ("Group #" ++ show n) [validRecordTypes, cpTests]
         ["reserved", "noncharacter", "surrogate", "char"]
     cpTests =
       group "Code point properties" $
-      flip concatMap (elementChildren elGroup) $ \el ->
+      flip map (elementChildren elGroup) $ \el ->
         let testCP' =
               testCP (elementChildren el) $ \nm ->
                 M.lookup nm (elementAttributes el) <|> M.lookup nm attrs
-         in case M.lookup "first-cp" (elementAttributes el) of
-              Just startStr ->
-                let start = readHex startStr
-                    end =
-                      readHex $
-                      fromMaybe
-                        (error "Missing \"last-cp\" attribute")
-                        (M.lookup "last-cp" (elementAttributes el))
-                 in map testCP' [toEnum start .. toEnum end]
+         in testSuite $
+            case M.lookup "first-cp" (elementAttributes el) of
+              Just startStr -> do
+                start <- readHex startStr
+                end <-
+                  readHex =<<
+                  requireJust
+                    "Missing \"last-cp\" attribute"
+                    (M.lookup "last-cp" (elementAttributes el))
+                pure $ group "" $ map testCP' [toEnum start .. toEnum end]
               Nothing ->
                 case M.lookup "cp" (elementAttributes el) of
-                  Just cpStr ->
-                    let cp = readHex cpStr
-                     in [testCP' $ toEnum cp]
-                  Nothing -> error $ "Unrecognized record type: " ++ show el
+                  Just cpStr -> do
+                    cp <- readHex cpStr
+                    pure $ testCP' $ toEnum cp
+                  Nothing ->
+                    criticalFailure $ "Unrecognized record type: " ++ show el
     attrs = elementAttributes elGroup
 
 testCP :: [Element] -> (Name -> Maybe T.Text) -> UCD.CodePoint -> Suite
@@ -177,7 +180,7 @@ testCP children getAttr cp =
               expected <-
                 if attr == "#"
                   then pure (fromEnum cp)
-                  else pure $ readHex attr
+                  else readHex attr
               expect testName $ expected =? fromEnum (f cp)
         traverse_
           (\(tn, an, f) -> testCPProp tn an f)
@@ -188,11 +191,11 @@ testCP children getAttr cp =
           ]
         let testCaseMappingProp testName attrName f = do
               attr <- requireAttr attrName
-              let expected =
-                    if attr == "#"
-                      then [fromEnum cp]
-                      else map readHex (T.words attr)
-                  actual =
+              expected <-
+                if attr == "#"
+                  then pure [fromEnum cp]
+                  else traverse readHex (T.words attr)
+              let actual =
                     case f cp of
                       UCD.SingleCM c1 -> [fromEnum c1]
                       UCD.DoubleCM c1 c2 -> [fromEnum c1, fromEnum c2]
@@ -250,11 +253,13 @@ testCP children getAttr cp =
         decompMap <-
           case getAttr "dm" of
             Nothing -> criticalFailure "Can't find decomposition mapping"
-            Just str -> pure $ map readHex $ T.words str
+            Just str
+              | str == "#" -> pure [cp]
+              | otherwise -> traverse (fmap toEnum . readHex) $ T.words str
         case decompType of
           Just UCD.Canonical ->
             expect "Canonical decomposition" $
-            foldMap (UCD.canonicalDecomposition . chr) decompMap =?
+            foldMap UCD.canonicalDecomposition decompMap =?
             UCD.nontrivialCanonicalDecomposition cp
           _ ->
             expect "Canonical decomposition" $
@@ -265,7 +270,7 @@ testCP children getAttr cp =
             [] =? UCD.nontrivialCompatibilityDecomposition cp
           _ ->
             expect "Compatibility decomposition" $
-            foldMap (UCD.compatibilityDecomposition . chr) decompMap =?
+            foldMap UCD.compatibilityDecomposition decompMap =?
             UCD.nontrivialCompatibilityDecomposition cp
         let getQuickCheck attr =
               case getAttr attr of
@@ -285,7 +290,7 @@ testCP children getAttr cp =
         nfkcCF <-
           case getAttr "NFKC_CF" of
             Just "#" -> pure [cp]
-            Just str -> pure $ map (toEnum . readHex) $ T.words str
+            Just str -> traverse (fmap toEnum . readHex) $ T.words str
             Nothing -> criticalFailure "Can't find NFKC_Casefold"
         case UCD.nfkcCaseFold cp of
           UCD.ShortCF c -> expect "NFKC_CF" $ nfkcCF =? [c]
@@ -310,7 +315,7 @@ testCP children getAttr cp =
         bmg <-
           case getAttr "bmg" of
             Just "" -> pure Nothing
-            Just str -> pure $ Just $ toEnum $ readHex str
+            Just str -> Just . toEnum <$> readHex str
             Nothing -> criticalFailure "Can't locate bidi mirroring glyph"
         expect "Bidi mirroring glyph" $ bmg =? UCD.bidiMirroringGlyph cp
           -------
@@ -320,10 +325,10 @@ testCP children getAttr cp =
           "n"
           UCD.bidiPairedBracketType
         bpbText <- requireAttr "bpb"
-        let bpbVal =
-              case bpbText of
-                "#" -> cp
-                _ -> toEnum $ readHex bpbText
+        bpbVal <-
+          case bpbText of
+            "#" -> pure cp
+            _ -> toEnum <$> readHex bpbText
         expect "Bidi Paired Bracket" $ bpbVal =? UCD.bidiPairedBracket cp
     ]
   where
@@ -422,11 +427,11 @@ testBlock blockDescr =
     blockName = fromJust $ M.lookup "name" $ elementAttributes blockDescr
     blockStart =
       case M.lookup "first-cp" $ elementAttributes blockDescr of
-        Just str -> pure $ readHex str
+        Just str -> readHex str
         Nothing -> criticalFailure "Can't locate block start"
     blockEnd =
       case M.lookup "last-cp" $ elementAttributes blockDescr of
-        Just str -> pure $ readHex str
+        Just str -> readHex str
         Nothing -> criticalFailure "Can't locate block end"
     block
       | blockName == "No_Block" = Just Nothing
@@ -437,17 +442,22 @@ testBlock blockDescr =
               bname = prepare $ T.dropEnd 5 $ T.pack $ show b
            in bname == prepare blockName
 
-readHex :: T.Text -> Int
+readHex :: HasCallStack => T.Text -> Test Int
+{-# INLINE readHex #-}
 readHex t =
+  withFrozenCallStack $
   case TR.hexadecimal t of
-    Left err -> error err
-    Right (n, "") -> n
-    Right (_, rest) -> error $ "Leftover parse input " ++ show (T.unpack rest)
+    Left err -> criticalFailure $ "Reading " ++ show t ++ ": " ++ err
+    Right (n, "") -> pure n
+    Right (_, rest) ->
+      criticalFailure $ "Leftover parse input " ++ show (T.unpack rest)
 
-readBoolean :: T.Text -> Test Bool
+readBoolean :: HasCallStack => T.Text -> Test Bool
+{-# INLINE readBoolean #-}
 readBoolean "Y" = pure True
 readBoolean "N" = pure False
-readBoolean txt = criticalFailure $ "Unable to read boolean: " ++ show txt
+readBoolean txt =
+  withFrozenCallStack $ criticalFailure $ "Unable to read boolean: " ++ show txt
 
 readUCD :: IO Document
 readUCD = do
