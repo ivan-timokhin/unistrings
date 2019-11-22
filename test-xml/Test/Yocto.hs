@@ -44,6 +44,7 @@ import GHC.Stack
   , withFrozenCallStack
   )
 import System.Exit (exitFailure)
+import System.IO (hPutStrLn, stderr)
 
 data Level
   = Expected
@@ -120,14 +121,15 @@ defaultMain suite = do
   runSuite suite $ \context failureReport -> do
     case fLevel failureReport of
       Expected -> do
-        putStrLn "Failure"
+        hPutStrLn stderr "Failure"
         atomicModifyIORef' failures (\c -> (c + 1, ()))
       Required -> do
-        putStrLn "Critical failure"
+        hPutStrLn stderr "Critical failure"
         atomicModifyIORef' critFailures (\c -> (c + 1, ()))
-    putStrLn $ "  in " ++ intercalate "/" context
-    for_ (fLoc failureReport) $ \loc -> putStrLn $ "  at " ++ prettySrcLoc loc
-    putStrLn $ "  " ++ fMsg failureReport
+    hPutStrLn stderr $ "  in " ++ intercalate "/" context
+    for_ (fLoc failureReport) $ \loc ->
+      hPutStrLn stderr $ "  at " ++ prettySrcLoc loc
+    hPutStrLn stderr $ "  " ++ fMsg failureReport
   critFailuresTotal <- readIORef critFailures
   failuresTotal <- readIORef failures
   putStrLn $ "Regular failures: " ++ show failuresTotal
