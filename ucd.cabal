@@ -266,6 +266,7 @@ test-suite ucd-test-icu
 test-suite ucd-test-xml
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
+  other-modules:       Test.Yocto
   ghc-options:         -Wall
                        -Wcompat
   if flag(Werror)
