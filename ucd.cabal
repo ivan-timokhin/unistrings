@@ -280,6 +280,7 @@ test-suite ucd-test-xml
                      , zip
                      , containers
   hs-source-dirs:      test-xml
+                     , test-common
   default-language:    Haskell2010
 
 test-suite ucd-test-inspection
