@@ -1,22 +1,24 @@
-module Main where
+module Main
+  ( main
+  ) where
 
-import Control.Monad (unless, when)
+import Control.Monad (unless)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (ord)
 import Data.Foldable (for_)
+import Data.Maybe (maybeToList)
 import qualified Data.Text as T
 import qualified Data.Text.ICU.Char as ICU
 import qualified Data.Text.ICU.Normalize as ICU
 import Numeric (showHex)
-import System.Exit (exitFailure)
-import Test.HUnit
+import Test.Yocto
 
 import qualified Data.UCD as UCD
 
 main :: IO ()
 main = do
   let tests =
-        TestList
+        group_
           [ generalCategory
           , canonicalCombiningClass
           , charName
@@ -32,18 +34,19 @@ main = do
           , eastAsianWidth
           , bidiMirrored
           , bidiMirroringGlyph
+          , hangulSyllableType
+          , normalFormQuickCheck
           ]
-  results <- runTestTT tests
-  when (errors results + failures results /= 0) exitFailure
+  defaultMain 100 tests
 
-canonicalCombiningClass :: Test
+canonicalCombiningClass :: Suite
 canonicalCombiningClass =
   compareForAll
     "Canonical combining class"
     (ICU.property ICU.CanonicalCombiningClass)
     (fromIntegral . UCD.canonicalCombiningClass)
 
-generalCategory :: Test
+generalCategory :: Suite
 generalCategory =
   compareForAll
     "General category"
@@ -84,10 +87,10 @@ generalCategory =
         ICU.InitialPunctuation -> UCD.InitialQuote
         ICU.FinalPunctuation -> UCD.FinalQuote
 
-charName :: Test
+charName :: Suite
 charName = compareForAll "Name" (B.pack . ICU.charName) UCD.name
 
-hangulSyllableType :: Test
+hangulSyllableType :: Suite
 hangulSyllableType =
   compareForAll
     "Hangul syllable type"
@@ -103,9 +106,9 @@ hangulSyllableType =
         ICU.LVSyllable -> UCD.LVSyllable
         ICU.LVTSyllable -> UCD.LVTSyllable
 
-propList :: Test
+propList :: Suite
 propList =
-  TestList
+  group_
     [ mkBoolTest "White space" ICU.WhiteSpace UCD.whiteSpace
     , mkBoolTest "Bidi control" ICU.BidiControl UCD.bidiControl
     , mkBoolTest "Join control" ICU.JoinControl UCD.joinControl
@@ -152,9 +155,9 @@ propList =
     , mkBoolTest "Pattern syntax" ICU.PatternSyntax UCD.patternSyntax
     ]
 
-derivedCoreProps :: Test
+derivedCoreProps :: Suite
 derivedCoreProps =
-  TestList
+  group_
     [ mkBoolTest "Math" ICU.Math UCD.math
     , mkBoolTest "Alphabetic" ICU.Alphabetic UCD.alphabetic
     , mkBoolTest "Uppercase" ICU.Uppercase UCD.uppercase
@@ -171,10 +174,10 @@ derivedCoreProps =
     , mkBoolTest "Grapheme base" ICU.GraphemeBase UCD.graphemeBase
     ]
 
-numeric :: Test
+numeric :: Suite
 numeric =
-  TestLabel "Numeric" $
-  TestList
+  group
+    "Numeric"
     [ compareForAll
         "Type"
         (ICU.property ICU.NumericType)
@@ -189,7 +192,7 @@ numeric =
     ucd2icuVal (UCD.Digit n) = fromIntegral n
     ucd2icuVal (UCD.Numeric q) = fromRational $ toRational q
 
-decompositionType :: Test
+decompositionType :: Suite
 decompositionType =
   compareForAll
     "Decomposition type"
@@ -218,14 +221,14 @@ decompositionType =
         ICU.Wide -> UCD.Wide
         ICU.Count -> error "'Count' is not actually a decomposition type"
 
-canonicalDecomposition :: Test
+canonicalDecomposition :: Suite
 canonicalDecomposition =
   mkDecompositionTest
     "Canonical decomposition"
     ICU.NFD
     UCD.canonicalDecomposition
 
-compatibilityDecomposition :: Test
+compatibilityDecomposition :: Suite
 compatibilityDecomposition =
   mkDecompositionTest
     "Compatibility decomposition"
@@ -233,7 +236,7 @@ compatibilityDecomposition =
     UCD.compatibilityDecomposition
 
 mkDecompositionTest ::
-     String -> ICU.NormalizationMode -> (Char -> [UCD.CodePoint]) -> Test
+     String -> ICU.NormalizationMode -> (Char -> [UCD.CodePoint]) -> Suite
 mkDecompositionTest name mode =
   compareForAll
     name
@@ -243,30 +246,31 @@ mkDecompositionTest name mode =
          ICU.Surrogate -> [c]
          _ -> T.unpack . ICU.normalize mode $ T.singleton c)
 
-canonicalComposition :: Test
+canonicalComposition :: Suite
 canonicalComposition =
-  TestLabel "Canonical composition" $
-  TestList
-    [ TestLabel "Pairs" $
-      TestCase $
-      for_ [minBound .. maxBound] $ \cp1 ->
-        for_ (UCD.canonicalCompositionStart cp1) $ \token ->
-          for_ [minBound .. maxBound] $ \cp2 ->
-            for_ (UCD.canonicalCompositionFinish token cp2) $ \composed ->
-              assertEqual
-                (showHex (ord cp1) $ ' ' : showHex (ord cp2) "")
-                (map UCD.toCodePoint $
-                 T.unpack $ ICU.normalize ICU.NFC $ T.pack [cp1, cp2])
-                [composed]
-    , TestLabel "Decompositions" $
-      TestCase $
+  group
+    "Canonical composition"
+    [ group "Pairs" $
+      flip
+        map
+        [ (cp1, cp2, composed)
+        | cp1 <- [minBound .. maxBound]
+        , token <- maybeToList $ UCD.canonicalCompositionStart cp1
+        , cp2 <- [minBound .. maxBound]
+        , composed <- maybeToList $ UCD.canonicalCompositionFinish token cp2
+        ] $ \(cp1, cp2, composed) ->
+        test (showHex (ord cp1) $ ' ' : showHex (ord cp2) "") $
+        expect "Value mismatch" $
+        map
+          UCD.toCodePoint
+          (T.unpack $ ICU.normalize ICU.NFC $ T.pack [cp1, cp2]) =?
+        [composed]
+    , test "Decompositions" $
       for_ [minBound .. maxBound] $ \cp ->
         unless (ICU.property ICU.GeneralCategory cp == ICU.Surrogate) $
-        assertEqual
-          (showHex (ord cp) "")
-          (map UCD.toCodePoint $
-           T.unpack $ ICU.normalize ICU.NFC $ T.singleton cp)
-          (ucdCompose $ UCD.canonicalDecomposition cp)
+        expect (showHex (ord cp) "") $
+        map UCD.toCodePoint (T.unpack $ ICU.normalize ICU.NFC $ T.singleton cp) =?
+        ucdCompose (UCD.canonicalDecomposition cp)
     ]
   where
     ucdCompose :: [UCD.CodePoint] -> [UCD.CodePoint]
@@ -277,17 +281,17 @@ canonicalComposition =
         Just c -> ucdCompose (c : cs')
         Nothing -> c1 : ucdCompose cs
 
-normalFormQuickCheck :: Test
+normalFormQuickCheck :: Suite
 normalFormQuickCheck =
-  TestLabel "Quick check" $
-  TestList
+  group
+    "Quick check"
     [ mkPropertyTest "NFD" ICU.NFDQuickCheck (Just . UCD.nfdQuickCheck)
     , mkPropertyTest "NFC" ICU.NFCQuickCheck UCD.nfcQuickCheck
     , mkPropertyTest "NFKD" ICU.NFKDQuickCheck (Just . UCD.nfkdQuickCheck)
     , mkPropertyTest "NFKC" ICU.NFKCQuickCheck UCD.nfkcQuickCheck
     ]
 
-joiningType :: Test
+joiningType :: Suite
 joiningType =
   compareForAll
     "Joining type"
@@ -303,7 +307,7 @@ joiningType =
         ICU.Transparent -> UCD.Transparent
     toUCD Nothing = UCD.NonJoining
 
-sentenceBreak :: Test
+sentenceBreak :: Suite
 sentenceBreak =
   compareForAll
     "Sentence break"
@@ -328,7 +332,7 @@ sentenceBreak =
         ICU.SBSTerm -> UCD.STermSB
         ICU.SBUpper -> UCD.UpperSB
 
-eastAsianWidth :: Test
+eastAsianWidth :: Suite
 eastAsianWidth =
   compareForAll
     "East Asian width"
@@ -345,10 +349,10 @@ eastAsianWidth =
         ICU.EAWide -> UCD.WideEAW
         ICU.EACount -> error "'EACount' is not actually a valid property value"
 
-bidiMirrored :: Test
+bidiMirrored :: Suite
 bidiMirrored = mkBoolTest "Bidi Mirrored" ICU.BidiMirrored UCD.bidiMirrored
 
-bidiMirroringGlyph :: Test
+bidiMirroringGlyph :: Suite
 bidiMirroringGlyph =
   compareForAll "Bidi mirroring glyph" icu UCD.bidiMirroringGlyph
   where
@@ -358,16 +362,19 @@ bidiMirroringGlyph =
       where
         mc = ICU.mirror c
 
-mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Test
+mkBoolTest :: String -> ICU.Bool_ -> (Char -> Bool) -> Suite
+{-# INLINE mkBoolTest #-}
 mkBoolTest = mkPropertyTest
 
 mkPropertyTest ::
-     (ICU.Property p v, Show v, Eq v) => String -> p -> (Char -> v) -> Test
+     (ICU.Property p v, Show v, Eq v) => String -> p -> (Char -> v) -> Suite
+{-# INLINE mkPropertyTest #-}
 mkPropertyTest name prop = compareForAll name (ICU.property prop)
 
-compareForAll :: (Show a, Eq a) => String -> (Char -> a) -> (Char -> a) -> Test
+compareForAll :: (Show a, Eq a) => String -> (Char -> a) -> (Char -> a) -> Suite
+{-# INLINE compareForAll #-}
 compareForAll name icuQuery ucdQuery =
-  TestLabel name $
-  TestCase $
-  for_ [minBound .. maxBound] $ \c ->
-    assertEqual (showHex (ord c) "") (icuQuery c) (ucdQuery c)
+  group name $
+  flip map [minBound .. maxBound] $ \c ->
+    test (showHex (ord c) "") $
+    expect "Value mismatch" $ icuQuery c =? ucdQuery c

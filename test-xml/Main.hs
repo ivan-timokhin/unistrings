@@ -5,21 +5,22 @@ module Main where
 
 import Codec.Archive.Zip (mkEntrySelector, sourceEntry, withArchive)
 import Control.Applicative ((<|>), liftA2)
-import Control.Monad (when)
 import Data.Bits ((.|.))
 import qualified Data.ByteString as B
-import Data.Char (chr, toUpper)
-import Data.Foldable (for_, traverse_)
+import Data.Char (toUpper)
+import Data.Foldable (for_)
+import Data.Functor ((<&>))
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
-import Data.Maybe (fromJust, fromMaybe, mapMaybe)
-import Data.Ratio ((%), denominator, numerator)
+import Data.Maybe (fromJust, mapMaybe)
+import Data.Ratio ((%))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import Numeric (showHex)
-import System.Exit (exitFailure)
-import Test.HUnit
+import Test.Yocto
+import Text.Read (readMaybe)
 import Text.XML
   ( Document
   , Element(..)
@@ -46,316 +47,316 @@ main = do
         find ((== "blocks") . nameLocalName . elementName) $
         elementChildren $ documentRoot ucd
   let tests =
-        TestList
-          [ TestLabel "groups" $
-            TestList $ groupsOnly groups : zipWith testGroup [0 ..] groups
-          , TestLabel "blocks" $ TestList $ map testBlock blocks
+        group_
+          [ group "groups" $ groupsOnly groups : zipWith testGroup [0 ..] groups
+          , group "blocks" $ map testBlock blocks
           ]
-  results <- runTestTT tests
-  when (errors results + failures results /= 0) exitFailure
+  defaultMain 100 tests
 
-groupsOnly :: [Element] -> Test
+groupsOnly :: [Element] -> Suite
 groupsOnly els =
-  TestLabel "Only groups at top level" $
-  TestCase $ for_ els $ \el -> nameLocalName (elementName el) @?= "group"
+  test "Only groups at top level" $
+  for_ els $ \el ->
+    expect "Element name should be \"group\"" $
+    "group" =? nameLocalName (elementName el)
 
-testGroup :: Int -> Element -> Test
-testGroup n group =
-  TestLabel ("Group #" ++ show n) $ TestList [validRecordTypes, cpTests]
+testGroup :: Int -> Element -> Suite
+testGroup n elGroup = group ("Group #" ++ show n) [validRecordTypes, cpTests]
   where
     validRecordTypes =
-      TestLabel "Valid record types" $
-      TestList $
-      flip map (elementChildren group) $ \el ->
-        TestCase $
+      group "Valid record types" $
+      flip map (elementChildren elGroup) $ \el ->
+        test (show $ elementName el) $
+        expect "Unrecognised record type" $
+        predicate $
         nameLocalName (elementName el) `elem`
-        ["reserved", "noncharacter", "surrogate", "char"] @?
-        "Unrecognized record type"
+        ["reserved", "noncharacter", "surrogate", "char"]
     cpTests =
-      TestLabel "Code point properties" $
-      TestList $
-      flip map (elementChildren group) $ \el ->
+      group "Code point properties" $
+      flip map (elementChildren elGroup) $ \el ->
         let testCP' =
               testCP (elementChildren el) $ \nm ->
                 M.lookup nm (elementAttributes el) <|> M.lookup nm attrs
-         in case M.lookup "first-cp" (elementAttributes el) of
-              Just startStr ->
-                let start = readHex startStr
-                    end =
-                      readHex $
-                      fromMaybe
-                        (error "Missing \"last-cp\" attribute")
-                        (M.lookup "last-cp" (elementAttributes el))
-                 in TestList $ map testCP' [toEnum start .. toEnum end]
-              Nothing ->
-                case M.lookup "cp" (elementAttributes el) of
-                  Just cpStr ->
-                    let cp = readHex cpStr
-                     in testCP' $ toEnum cp
-                  Nothing -> error $ "Unrecognized record type: " ++ show el
-    attrs = elementAttributes group
+         in withT_ $
+            case M.lookup "first-cp" (elementAttributes el) of
+              Just startStr -> do
+                start <- readHex startStr
+                end <-
+                  readHex =<<
+                  requireJust
+                    "Missing \"last-cp\" attribute"
+                    (M.lookup "last-cp" (elementAttributes el))
+                pure $ group_ $ map testCP' [toEnum start .. toEnum end]
+              Nothing -> do
+                cpStr <-
+                  requireJust ("Unrecognized record type: " ++ show el) $
+                  M.lookup "cp" $ elementAttributes el
+                cp <- readHex cpStr
+                pure $ testCP' $ toEnum cp
+    attrs = elementAttributes elGroup
 
-testCP :: [Element] -> (Name -> Maybe T.Text) -> UCD.CodePoint -> Test
+testCP :: [Element] -> (Name -> Maybe T.Text) -> UCD.CodePoint -> Suite
 testCP children getAttr cp =
-  TestLabel (show cp) $
-  TestList
-    [ "Name aliases" ~: testCPAliases children cp
-    , "Properties" ~:
-      (do testEnumerated "General category" "gc" UCD.generalCategory
-          xmlCCC <- canonicalCombiningClass
-          assertEqual "Canonical combining class" xmlCCC $
-            UCD.canonicalCombiningClass cp
-          xmlName <- name
-          assertEqual "Name" xmlName $ UCD.name cp
-          testMayEnumerated "Age" "age" "unassigned" UCD.age
-          testEnumerated "Script" "sc" UCD.script
-          testMayEnumerated "Block" "blk" "NB" UCD.block
-          xmlScriptExts <- scriptExts
-          assertEqual "Script extensions" (sort xmlScriptExts) $
-            sort $ UCD.scriptExtensions cp
-          let testBoolean testName attrName f = do
-                attr <- requireAttr attrName
-                b <- readBoolean attr
-                assertEqual testName b (f cp)
-          traverse_
-            (\(tn, an, f) -> testBoolean tn an f)
-            [ ("White space", "WSpace", UCD.whiteSpace)
-            , ("Bidi control", "Bidi_C", UCD.bidiControl)
-            , ("Join control", "Join_C", UCD.joinControl)
-            , ("Dash", "Dash", UCD.dash)
-            , ("Quotation mark", "QMark", UCD.quotationMark)
-            , ("Terminal punctuation", "Term", UCD.terminalPunctuation)
-            , ("Hex digit", "Hex", UCD.hexDigit)
-            , ("ASCII hex digit", "AHex", UCD.asciiHexDigit)
-            , ("Ideographic", "Ideo", UCD.ideographic)
-            , ("Diacritic", "Dia", UCD.diacritic)
-            , ("Extender", "Ext", UCD.extender)
-            , ("Noncharacter code point", "NChar", UCD.noncharacterCodePoint)
-            , ("IDS binary operator", "IDSB", UCD.idsBinaryOperator)
-            , ("IDS trinary operator", "IDST", UCD.idsTrinaryOperator)
-            , ("Radical", "Radical", UCD.radical)
-            , ("Unified Ideograph", "UIdeo", UCD.unifiedIdeograph)
-            , ("Deprecated", "Dep", UCD.deprecated)
-            , ("Soft dotted", "SD", UCD.softDotted)
-            , ("Logical order exception", "LOE", UCD.logicalOrderException)
-            , ("Sentence terminal", "STerm", UCD.sentenceTerminal)
-            , ("Variation selector", "VS", UCD.variationSelector)
-            , ("Pattern white space", "Pat_WS", UCD.patternWhiteSpace)
-            , ("Pattern syntax", "Pat_Syn", UCD.patternSyntax)
-            , ( "Prepended concatenation mark"
-              , "PCM"
-              , UCD.prependedConcatenationMark)
-            , ("Regional indicator", "RI", UCD.regionalIndicator)
-            , ("Math", "Math", UCD.math)
-            , ("Alphabetic", "Alpha", UCD.alphabetic)
-            , ("Uppercase", "Upper", UCD.uppercase)
-            , ("Lowercase", "Lower", UCD.lowercase)
-            , ("Cased", "Cased", UCD.cased)
-            , ("Case ignorable", "CI", UCD.caseIgnorable)
-            , ("Changes when lowercased", "CWL", UCD.changesWhenLowercased)
-            , ("Changes when uppercased", "CWU", UCD.changesWhenUppercased)
-            , ("Changes when titlecased", "CWT", UCD.changesWhenTitlecased)
-            , ("Changes when casefolded", "CWCF", UCD.changesWhenCasefolded)
-            , ("Changes when casemapped", "CWCM", UCD.changesWhenCasemapped)
-            , ("ID start", "IDS", UCD.idStart)
-            , ("ID continue", "IDC", UCD.idContinue)
-            , ("XID start", "XIDS", UCD.xidStart)
-            , ("XID continue", "XIDC", UCD.xidContinue)
-            , ("Default ignorable", "DI", UCD.defaultIgnorableCodePoint)
-            , ("Grapheme extend", "Gr_Ext", UCD.graphemeExtend)
-            , ("Grapheme base", "Gr_Base", UCD.graphemeBase)
-            , ( "Changes when NFKC casefolded"
-              , "CWKCF"
-              , UCD.changesWhenNFKCCasefolded)
-            , ("Bidi Mirrored", "Bidi_M", UCD.bidiMirrored)
-            ]
-          testMayEnumerated
+  group
+    (show cp)
+    [ test "Name aliases" $ testCPAliases children cp
+    , group
+        "Properties"
+        [ testEnumerated "General category" "gc" UCD.generalCategory
+        , test "Canonical comibing class" $ do
+            xmlCCC <- canonicalCombiningClass
+            expect "Canonical combining class" $
+              xmlCCC =? UCD.canonicalCombiningClass cp
+        , test "Name" $ do
+            xmlName <- name
+            expect "Name" $ xmlName =? UCD.name cp
+        , testMayEnumerated "Age" "age" "unassigned" UCD.age
+        , testEnumerated "Script" "sc" UCD.script
+        , testMayEnumerated "Block" "blk" "NB" UCD.block
+        , test "Script extensions" $ do
+            xmlScriptExts <- scriptExts
+            expect "Script extensions" $
+              sort xmlScriptExts =? sort (UCD.scriptExtensions cp)
+        , group "Boolean properties" $
+          let testBoolean testName attrName f =
+                test testName $ do
+                  attr <- requireAttr attrName
+                  b <- readBoolean attr
+                  expect "Attribute value mismatch" $ b =? f cp
+           in map
+                (\(tn, an, f) -> testBoolean tn an f)
+                [ ("White space", "WSpace", UCD.whiteSpace)
+                , ("Bidi control", "Bidi_C", UCD.bidiControl)
+                , ("Join control", "Join_C", UCD.joinControl)
+                , ("Dash", "Dash", UCD.dash)
+                , ("Quotation mark", "QMark", UCD.quotationMark)
+                , ("Terminal punctuation", "Term", UCD.terminalPunctuation)
+                , ("Hex digit", "Hex", UCD.hexDigit)
+                , ("ASCII hex digit", "AHex", UCD.asciiHexDigit)
+                , ("Ideographic", "Ideo", UCD.ideographic)
+                , ("Diacritic", "Dia", UCD.diacritic)
+                , ("Extender", "Ext", UCD.extender)
+                , ( "Noncharacter code point"
+                  , "NChar"
+                  , UCD.noncharacterCodePoint)
+                , ("IDS binary operator", "IDSB", UCD.idsBinaryOperator)
+                , ("IDS trinary operator", "IDST", UCD.idsTrinaryOperator)
+                , ("Radical", "Radical", UCD.radical)
+                , ("Unified Ideograph", "UIdeo", UCD.unifiedIdeograph)
+                , ("Deprecated", "Dep", UCD.deprecated)
+                , ("Soft dotted", "SD", UCD.softDotted)
+                , ("Logical order exception", "LOE", UCD.logicalOrderException)
+                , ("Sentence terminal", "STerm", UCD.sentenceTerminal)
+                , ("Variation selector", "VS", UCD.variationSelector)
+                , ("Pattern white space", "Pat_WS", UCD.patternWhiteSpace)
+                , ("Pattern syntax", "Pat_Syn", UCD.patternSyntax)
+                , ( "Prepended concatenation mark"
+                  , "PCM"
+                  , UCD.prependedConcatenationMark)
+                , ("Regional indicator", "RI", UCD.regionalIndicator)
+                , ("Math", "Math", UCD.math)
+                , ("Alphabetic", "Alpha", UCD.alphabetic)
+                , ("Uppercase", "Upper", UCD.uppercase)
+                , ("Lowercase", "Lower", UCD.lowercase)
+                , ("Cased", "Cased", UCD.cased)
+                , ("Case ignorable", "CI", UCD.caseIgnorable)
+                , ("Changes when lowercased", "CWL", UCD.changesWhenLowercased)
+                , ("Changes when uppercased", "CWU", UCD.changesWhenUppercased)
+                , ("Changes when titlecased", "CWT", UCD.changesWhenTitlecased)
+                , ("Changes when casefolded", "CWCF", UCD.changesWhenCasefolded)
+                , ("Changes when casemapped", "CWCM", UCD.changesWhenCasemapped)
+                , ("ID start", "IDS", UCD.idStart)
+                , ("ID continue", "IDC", UCD.idContinue)
+                , ("XID start", "XIDS", UCD.xidStart)
+                , ("XID continue", "XIDC", UCD.xidContinue)
+                , ("Default ignorable", "DI", UCD.defaultIgnorableCodePoint)
+                , ("Grapheme extend", "Gr_Ext", UCD.graphemeExtend)
+                , ("Grapheme base", "Gr_Base", UCD.graphemeBase)
+                , ( "Changes when NFKC casefolded"
+                  , "CWKCF"
+                  , UCD.changesWhenNFKCCasefolded)
+                , ("Bidi Mirrored", "Bidi_M", UCD.bidiMirrored)
+                ]
+        , testMayEnumerated
             "Hangul syllable type"
             "hst"
             "NA"
             UCD.hangulSyllableType
-          let testCPProp testName attrName f = do
-                attr <- requireAttr attrName
-                expected <-
-                  if attr == "#"
-                    then pure (fromEnum cp)
-                    else pure $ readHex attr
-                assertEqual testName expected $ fromEnum $ f cp
-          traverse_
-            (\(tn, an, f) -> testCPProp tn an f)
-            [ ("Simple lowercase mapping", "slc", UCD.simpleLowercaseMapping)
-            , ("Simple uppercase mapping", "suc", UCD.simpleUppercaseMapping)
-            , ("Simple titlecase mapping", "stc", UCD.simpleTitlecaseMapping)
-            , ("Simple case folding", "scf", UCD.simpleCaseFolding)
+        , group "Simple case mappings" $
+          let testCPProp testName attrName f =
+                test testName $ do
+                  attr <- requireAttr attrName
+                  expected <-
+                    if attr == "#"
+                      then pure (fromEnum cp)
+                      else readHex attr
+                  expect "Attribute value mismatch" $
+                    expected =? fromEnum (f cp)
+           in map
+                (\(tn, an, f) -> testCPProp tn an f)
+                [ ("Lowercase", "slc", UCD.simpleLowercaseMapping)
+                , ("Uppercase", "suc", UCD.simpleUppercaseMapping)
+                , ("Titlecase", "stc", UCD.simpleTitlecaseMapping)
+                , ("Folding", "scf", UCD.simpleCaseFolding)
+                ]
+        , group "Full case mappings" $
+          let testCaseMappingProp testName attrName f =
+                test testName $ do
+                  attr <- requireAttr attrName
+                  expected <-
+                    if attr == "#"
+                      then pure [fromEnum cp]
+                      else traverse readHex (T.words attr)
+                  let actual =
+                        case f cp of
+                          UCD.SingleCM c1 -> [fromEnum c1]
+                          UCD.DoubleCM c1 c2 -> [fromEnum c1, fromEnum c2]
+                          UCD.TripleCM c1 c2 c3 ->
+                            [fromEnum c1, fromEnum c2, fromEnum c3]
+                  expect "Attribute value mismatch" $ expected =? actual
+           in map
+                (\(tn, an, f) -> testCaseMappingProp tn an f)
+                [ ("Lowercase", "lc", UCD.lowercaseMapping)
+                , ("Uppercase", "uc", UCD.uppercaseMapping)
+                , ("Titlecase", "tc", UCD.titlecaseMapping)
+                , ("Folding", "cf", UCD.caseFolding)
+                ]
+        , group
+            "Numeric properties"
+            [ test "Type" $ do
+                xmlTy <- requireAttr "nt"
+                let ucdTy =
+                      case UCD.numeric cp of
+                        Nothing -> "None"
+                        Just n ->
+                          case n of
+                            UCD.Decimal _ -> "De"
+                            UCD.Digit _ -> "Di"
+                            UCD.Numeric _ -> "Nu"
+                expect "Attribute mismatch" $ xmlTy =? ucdTy
+            , test "Value" $ do
+                xmlVal <-
+                  requireAttr "nv" >>= \case
+                    "NaN" -> pure Nothing
+                    str -> do
+                      let (numStr, denomStr) = break (== '/') $ T.unpack str
+                      num <-
+                        requireJust ("Numerator " ++ show numStr) $
+                        readMaybe numStr
+                      denom <-
+                        case denomStr of
+                          "" -> pure 1
+                          (_:dstr) ->
+                            requireJust ("Denominator " ++ show dstr) $
+                            readMaybe dstr
+                      pure $ Just $ num % denom
+                let ucdVal =
+                      UCD.numeric cp <&> \case
+                        UCD.Decimal v -> fromIntegral v
+                        UCD.Digit v -> fromIntegral v
+                        UCD.Numeric v -> v
+                expect "Attribute mismatch" $ xmlVal =? ucdVal
             ]
-          let testCaseMappingProp testName attrName f = do
-                attr <- requireAttr attrName
-                let expected =
-                      if attr == "#"
-                        then [fromEnum cp]
-                        else map readHex (T.words attr)
-                    actual =
-                      case f cp of
-                        UCD.SingleCM c1 -> [fromEnum c1]
-                        UCD.DoubleCM c1 c2 -> [fromEnum c1, fromEnum c2]
-                        UCD.TripleCM c1 c2 c3 ->
-                          [fromEnum c1, fromEnum c2, fromEnum c3]
-                assertEqual testName expected actual
-          traverse_
-            (\(tn, an, f) -> testCaseMappingProp tn an f)
-            [ ("Lowercase mapping", "lc", UCD.lowercaseMapping)
-            , ("Uppercase mapping", "uc", UCD.uppercaseMapping)
-            , ("Titlecase mapping", "tc", UCD.titlecaseMapping)
-            , ("Case folding", "cf", UCD.caseFolding)
-            ]
-          case getAttr "nt" of
-            Nothing -> assertFailure "Can't locate numeric type"
-            Just ntStr ->
-              case getAttr "nv" of
-                Nothing -> assertFailure "Can't locate numeric value"
-                Just nvStr ->
-                  let ucdNum = UCD.numeric cp
-                   in case ntStr of
-                        "None" -> assertEqual "Not numeric" Nothing ucdNum
-                        "De" ->
-                          case ucdNum of
-                            Just (UCD.Decimal n) ->
-                              assertEqual
-                                "Numeric decimal"
-                                (read $ T.unpack nvStr) $
-                              toInteger n
-                            _ ->
-                              assertFailure $
-                              "Expected decimal, got " ++ show ucdNum
-                        "Di" ->
-                          case ucdNum of
-                            Just (UCD.Digit n) ->
-                              assertEqual
-                                "Numeric digit"
-                                (read $ T.unpack nvStr) $
-                              toInteger n
-                            _ ->
-                              assertFailure $
-                              "Expected digit, got " ++ show ucdNum
-                        "Nu" ->
-                          case ucdNum of
-                            Just (UCD.Numeric r) ->
-                              let (numStr, mdenomStr) =
-                                    break (== '/') $ T.unpack nvStr
-                                  numer = read numStr
-                                  denom =
-                                    case mdenomStr of
-                                      "" -> 1
-                                      (_:denomStr) -> read denomStr
-                                  r' =
-                                    toInteger (numerator r) %
-                                    toInteger (denominator r)
-                               in assertEqual
-                                    "Numeric numeric"
-                                    (numer % denom)
-                                    r'
-                            _ ->
-                              assertFailure $
-                              "Expected numeric, got " ++ show ucdNum
-                        _ ->
-                          assertFailure $
-                          "Unrecognised numeric type: " ++ show ntStr
-          testMayEnumerated
+        , testMayEnumerated
             "Decomposition type"
             "dt"
             "none"
             UCD.decompositionType
-          let decompType = UCD.decompositionType cp
-          decompMap <-
-            case getAttr "dm" of
-              Nothing -> assertFailure "Can't find decomposition mapping"
-              Just str -> pure $ map readHex $ T.words str
-          case decompType of
-            Just UCD.Canonical ->
-              assertEqual
-                "Canonical decomposition"
-                (foldMap (UCD.canonicalDecomposition . chr) decompMap) $
-              UCD.nontrivialCanonicalDecomposition cp
-            _ ->
-              assertEqual "Canonical decomposition" [] $
-              UCD.nontrivialCanonicalDecomposition cp
-          case decompType of
-            Nothing ->
-              assertEqual "Compatibility decomposition" [] $
-              UCD.nontrivialCompatibilityDecomposition cp
-            _ ->
-              assertEqual
-                "Compatibility decomposition"
-                (foldMap (UCD.compatibilityDecomposition . chr) decompMap) $
-              UCD.nontrivialCompatibilityDecomposition cp
+        , test "Decomposition" $ do
+            let decompType = UCD.decompositionType cp
+            decompMap <-
+              requireAttr "dm" >>= \case
+                "#" -> pure [cp]
+                str -> traverse (fmap toEnum . readHex) $ T.words str
+            case decompType of
+              Just UCD.Canonical ->
+                expect "Canonical decomposition" $
+                foldMap UCD.canonicalDecomposition decompMap =?
+                UCD.nontrivialCanonicalDecomposition cp
+              _ ->
+                expect "Canonical decomposition" $
+                [] =? UCD.nontrivialCanonicalDecomposition cp
+            case decompType of
+              Nothing ->
+                expect "Compatibility decomposition" $
+                [] =? UCD.nontrivialCompatibilityDecomposition cp
+              _ ->
+                expect "Compatibility decomposition" $
+                foldMap UCD.compatibilityDecomposition decompMap =?
+                UCD.nontrivialCompatibilityDecomposition cp
+        , group "Normalisation quick check" $
           let getQuickCheck attr =
                 case getAttr attr of
                   Just "Y" -> pure $ Just True
                   Just "N" -> pure $ Just False
                   Just "M" -> pure Nothing
-                  _ -> assertFailure "Can't parse quick check attribute"
-          nfdQC <- getQuickCheck "NFD_QC"
-          assertEqual "NFD quick check" nfdQC $ Just $ UCD.nfdQuickCheck cp
-          nfcQC <- getQuickCheck "NFC_QC"
-          assertEqual "NFC quick check" nfcQC $ UCD.nfcQuickCheck cp
-          nfkdQC <- getQuickCheck "NFKD_QC"
-          assertEqual "NFKD quick check" nfkdQC $ Just $ UCD.nfkdQuickCheck cp
-          nfkcQC <- getQuickCheck "NFKC_QC"
-          assertEqual "NFKC quick check" nfkcQC $ UCD.nfkcQuickCheck cp
-          ------
-          nfkcCF <-
-            case getAttr "NFKC_CF" of
-              Just "#" -> pure [cp]
-              Just str -> pure $ map (toEnum . readHex) $ T.words str
-              Nothing -> assertFailure "Can't find NFKC_Casefold"
-          case UCD.nfkcCaseFold cp of
-            UCD.ShortCF c -> assertEqual "NFKC_CF" nfkcCF [c]
-            UCD.LongCF cs -> do
-              assert $ length cs /= 1
-              assertEqual "NFKC_CF" nfkcCF cs
-          -----
-          testEnumerated "Joining type" "jt" UCD.joiningType
-          testMayEnumerated
+                  _ -> criticalFailure "Can't parse quick check attribute"
+           in [ test "NFD" $ do
+                  nfdQC <- getQuickCheck "NFD_QC"
+                  expect "Attribute value mismatch" $
+                    nfdQC =? Just (UCD.nfdQuickCheck cp)
+              , test "NFC" $ do
+                  nfcQC <- getQuickCheck "NFC_QC"
+                  expect "Attribute value mismatch" $
+                    nfcQC =? UCD.nfcQuickCheck cp
+              , test "NFKD" $ do
+                  nfkdQC <- getQuickCheck "NFKD_QC"
+                  expect "Attribute value mismatch" $
+                    nfkdQC =? Just (UCD.nfkdQuickCheck cp)
+              , test "NFKC" $ do
+                  nfkcQC <- getQuickCheck "NFKC_QC"
+                  expect "Attribute value mismatch" $
+                    nfkcQC =? UCD.nfkcQuickCheck cp
+              ]
+        , test "NFKC case fold" $ do
+            nfkcCF <-
+              requireAttr "NFKC_CF" >>= \case
+                "#" -> pure [cp]
+                str -> traverse (fmap toEnum . readHex) $ T.words str
+            case UCD.nfkcCaseFold cp of
+              UCD.ShortCF c -> expect "Value mismatch" $ nfkcCF =? [c]
+              UCD.LongCF cs -> do
+                expect "LongCF for long strings" $ 1 /=? length cs
+                expect "Value mismatch" $ nfkcCF =? cs
+        , testEnumerated "Joining type" "jt" UCD.joiningType
+        , testMayEnumerated
             "Joining group"
             "jg"
             "No_Joining_Group"
             UCD.joiningGroup
-          testEnumerated "Vertical orientation" "vo" UCD.verticalOrientation
-          testEnumerated "Line break" "lb" UCD.lineBreak
-          testEnumerated "Grapheme cluster break" "GCB" UCD.graphemeClusterBreak
-          testEnumerated "Sentence break" "SB" UCD.sentenceBreak
-          testEnumerated "Word break" "WB" UCD.wordBreak
-          testEnumerated "East Asian width" "ea" UCD.eastAsianWidth
-          testEnumerated "Bidi class" "bc" UCD.bidiClass
-          -------
-          bmg <-
-            case getAttr "bmg" of
-              Just "" -> pure Nothing
-              Just str -> pure $ Just $ toEnum $ readHex str
-              Nothing -> assertFailure "Can't locate bidi mirroring glyph"
-          assertEqual "Bidi mirroring glyph" bmg $ UCD.bidiMirroringGlyph cp
-          -------
-          testMayEnumerated
+        , testEnumerated "Vertical orientation" "vo" UCD.verticalOrientation
+        , testEnumerated "Line break" "lb" UCD.lineBreak
+        , testEnumerated "Grapheme cluster break" "GCB" UCD.graphemeClusterBreak
+        , testEnumerated "Sentence break" "SB" UCD.sentenceBreak
+        , testEnumerated "Word break" "WB" UCD.wordBreak
+        , testEnumerated "East Asian width" "ea" UCD.eastAsianWidth
+        , testEnumerated "Bidi class" "bc" UCD.bidiClass
+        , test "Bidi mirroring glych" $ do
+            bmg <-
+              requireAttr "bmg" >>= \case
+                "" -> pure Nothing
+                str -> Just . toEnum <$> readHex str
+            expect "Bidi mirroring glyph" $ bmg =? UCD.bidiMirroringGlyph cp
+        , testMayEnumerated
             "Bidi Paired Bracket Type"
             "bpt"
             "n"
             UCD.bidiPairedBracketType
-          bpbText <- requireAttr "bpb"
-          let bpbVal =
-                case bpbText of
-                  "#" -> cp
-                  _ -> toEnum $ readHex bpbText
-          assertEqual "Bidi Paired Bracket" bpbVal $ UCD.bidiPairedBracket cp)
+        , test "Bidi paired bracket" $ do
+            bpbText <- requireAttr "bpb"
+            bpbVal <-
+              case bpbText of
+                "#" -> pure cp
+                _ -> toEnum <$> readHex bpbText
+            expect "Bidi Paired Bracket" $ bpbVal =? UCD.bidiPairedBracket cp
+        ]
     ]
   where
-    canonicalCombiningClass =
-      case getAttr "ccc" of
-        Just cccStr -> readIO $ T.unpack cccStr
-        Nothing -> assertFailure "Can't locate canonical combining class"
-    name =
-      case getAttr "na" of
-        Just rawName -> pure $ TE.encodeUtf8 $ T.replace "#" hexStr rawName
-        Nothing -> assertFailure "Can't locate name"
+    canonicalCombiningClass = do
+      cccText <- requireAttr "ccc"
+      requireJust ("Can't parse canonical combining class " ++ show cccText) $
+        readMaybe $ T.unpack cccText
+    name = TE.encodeUtf8 . T.replace "#" hexStr <$> requireAttr "na"
     hexStr =
       T.pack $
       let raw = map toUpper $ showHex (fromEnum cp) ""
@@ -363,56 +364,54 @@ testCP children getAttr cp =
             then replicate (4 - length raw) ' ' ++ raw
             else raw
     scriptExts =
-      case getAttr "scx" of
-        Nothing -> assertFailure "Can't locate script extensions"
-        Just scxStr ->
-          traverse (parseEnumerated "script extension") $ T.words scxStr
+      traverse (parseEnumerated "script extension") . T.words =<<
+      requireAttr "scx"
     testEnumerated ::
          (Show p, Eq p, UCD.EnumeratedProperty p)
       => String
       -> Name
       -> (UCD.CodePoint -> p)
-      -> IO ()
-    testEnumerated testName attrName f = do
-      attr <- requireAttr attrName
-      xmlVal <- parseEnumerated testName attr
-      assertEqual testName xmlVal $ f cp
+      -> Suite
+    testEnumerated testName attrName f =
+      test testName $ do
+        attr <- requireAttr attrName
+        xmlVal <- parseEnumerated testName attr
+        expect "Attribute value mismatch" $ xmlVal =? f cp
     testMayEnumerated ::
          (Show p, Eq p, UCD.EnumeratedProperty p)
       => String
       -> Name
       -> T.Text
       -> (UCD.CodePoint -> Maybe p)
-      -> IO ()
-    testMayEnumerated testName attrName absent f = do
-      attr <- requireAttr attrName
-      if attr == absent
-        then assertEqual (show attrName) Nothing $ f cp
-        else do
-          xmlVal <- parseEnumerated testName attr
-          assertEqual testName (Just xmlVal) $ f cp
-    requireAttr :: Name -> IO T.Text
+      -> Suite
+    testMayEnumerated testName attrName absent f =
+      test testName $ do
+        attr <- requireAttr attrName
+        if attr == absent
+          then expect "Attribute should be absent" $ Nothing =? f cp
+          else do
+            xmlVal <- parseEnumerated testName attr
+            expect "Attribute value mismatch" $ Just xmlVal =? f cp
+    requireAttr :: Name -> Test T.Text
     requireAttr attrName =
-      case getAttr attrName of
-        Nothing -> assertFailure $ "Can't locate attribute " ++ show attrName
-        Just txt -> pure txt
-    parseEnumerated :: UCD.EnumeratedProperty p => String -> T.Text -> IO p
+      requireJust
+        ("Can't locate attribute " ++ show attrName)
+        (getAttr attrName)
+    parseEnumerated :: UCD.EnumeratedProperty p => String -> T.Text -> Test p
     parseEnumerated propertyName txt =
-      case find
-             ((== txt8) . toUpper8 . UCD.abbreviatedPropertyValueName)
-             [minBound .. maxBound] of
-        Just p -> pure p
-        Nothing ->
-          assertFailure $ "Can't parse " ++ propertyName ++ ": " ++ show txt
+      requireJust ("Can't parse " ++ propertyName ++ ": " ++ show txt) $
+      find
+        ((== txt8) . toUpper8 . UCD.abbreviatedPropertyValueName)
+        [minBound .. maxBound]
       where
         txt8 = toUpper8 $ TE.encodeUtf8 txt
     toUpper8 = B.map (.|. 0x20)
 
-testCPAliases :: [Element] -> UCD.CodePoint -> IO ()
+testCPAliases :: [Element] -> UCD.CodePoint -> Test ()
 testCPAliases children cp = do
   aliases <-
     sort <$> traverse (\elt -> liftA2 (,) (aliasType elt) (alias elt)) aliasElts
-  assertEqual "Name aliases" aliases $ UCD.nameAliases cp
+  expect "Name aliases" $ aliases =? UCD.nameAliases cp
   where
     aliasElts =
       filter
@@ -426,31 +425,29 @@ testCPAliases children cp = do
         Just "figment" -> pure UCD.FigmentAlias
         Just "abbreviation" -> pure UCD.AbbreviationAlias
         Just otherStr ->
-          assertFailure $ "Unrecognised name alias type" ++ show otherStr
-        Nothing -> assertFailure "Can't locate alias type"
+          criticalFailure $ "Unrecognised name alias type" ++ show otherStr
+        Nothing -> criticalFailure "Can't locate alias type"
     alias elt =
       case M.lookup "alias" (elementAttributes elt) of
         Just str -> pure $ TE.encodeUtf8 str
-        Nothing -> assertFailure "Can't locate alias"
+        Nothing -> criticalFailure "Can't locate alias"
 
-testBlock :: Element -> Test
+testBlock :: Element -> Suite
 testBlock blockDescr =
-  TestLabel (T.unpack blockName) $
-  TestCase $ do
+  test (T.unpack blockName) $ do
     start <- (toEnum :: Int -> UCD.CodePoint) <$> blockStart
     end <- toEnum <$> blockEnd
-    for_ [start .. end] $ \cp ->
-      assertEqual (show cp) block $ Just $ UCD.block cp
+    for_ [start .. end] $ \cp -> expect (show cp) $ block =? Just (UCD.block cp)
   where
     blockName = fromJust $ M.lookup "name" $ elementAttributes blockDescr
     blockStart =
       case M.lookup "first-cp" $ elementAttributes blockDescr of
-        Just str -> pure $ readHex str
-        Nothing -> assertFailure "Can't locate block start"
+        Just str -> readHex str
+        Nothing -> criticalFailure "Can't locate block start"
     blockEnd =
       case M.lookup "last-cp" $ elementAttributes blockDescr of
-        Just str -> pure $ readHex str
-        Nothing -> assertFailure "Can't locate block end"
+        Just str -> readHex str
+        Nothing -> criticalFailure "Can't locate block end"
     block
       | blockName == "No_Block" = Just Nothing
       | otherwise =
@@ -460,17 +457,22 @@ testBlock blockDescr =
               bname = prepare $ T.dropEnd 5 $ T.pack $ show b
            in bname == prepare blockName
 
-readHex :: T.Text -> Int
+readHex :: HasCallStack => T.Text -> Test Int
+{-# INLINE readHex #-}
 readHex t =
+  withFrozenCallStack $
   case TR.hexadecimal t of
-    Left err -> error err
-    Right (n, "") -> n
-    Right (_, rest) -> error $ "Leftover parse input " ++ show (T.unpack rest)
+    Left err -> criticalFailure $ "Reading " ++ show t ++ ": " ++ err
+    Right (n, "") -> pure n
+    Right (_, rest) ->
+      criticalFailure $ "Leftover parse input " ++ show (T.unpack rest)
 
-readBoolean :: T.Text -> IO Bool
+readBoolean :: HasCallStack => T.Text -> Test Bool
+{-# INLINE readBoolean #-}
 readBoolean "Y" = pure True
 readBoolean "N" = pure False
-readBoolean txt = assertFailure $ "Unable to read boolean: " ++ show txt
+readBoolean txt =
+  withFrozenCallStack $ criticalFailure $ "Unable to read boolean: " ++ show txt
 
 readUCD :: IO Document
 readUCD = do

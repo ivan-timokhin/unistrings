@@ -235,43 +235,45 @@ library
 test-suite ucd-test
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
+  other-modules:       Test.Yocto
   ghc-options:         -Wall
                        -Wcompat
   if flag(Werror)
     ghc-options:       -Werror
   build-depends:       base
-                     , HUnit
                      , ucd
                      , attoparsec
                      , bytestring
   hs-source-dirs:      test
+                     , test-common
   default-language:    Haskell2010
 
 test-suite ucd-test-icu
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
+  other-modules:       Test.Yocto
   ghc-options:         -Wall
                        -Wcompat
   if flag(Werror)
     ghc-options:       -Werror
   build-depends:       base
-                     , HUnit
                      , ucd
                      , text-icu
                      , text
                      , bytestring
   hs-source-dirs:      test-icu
+                     , test-common
   default-language:    Haskell2010
 
 test-suite ucd-test-xml
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
+  other-modules:       Test.Yocto
   ghc-options:         -Wall
                        -Wcompat
   if flag(Werror)
     ghc-options:       -Werror
   build-depends:       base
-                     , HUnit
                      , ucd
                      , bytestring
                      , text
@@ -279,6 +281,7 @@ test-suite ucd-test-xml
                      , zip
                      , containers
   hs-source-dirs:      test-xml
+                     , test-common
   default-language:    Haskell2010
 
 test-suite ucd-test-inspection
