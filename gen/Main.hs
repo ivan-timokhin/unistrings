@@ -58,6 +58,7 @@ import qualified UCD.DerivedJoiningGroup
 import qualified UCD.DerivedJoiningType
 import qualified UCD.DerivedNormalizationProps as UCD.DNP
 import qualified UCD.EastAsianWidth
+import qualified UCD.EquivalentUnifiedIdeograph
 import qualified UCD.GraphemeBreakProperty
 import qualified UCD.HangulSyllableType
 import qualified UCD.Jamo
@@ -440,6 +441,9 @@ main = do
                V.generate unicodeTableSize id `adjustWith` fmap fst bb
          processTable fullPartitionings "bidi_paired_bracket_type" types
          generateSources fullPartitionings "bidi_paired_bracket" pairs
+    , do eui <- UCD.EquivalentUnifiedIdeograph.fetch
+         generateSources fullPartitionings "equivalent_unified_ideograph" $
+           UCD.Common.tableToVector Nothing $ fmap Just eui
     ]
 
 printLong :: Show a => [a] -> IO ()

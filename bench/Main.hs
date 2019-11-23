@@ -410,6 +410,13 @@ main =
                       (maybe 0 fromEnum . UCD.bidiPairedBracketType)
                   ]
               ]
+          , C.bgroup
+              "Equivalent unified ideograph"
+              [ C.bench "UCD" $
+                mkBenchmark
+                  udhr
+                  (maybe 0 fromEnum . UCD.equivalentUnifiedIdeograph)
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

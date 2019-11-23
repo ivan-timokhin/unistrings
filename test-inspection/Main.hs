@@ -100,5 +100,10 @@ bidiPairedBracketType c = isJust (UCD.bidiPairedBracketType c)
 
 inspect $ 'bidiPairedBracketType `hasNoType` ''Maybe
 
+equivalentUnifiedIdeograph :: UCD.CodePoint -> Bool
+equivalentUnifiedIdeograph c = isJust (UCD.equivalentUnifiedIdeograph c)
+
+inspect $ 'equivalentUnifiedIdeograph `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()

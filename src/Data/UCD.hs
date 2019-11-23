@@ -113,6 +113,7 @@ module Data.UCD
   , bidiPairedBracket
   , bidiPairedBracketType
   , BidiPairedBracketType(..)
+  , equivalentUnifiedIdeograph
   , unicode1Name
   , EnumeratedProperty(..)
   ) where
@@ -159,6 +160,7 @@ import qualified Data.UCD.Internal.DefaultIgnorableCodePoint as DICP
 import qualified Data.UCD.Internal.Deprecated as De
 import qualified Data.UCD.Internal.Diacritic as Di
 import qualified Data.UCD.Internal.EastAsianWidth as EAW
+import qualified Data.UCD.Internal.EquivalentUnifiedIdeograph as EUI
 import qualified Data.UCD.Internal.Extender as Ext
 import qualified Data.UCD.Internal.FullCaseFolding0 as FCF0
 import qualified Data.UCD.Internal.FullCaseFolding1 as FCF1
@@ -818,6 +820,10 @@ bidiPairedBracket =
 
 bidiPairedBracketType :: IsCodePoint cp => cp -> Maybe BidiPairedBracketType
 bidiPairedBracketType = withCP $ \cp -> BPBT.retrieve cp
+
+equivalentUnifiedIdeograph :: IsCodePoint cp => cp -> Maybe CodePoint
+equivalentUnifiedIdeograph =
+  withCP $ fmap (CodePoint . fromIntegral) . EUI.retrieve
 
 unicode1Name :: IsCodePoint cp => cp -> ByteString
 unicode1Name =

@@ -1,4 +1,4 @@
-* Unicode Properties [91/96]
+* Unicode Properties [93/96]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -89,14 +89,14 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] XID_Start
   - [X] Pattern_Syntax
   - [X] Pattern_White_Space
-- [-] CJK [5/6]
+- [X] CJK [6/6]
   - [X] Ideographic
   - [X] Unified_Ideograph
   - [X] Radical
   - [X] IDS_Binary_Operator
   - [X] IDS_Trinary_Operator
   - Unicode_Radical_Stroke
-  - [ ] Equivalent_Unified_Ideograph
+  - [X] Equivalent_Unified_Ideograph
 - [-] Miscellaneous [11/13]
   - [X] Math
   - [X] Quotation_Mark
