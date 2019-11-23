@@ -351,6 +351,9 @@ testCP children getAttr cp =
                 "#" -> pure cp
                 _ -> toEnum <$> readHex bpbText
             expect "Bidi Paired Bracket" $ bpbVal =? UCD.bidiPairedBracket cp
+        , test "Unicode 1 Name" $ do
+            u1name <- requireAttr "na1"
+            expect "Name mismatch" $ TE.encodeUtf8 u1name =? UCD.unicode1Name cp
         ]
     ]
   where

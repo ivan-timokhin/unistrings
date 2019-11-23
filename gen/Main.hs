@@ -182,6 +182,9 @@ main = do
          [0x2CEB0 .. 0x2EBE0] ++
          [0x17000 .. 0x187F7] ++
          [0xF900 .. 0xFA6D] ++ [0xFA70 .. 0xFAD9] ++ [0x2F800 .. 0x2FA1D])
+    , generateASCIITableSources fullPartitionings "unicode_1_name" $
+      UCD.UnicodeData.tableToVector "" $
+      UCD.UnicodeData.propUnicode1Name <$> records
     , do shortNames <- UCD.Jamo.fetch
          generateASCIITableSources (0, 0) "jamo_short_name" shortNames
     , do aliases <- tableToVector V.empty <$> UCD.NameAliases.fetch

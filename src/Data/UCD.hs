@@ -113,6 +113,7 @@ module Data.UCD
   , bidiPairedBracket
   , bidiPairedBracketType
   , BidiPairedBracketType(..)
+  , unicode1Name
   , EnumeratedProperty(..)
   ) where
 
@@ -234,6 +235,8 @@ import Data.UCD.Internal.Types
   , VerticalOrientation(..)
   , WordBreak(..)
   )
+import qualified Data.UCD.Internal.Unicode1NameLen as U1NL
+import qualified Data.UCD.Internal.Unicode1NamePtr as U1NP
 import qualified Data.UCD.Internal.UnifiedIdeograph as UI
 import qualified Data.UCD.Internal.Uppercase as UC
 import qualified Data.UCD.Internal.VerticalOrientation as VO
@@ -815,6 +818,10 @@ bidiPairedBracket =
 
 bidiPairedBracketType :: IsCodePoint cp => cp -> Maybe BidiPairedBracketType
 bidiPairedBracketType = withCP $ \cp -> BPBT.retrieve cp
+
+unicode1Name :: IsCodePoint cp => cp -> ByteString
+unicode1Name =
+  withCP $ \cp -> mkByteString (U1NL.retrieve cp) (U1NP.retrieve cp)
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

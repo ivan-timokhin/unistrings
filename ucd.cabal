@@ -32,6 +32,8 @@ library
                      , Data.UCD.Internal.CanonicalCombiningClass
                      , Data.UCD.Internal.NamePtr
                      , Data.UCD.Internal.NameLen
+                     , Data.UCD.Internal.Unicode1NameLen
+                     , Data.UCD.Internal.Unicode1NamePtr
                      , Data.UCD.Internal.JamoShortNamePtr
                      , Data.UCD.Internal.JamoShortNameLen
                      , Data.UCD.Internal.NameAliasesAliasesLen
@@ -135,6 +137,8 @@ library
                      , generated/cbits/canonical_combining_class.c
                      , generated/cbits/name_len.c
                      , generated/cbits/name_ptr.c
+                     , generated/cbits/unicode_1_name_len.c
+                     , generated/cbits/unicode_1_name_ptr.c
                      , generated/cbits/jamo_short_name_len.c
                      , generated/cbits/jamo_short_name_ptr.c
                      , generated/cbits/name_aliases_aliases_len.c
