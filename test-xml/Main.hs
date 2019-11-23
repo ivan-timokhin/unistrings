@@ -51,7 +51,7 @@ main = do
           [ group "groups" $ groupsOnly groups : zipWith testGroup [0 ..] groups
           , group "blocks" $ map testBlock blocks
           ]
-  defaultMain tests
+  defaultMain 100 tests
 
 groupsOnly :: [Element] -> Suite
 groupsOnly els =

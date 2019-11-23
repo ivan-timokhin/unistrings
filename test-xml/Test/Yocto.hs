@@ -126,23 +126,31 @@ withT_ :: Test Suite -> Suite
 withT_ ts =
   Suite $ \report -> runTest ts (report []) $ \suite -> runSuite suite report
 
-defaultMain :: Suite -> IO ()
+defaultMain :: Int -> Suite -> IO ()
 {-# INLINE defaultMain #-}
-defaultMain suite = do
+defaultMain maxErrors suite = do
   critFailures <- newIORef (0 :: Int)
   failures <- newIORef (0 :: Int)
+  toReport <- newIORef maxErrors
   runSuite suite $ \context failureReport -> do
+    (doReport, final) <-
+      atomicModifyIORef' toReport (\c -> (c - 1, (c > 0, c == 1)))
     case fLevel failureReport of
       Expected -> do
-        hPutStrLn stderr "Failure"
+        when doReport $ hPutStrLn stderr "Failure"
         atomicModifyIORef' failures (\c -> (c + 1, ()))
       Required -> do
-        hPutStrLn stderr "Critical failure"
+        when doReport $ hPutStrLn stderr "Critical failure"
         atomicModifyIORef' critFailures (\c -> (c + 1, ()))
-    hPutStrLn stderr $ "  in " ++ intercalate "/" context
-    for_ (fLoc failureReport) $ \loc ->
-      hPutStrLn stderr $ "  at " ++ prettySrcLoc loc
-    hPutStrLn stderr $ "  " ++ fMsg failureReport
+    when doReport $ do
+      hPutStrLn stderr $ "  in " ++ intercalate "/" context
+      for_ (fLoc failureReport) $ \loc ->
+        hPutStrLn stderr $ "  at " ++ prettySrcLoc loc
+      hPutStrLn stderr $ "  " ++ fMsg failureReport
+      when final $
+        hPutStrLn stderr $
+        "Reached limit of " ++
+        show maxErrors ++ " errors; suppressing further printing"
   critFailuresTotal <- readIORef critFailures
   failuresTotal <- readIORef failures
   putStrLn $ "Regular failures: " ++ show failuresTotal
