@@ -86,13 +86,12 @@ testGroup n elGroup = group ("Group #" ++ show n) [validRecordTypes, cpTests]
                     "Missing \"last-cp\" attribute"
                     (M.lookup "last-cp" (elementAttributes el))
                 pure $ group_ $ map testCP' [toEnum start .. toEnum end]
-              Nothing ->
-                case M.lookup "cp" (elementAttributes el) of
-                  Just cpStr -> do
-                    cp <- readHex cpStr
-                    pure $ testCP' $ toEnum cp
-                  Nothing ->
-                    criticalFailure $ "Unrecognized record type: " ++ show el
+              Nothing -> do
+                cpStr <-
+                  requireJust ("Unrecognized record type: " ++ show el) $
+                  M.lookup "cp" $ elementAttributes el
+                cp <- readHex cpStr
+                pure $ testCP' $ toEnum cp
     attrs = elementAttributes elGroup
 
 testCP :: [Element] -> (Name -> Maybe T.Text) -> UCD.CodePoint -> Suite
@@ -250,11 +249,9 @@ testCP children getAttr cp =
         testMayEnumerated "Decomposition type" "dt" "none" UCD.decompositionType
         let decompType = UCD.decompositionType cp
         decompMap <-
-          case getAttr "dm" of
-            Nothing -> criticalFailure "Can't find decomposition mapping"
-            Just str
-              | str == "#" -> pure [cp]
-              | otherwise -> traverse (fmap toEnum . readHex) $ T.words str
+          requireAttr "dm" >>= \case
+            "#" -> pure [cp]
+            str -> traverse (fmap toEnum . readHex) $ T.words str
         case decompType of
           Just UCD.Canonical ->
             expect "Canonical decomposition" $
@@ -287,10 +284,9 @@ testCP children getAttr cp =
         expect "NFKC quick check" $ nfkcQC =? UCD.nfkcQuickCheck cp
           ------
         nfkcCF <-
-          case getAttr "NFKC_CF" of
-            Just "#" -> pure [cp]
-            Just str -> traverse (fmap toEnum . readHex) $ T.words str
-            Nothing -> criticalFailure "Can't find NFKC_Casefold"
+          requireAttr "NFKC_CF" >>= \case
+            "#" -> pure [cp]
+            str -> traverse (fmap toEnum . readHex) $ T.words str
         case UCD.nfkcCaseFold cp of
           UCD.ShortCF c -> expect "NFKC_CF" $ nfkcCF =? [c]
           UCD.LongCF cs -> do
@@ -312,10 +308,9 @@ testCP children getAttr cp =
         testEnumerated "Bidi class" "bc" UCD.bidiClass
           -------
         bmg <-
-          case getAttr "bmg" of
-            Just "" -> pure Nothing
-            Just str -> Just . toEnum <$> readHex str
-            Nothing -> criticalFailure "Can't locate bidi mirroring glyph"
+          requireAttr "bmg" >>= \case
+            "" -> pure Nothing
+            str -> Just . toEnum <$> readHex str
         expect "Bidi mirroring glyph" $ bmg =? UCD.bidiMirroringGlyph cp
           -------
         testMayEnumerated
@@ -331,14 +326,8 @@ testCP children getAttr cp =
         expect "Bidi Paired Bracket" $ bpbVal =? UCD.bidiPairedBracket cp
     ]
   where
-    canonicalCombiningClass =
-      case getAttr "ccc" of
-        Just cccStr -> liftIO $ readIO $ T.unpack cccStr
-        Nothing -> criticalFailure "Can't locate canonical combining class"
-    name =
-      case getAttr "na" of
-        Just rawName -> pure $ TE.encodeUtf8 $ T.replace "#" hexStr rawName
-        Nothing -> criticalFailure "Can't locate name"
+    canonicalCombiningClass = liftIO . readIO . T.unpack =<< requireAttr "ccc"
+    name = TE.encodeUtf8 . T.replace "#" hexStr <$> requireAttr "na"
     hexStr =
       T.pack $
       let raw = map toUpper $ showHex (fromEnum cp) ""
@@ -346,10 +335,8 @@ testCP children getAttr cp =
             then replicate (4 - length raw) ' ' ++ raw
             else raw
     scriptExts =
-      case getAttr "scx" of
-        Nothing -> criticalFailure "Can't locate script extensions"
-        Just scxStr ->
-          traverse (parseEnumerated "script extension") $ T.words scxStr
+      traverse (parseEnumerated "script extension") . T.words =<<
+      requireAttr "scx"
     testEnumerated ::
          (Show p, Eq p, UCD.EnumeratedProperty p)
       => String
@@ -376,17 +363,15 @@ testCP children getAttr cp =
           expect testName $ Just xmlVal =? f cp
     requireAttr :: Name -> Test T.Text
     requireAttr attrName =
-      case getAttr attrName of
-        Nothing -> criticalFailure $ "Can't locate attribute " ++ show attrName
-        Just txt -> pure txt
+      requireJust
+        ("Can't locate attribute " ++ show attrName)
+        (getAttr attrName)
     parseEnumerated :: UCD.EnumeratedProperty p => String -> T.Text -> Test p
     parseEnumerated propertyName txt =
-      case find
-             ((== txt8) . toUpper8 . UCD.abbreviatedPropertyValueName)
-             [minBound .. maxBound] of
-        Just p -> pure p
-        Nothing ->
-          criticalFailure $ "Can't parse " ++ propertyName ++ ": " ++ show txt
+      requireJust ("Can't parse " ++ propertyName ++ ": " ++ show txt) $
+      find
+        ((== txt8) . toUpper8 . UCD.abbreviatedPropertyValueName)
+        [minBound .. maxBound]
       where
         txt8 = toUpper8 $ TE.encodeUtf8 txt
     toUpper8 = B.map (.|. 0x20)
