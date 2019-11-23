@@ -363,6 +363,10 @@ testCP children getAttr cp =
             "InPC"
             "NA"
             UCD.indicPositionalCategory
+        , testEnumerated
+            "Indic syllabic category"
+            "InSC"
+            UCD.indicSyllabicCategory
         ]
     ]
   where

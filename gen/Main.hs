@@ -26,6 +26,7 @@ import Data.UCD.Internal.Types
   ( BidiClass(LeftToRightBC)
   , EastAsianWidth(NeutralEAW)
   , GraphemeClusterBreak(OtherGCB)
+  , IndicSyllabicCategory(Other)
   , JoiningType(NonJoining)
   , LineBreak(UnknownLB)
   , Script(UnknownScript)
@@ -62,6 +63,7 @@ import qualified UCD.EquivalentUnifiedIdeograph
 import qualified UCD.GraphemeBreakProperty
 import qualified UCD.HangulSyllableType
 import qualified UCD.IndicPositionalCategory
+import qualified UCD.IndicSyllabicCategory
 import qualified UCD.Jamo
 import qualified UCD.LineBreak
 import qualified UCD.NameAliases
@@ -448,6 +450,9 @@ main = do
     , do ipc <- UCD.IndicPositionalCategory.fetch
          processTable fullPartitionings "indic_positional_category" $
            UCD.Common.tableToVector Nothing $ fmap Just ipc
+    , do isc <- UCD.IndicSyllabicCategory.fetch
+         processTable fullPartitionings "indic_syllabic_category" $
+           UCD.Common.tableToVector Other isc
     ]
 
 printLong :: Show a => [a] -> IO ()

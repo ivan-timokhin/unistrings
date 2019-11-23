@@ -424,6 +424,9 @@ main =
                   udhr
                   (maybe 0 fromEnum . UCD.indicPositionalCategory)
               ]
+          , C.bgroup
+              "Indic syllabic category"
+              [C.bench "UCD" $ mkEnumBenchmark udhr UCD.indicSyllabicCategory]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

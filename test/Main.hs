@@ -60,6 +60,10 @@ main = do
                   "Indic positional category"
                   "indic_positional_category"
                   UCD.indicPositionalCategory
+              , testEnum
+                  "Indic syllabic category"
+                  "indic_syllabic_category"
+                  UCD.indicSyllabicCategory
               ]
           , group
               "Names"

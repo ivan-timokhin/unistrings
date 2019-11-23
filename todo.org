@@ -1,4 +1,4 @@
-* Unicode Properties [94/96]
+* Unicode Properties [96/96]
 :PROPERTIES:
 :COOKIE_DATA: recursive
 :END:
@@ -97,7 +97,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] IDS_Trinary_Operator
   - Unicode_Radical_Stroke
   - [X] Equivalent_Unified_Ideograph
-- [-] Miscellaneous [12/13]
+- [X] Miscellaneous [13/13]
   - [X] Math
   - [X] Quotation_Mark
   - [X] Dash
@@ -110,7 +110,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Unicode_1_Name
   - [X] Regional_Indicator
   - [X] Indic_Positional_Category
-  - [ ] Indic_Syllabic_Category
+  - [X] Indic_Syllabic_Category
 * Emoji properties [0/6]
 - [ ] Emoji
 - [ ] Emoji_Presentation

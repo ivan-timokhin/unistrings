@@ -46,6 +46,7 @@ import Data.UCD.Internal.Types
   , GraphemeClusterBreak
   , HangulSyllableType
   , IndicPositionalCategory
+  , IndicSyllabicCategory
   , JoiningGroup
   , JoiningType
   , LineBreak
@@ -152,6 +153,9 @@ deriving via TableEnum EastAsianWidth instance
          TableValue EastAsianWidth
 
 deriving via TableEnum BidiClass instance TableValue BidiClass
+
+deriving via TableEnum IndicSyllabicCategory instance
+         TableValue IndicSyllabicCategory
 
 newtype TableMayEnum e =
   TableMayEnum

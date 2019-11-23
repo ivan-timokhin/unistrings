@@ -21,6 +21,7 @@ module Data.UCD.Internal.Types
   , EastAsianWidth(..)
   , BidiPairedBracketType(..)
   , IndicPositionalCategory(..)
+  , IndicSyllabicCategory(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2400,4 +2401,84 @@ instance EnumeratedProperty IndicPositionalCategory where
       TopAndLeftAndRightIPC -> "Top_And_Left_And_Right"
       TopAndRightIPC -> "Top_And_Right"
       VisualOrderLeftIPC -> "Visual_Order_Left"
+  abbreviatedPropertyValueName = fullPropertyValueName
+
+data IndicSyllabicCategory
+  = Avagraha
+  | Bindu
+  | BrahmiJoiningNumber
+  | CantillationMark
+  | Consonant
+  | ConsonantDead
+  | ConsonantFinal
+  | ConsonantHeadLetter
+  | ConsonantInitialPostfixed
+  | ConsonantKiller
+  | ConsonantMedial
+  | ConsonantPlaceholder
+  | ConsonantPrecedingRepha
+  | ConsonantPrefixed
+  | ConsonantSubjoined
+  | ConsonantSucceedingRepha
+  | ConsonantWithStacker
+  | GeminationMark
+  | InvisibleStacker
+  | Joiner
+  | ModifyingLetter
+  | NonJoiner
+  | Nukta
+  | Number
+  | NumberJoiner
+  | Other
+  | PureKiller
+  | RegisterShifter
+  | SyllableModifier
+  | ToneLetter
+  | ToneMark
+  | Virama
+  | Visarga
+  | Vowel
+  | VowelDependent
+  | VowelIndependent
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty IndicSyllabicCategory where
+  fullPropertyValueName isc =
+    case isc of
+      Avagraha -> "Avagraha"
+      Bindu -> "Bindu"
+      BrahmiJoiningNumber -> "Brahmi_Joining_Number"
+      CantillationMark -> "Cantillation_Mark"
+      Consonant -> "Consonant"
+      ConsonantDead -> "Consonant_Dead"
+      ConsonantFinal -> "Consonant_Final"
+      ConsonantHeadLetter -> "Consonant_Head_Letter"
+      ConsonantInitialPostfixed -> "Consonant_Initial_Postfixed"
+      ConsonantKiller -> "Consonant_Killer"
+      ConsonantMedial -> "Consonant_Medial"
+      ConsonantPlaceholder -> "Consonant_Placeholder"
+      ConsonantPrecedingRepha -> "Consonant_Preceding_Repha"
+      ConsonantPrefixed -> "Consonant_Prefixed"
+      ConsonantSubjoined -> "Consonant_Subjoined"
+      ConsonantSucceedingRepha -> "Consonant_Succeeding_Repha"
+      ConsonantWithStacker -> "Consonant_With_Stacker"
+      GeminationMark -> "Gemination_Mark"
+      InvisibleStacker -> "Invisible_Stacker"
+      Joiner -> "Joiner"
+      ModifyingLetter -> "Modifying_Letter"
+      NonJoiner -> "Non_Joiner"
+      Nukta -> "Nukta"
+      Number -> "Number"
+      NumberJoiner -> "Number_Joiner"
+      Other -> "Other"
+      PureKiller -> "Pure_Killer"
+      RegisterShifter -> "Register_Shifter"
+      SyllableModifier -> "Syllable_Modifier"
+      ToneLetter -> "Tone_Letter"
+      ToneMark -> "Tone_Mark"
+      Virama -> "Virama"
+      Visarga -> "Visarga"
+      Vowel -> "Vowel"
+      VowelDependent -> "Vowel_Dependent"
+      VowelIndependent -> "Vowel_Independent"
   abbreviatedPropertyValueName = fullPropertyValueName

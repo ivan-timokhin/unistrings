@@ -117,6 +117,8 @@ module Data.UCD
   , unicode1Name
   , indicPositionalCategory
   , IndicPositionalCategory(..)
+  , indicSyllabicCategory
+  , IndicSyllabicCategory(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -176,6 +178,7 @@ import qualified Data.UCD.Internal.IdContinue as IC
 import qualified Data.UCD.Internal.IdStart as IS
 import qualified Data.UCD.Internal.Ideographic as Ide
 import qualified Data.UCD.Internal.IndicPositionalCategory as IPC
+import qualified Data.UCD.Internal.IndicSyllabicCategory as ISC
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
 import qualified Data.UCD.Internal.JoiningGroup as JG
@@ -232,6 +235,7 @@ import Data.UCD.Internal.Types
   , GraphemeClusterBreak(..)
   , HangulSyllableType(..)
   , IndicPositionalCategory(..)
+  , IndicSyllabicCategory(..)
   , JoiningGroup(..)
   , JoiningType(..)
   , LineBreak(..)
@@ -835,6 +839,9 @@ unicode1Name =
 
 indicPositionalCategory :: IsCodePoint cp => cp -> Maybe IndicPositionalCategory
 indicPositionalCategory = withCP IPC.retrieve
+
+indicSyllabicCategory :: IsCodePoint cp => cp -> IndicSyllabicCategory
+indicSyllabicCategory = withCP ISC.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint
