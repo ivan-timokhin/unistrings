@@ -11,7 +11,6 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
 import Data.Char (toLower)
-import Data.Foldable (for_)
 import Data.List (sort, sortOn)
 import Data.Ord (Down(Down))
 import Test.Yocto
@@ -235,15 +234,21 @@ caseMappings =
     ]
   where
     testCM name file sf f =
-      test name $ do
+      withT_ $ do
         reference <-
           readFullTable
             (enclosedP "[" "]" $ A.decimal `A.sepBy` ",")
             ("generated/test_data/" ++ file ++ ".txt")
-        for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-          if null ref
-            then expect (show cp) $ UCD.SingleCM (sf cp) =? f cp
-            else expect (show cp) $ map toEnum ref =? cm2list (f cp)
+        pure $
+          group name $
+          zipWith
+            (\cp ref ->
+               test (show cp) $
+               if null ref
+                 then expect "Value mismatch" $ UCD.SingleCM (sf cp) =? f cp
+                 else expect "Value mismatch" $ map toEnum ref =? cm2list (f cp))
+            [minCp .. maxCp]
+            reference
     cm2list (UCD.SingleCM c) = [c]
     cm2list (UCD.DoubleCM c1 c2) = [c1, c2]
     cm2list (UCD.TripleCM c1 c2 c3) = [c1, c2, c3]
@@ -302,13 +307,14 @@ testFullNames ::
   => String
   -> Suite
 testFullNames name =
-  test name $
-  for_ [minBound @p .. maxBound @p] $ \pval ->
+  group name $
+  flip map [minBound @p .. maxBound @p] $ \pval ->
+    test (show pval) $
     let pstr =
           map toLower . filter (\c -> c /= '_' && c /= '-') . B.unpack $
           UCD.fullPropertyValueName pval
         sstr = map toLower $ show pval
-     in expect (show pval) $ take (length pstr) sstr =? pstr
+     in expect "Name mismatch" $ take (length pstr) sstr =? pstr
 
 testEnum ::
      (Enum e, Show e, Bounded e, Eq e)
@@ -347,10 +353,16 @@ mkTestConditional ::
   -> (UCD.CodePoint -> a)
   -> Suite
 mkTestConditional exclude parser name file f =
-  test name $ do
+  withT_ $ do
     reference <- readFullTable parser $ "generated/test_data/" ++ file ++ ".txt"
-    for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      unless (exclude cp) $ expect (show cp) $ ref =? f cp
+    pure $
+      group name $
+      zipWith
+        (\cp ref ->
+           test (show cp) $
+           unless (exclude cp) $ expect "Value mismatch" $ ref =? f cp)
+        [minCp .. maxCp]
+        reference
 
 maxCp :: UCD.CodePoint
 maxCp = maxBound
