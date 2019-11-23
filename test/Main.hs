@@ -6,24 +6,24 @@
 module Main where
 
 import Control.Applicative ((<|>))
-import Control.Monad (replicateM, unless, when)
+import Control.Monad (replicateM, unless)
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
 import Data.Char (toLower)
 import Data.Foldable (for_)
 import Data.List (sort, sortOn)
 import Data.Ord (Down(Down))
-import System.Exit (exitFailure)
-import Test.HUnit
+import Test.Yocto
 
 import qualified Data.UCD as UCD
 
 main :: IO ()
 main = do
   let tests =
-        TestList
-          [ TestLabel "Properties" $
-            TestList
+        group_
+          [ group
+              "Properties"
               [ generalCategory
               , canonicalCombiningClass
               , nameAliases
@@ -56,20 +56,19 @@ main = do
                   "bidi_paired_bracket_type"
                   UCD.bidiPairedBracketType
               ]
-          , TestLabel "Names" $
-            TestList
+          , group
+              "Names"
               [ testFullNames @UCD.Block "Block"
               , testFullNames @UCD.Script "Script"
               ]
           ]
-  results <- runTestTT tests
-  when (errors results + failures results /= 0) exitFailure
+  defaultMain 100 tests
 
-generalCategory :: Test
+generalCategory :: Suite
 generalCategory =
   testEnum "General category" "general_category" UCD.generalCategory
 
-canonicalCombiningClass :: Test
+canonicalCombiningClass :: Suite
 canonicalCombiningClass =
   mkTest
     A.decimal
@@ -77,7 +76,7 @@ canonicalCombiningClass =
     "canonical_combining_class"
     UCD.canonicalCombiningClass
 
-nameAliases :: Test
+nameAliases :: Suite
 nameAliases =
   mkTest (sort <$> parser) "Name aliases" "name_aliases" UCD.nameAliases
   where
@@ -90,20 +89,20 @@ nameAliases =
         ((,) <$> enumP <* "," <*> enclosedP "\"" "\"" (A.takeWhile (/= '"'))) `A.sepBy`
       ","
 
-ages :: Test
+ages :: Suite
 ages = testMayEnum "Ages" "age" UCD.age
 
-hangulSyllableType :: Test
+hangulSyllableType :: Suite
 hangulSyllableType =
   testMayEnum
     "Hangul syllable type"
     "hangul_syllable_type"
     UCD.hangulSyllableType
 
-script :: Test
+script :: Suite
 script = testEnum "Script" "script" UCD.script
 
-scriptExts :: Test
+scriptExts :: Suite
 scriptExts =
   mkTest
     (sort <$> parser)
@@ -113,9 +112,9 @@ scriptExts =
   where
     parser = enclosedP "[" "]" $ enumP `A.sepBy` ","
 
-propList :: Test
+propList :: Suite
 propList =
-  TestList
+  group_
     [ testEnum "White space" "white_space" UCD.whiteSpace
     , testEnum "Bidi control" "bidi_control" UCD.bidiControl
     , testEnum "Join control" "join_control" UCD.joinControl
@@ -158,9 +157,9 @@ propList =
     , testEnum "Regional indicator" "regional_indicator" UCD.regionalIndicator
     ]
 
-derivedCoreProps :: Test
+derivedCoreProps :: Suite
 derivedCoreProps =
-  TestList
+  group_
     [ testEnum "Math" "math" UCD.math
     , testEnum "Alphabetic" "alphabetic" UCD.alphabetic
     , testEnum "Lowercase" "lowercase" UCD.lowercase
@@ -199,39 +198,32 @@ derivedCoreProps =
     , testEnum "Grapheme base" "grapheme_base" UCD.graphemeBase
     ]
 
-simpleCaseMappings :: Test
+simpleCaseMappings :: Suite
 simpleCaseMappings =
-  TestList
-    [ testCP
-        "Simple lowercase mapping"
-        "simple_lowercase_mapping"
-        UCD.simpleLowercaseMapping
-    , testCP
-        "Simple uppercase mapping"
-        "simple_uppercase_mapping"
-        UCD.simpleUppercaseMapping
-    , testCP
-        "Simple titlecase mapping"
-        "simple_titlecase_mapping"
-        UCD.simpleTitlecaseMapping
-    , testCP "Simple case folding" "simple_case_folding" UCD.simpleCaseFolding
+  group
+    "Simple case mappings"
+    [ testCP "Lowercase" "simple_lowercase_mapping" UCD.simpleLowercaseMapping
+    , testCP "Uppercase" "simple_uppercase_mapping" UCD.simpleUppercaseMapping
+    , testCP "Titlecase" "simple_titlecase_mapping" UCD.simpleTitlecaseMapping
+    , testCP "Case folding" "simple_case_folding" UCD.simpleCaseFolding
     ]
 
-caseMappings :: Test
+caseMappings :: Suite
 caseMappings =
-  TestList
+  group
+    "Full case mappings"
     [ testCM
-        "Uppercase mapping"
+        "Uppercase"
         "special_uppercase_mapping"
         UCD.simpleUppercaseMapping
         UCD.uppercaseMapping
     , testCM
-        "Lowercase mapping"
+        "Lowercase"
         "special_lowercase_mapping"
         UCD.simpleLowercaseMapping
         UCD.lowercaseMapping
     , testCM
-        "Titlecase mapping"
+        "Titlecase"
         "special_titlecase_mapping"
         UCD.simpleTitlecaseMapping
         UCD.titlecaseMapping
@@ -243,21 +235,20 @@ caseMappings =
     ]
   where
     testCM name file sf f =
-      TestLabel name $
-      TestCase $ do
+      test name $ do
         reference <-
           readFullTable
             (enclosedP "[" "]" $ A.decimal `A.sepBy` ",")
             ("generated/test_data/" ++ file ++ ".txt")
         for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
           if null ref
-            then assertEqual (show cp) (UCD.SingleCM $ sf cp) (f cp)
-            else assertEqual (show cp) (map toEnum ref) (cm2list $ f cp)
+            then expect (show cp) $ UCD.SingleCM (sf cp) =? f cp
+            else expect (show cp) $ map toEnum ref =? cm2list (f cp)
     cm2list (UCD.SingleCM c) = [c]
     cm2list (UCD.DoubleCM c1 c2) = [c1, c2]
     cm2list (UCD.TripleCM c1 c2 c3) = [c1, c2, c3]
 
-decompositionType :: Test
+decompositionType :: Suite
 decompositionType =
   mkTestConditional
     (\cp -> 0xac00 <= fromEnum cp && fromEnum cp <= 0xd7a3)
@@ -266,66 +257,65 @@ decompositionType =
     "decomposition_type"
     UCD.decompositionType
 
-normalFormQuickCheck :: Test
+normalFormQuickCheck :: Suite
 normalFormQuickCheck =
-  TestLabel "Quick checks for normal form" $
-  TestList
+  group
+    "Quick checks for normal form"
     [ testEnum "NFD" "nfd_quick_check" UCD.nfdQuickCheck
     , testMayEnum "NFC" "nfc_quick_check" UCD.nfcQuickCheck
     , testEnum "NFKD" "nfkd_quick_check" UCD.nfkdQuickCheck
     , testMayEnum "NFKC" "nfkc_quick_check" UCD.nfkcQuickCheck
     ]
 
-changesWhenNFKCCaseFolded :: Test
+changesWhenNFKCCaseFolded :: Suite
 changesWhenNFKCCaseFolded =
   testEnum
     "Changes when NFKC casefolded"
     "changes_when_nfkc_casefolded"
     UCD.changesWhenNFKCCasefolded
 
-joiningType :: Test
+joiningType :: Suite
 joiningType = testEnum "Joining type" "joining_type" UCD.joiningType
 
-joiningGroup :: Test
+joiningGroup :: Suite
 joiningGroup = testMayEnum "Joining group" "joining_group" UCD.joiningGroup
 
-verticalOrientation :: Test
+verticalOrientation :: Suite
 verticalOrientation =
   testEnum "Vertical orientation" "vertical_orientation" UCD.verticalOrientation
 
-lineBreak :: Test
+lineBreak :: Suite
 lineBreak = testEnum "Line break" "line_break" UCD.lineBreak
 
-graphemeCluster :: Test
+graphemeCluster :: Suite
 graphemeCluster =
   testEnum
     "Grapheme cluster break"
     "grapheme_cluster_break"
     UCD.graphemeClusterBreak
 
-sentenceBreak :: Test
+sentenceBreak :: Suite
 sentenceBreak = testEnum "Sentence break" "sentence_break" UCD.sentenceBreak
 
 testFullNames ::
      forall p. (Show p, UCD.EnumeratedProperty p)
   => String
-  -> Test
+  -> Suite
 testFullNames name =
-  TestLabel name $
-  TestCase $
+  test name $
   for_ [minBound @p .. maxBound @p] $ \pval ->
     let pstr =
           map toLower . filter (\c -> c /= '_' && c /= '-') . B.unpack $
           UCD.fullPropertyValueName pval
         sstr = map toLower $ show pval
-     in assertEqual (show pval) (take (length pstr) sstr) pstr
+     in expect (show pval) $ take (length pstr) sstr =? pstr
 
 testEnum ::
      (Enum e, Show e, Bounded e, Eq e)
   => String
   -> FilePath
   -> (UCD.CodePoint -> e)
-  -> Test
+  -> Suite
 testEnum = mkTest enumP
 
 testMayEnum ::
@@ -333,10 +323,10 @@ testMayEnum ::
   => String
   -> FilePath
   -> (UCD.CodePoint -> Maybe e)
-  -> Test
+  -> Suite
 testMayEnum = mkTest mayEnumP
 
-testCP :: String -> FilePath -> (UCD.CodePoint -> UCD.CodePoint) -> Test
+testCP :: String -> FilePath -> (UCD.CodePoint -> UCD.CodePoint) -> Suite
 testCP = mkTest $ toEnum <$> A.decimal
 
 mkTest ::
@@ -345,7 +335,7 @@ mkTest ::
   -> String
   -> FilePath
   -> (UCD.CodePoint -> a)
-  -> Test
+  -> Suite
 mkTest = mkTestConditional (const False)
 
 mkTestConditional ::
@@ -355,13 +345,12 @@ mkTestConditional ::
   -> String
   -> FilePath
   -> (UCD.CodePoint -> a)
-  -> Test
+  -> Suite
 mkTestConditional exclude parser name file f =
-  TestLabel name $
-  TestCase $ do
+  test name $ do
     reference <- readFullTable parser $ "generated/test_data/" ++ file ++ ".txt"
     for_ (zip [minCp .. maxCp] reference) $ \(cp, ref) ->
-      unless (exclude cp) $ assertEqual (show cp) ref $ f cp
+      unless (exclude cp) $ expect (show cp) $ ref =? f cp
 
 maxCp :: UCD.CodePoint
 maxCp = maxBound
@@ -369,12 +358,12 @@ maxCp = maxBound
 minCp :: UCD.CodePoint
 minCp = minBound
 
-readFullTable :: A.Parser a -> FilePath -> IO [a]
+readFullTable :: A.Parser a -> FilePath -> Test [a]
 readFullTable p file = do
-  txt <- B.readFile file
+  txt <- liftIO $ B.readFile file
   let parsed = A.parseOnly (replicateM 0x110000 (p <* A.char '\n')) txt
   case parsed of
-    Left err -> assertFailure err
+    Left err -> criticalFailure err
     Right vals -> pure vals
 
 enumP :: (Enum a, Show a, Bounded a) => A.Parser a
