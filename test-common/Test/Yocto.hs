@@ -158,14 +158,17 @@ defaultMain maxErrors suite = do
   when (critFailuresTotal + failuresTotal /= 0) exitFailure
 
 locOf :: CallStack -> Maybe SrcLoc
+{-# INLINE locOf #-}
 locOf = fmap snd . listToMaybe . getCallStack
 
 criticalFailure :: HasCallStack => String -> Test a
+{-# INLINE criticalFailure #-}
 criticalFailure msg =
   Test $ \report _ ->
     report Failure {fLevel = Required, fMsg = msg, fLoc = locOf callStack}
 
 failure :: HasCallStack => String -> Test ()
+{-# INLINE failure #-}
 failure msg =
   Test $ \report cont -> do
     report Failure {fLevel = Expected, fMsg = msg, fLoc = locOf callStack}
@@ -177,21 +180,26 @@ newtype Assertion =
     }
 
 require :: HasCallStack => String -> Assertion -> Test ()
+{-# INLINE require #-}
 require name assert =
   withFrozenCallStack $ runAssertion assert criticalFailure (showString name)
 
 expect :: HasCallStack => String -> Assertion -> Test ()
+{-# INLINE expect #-}
 expect name assert =
   withFrozenCallStack $ runAssertion assert failure (showString name)
 
 requireJust :: HasCallStack => String -> Maybe a -> Test a
+{-# INLINE requireJust #-}
 requireJust _ (Just a) = pure a
 requireJust msg Nothing = withFrozenCallStack $ criticalFailure msg
 
 predicate :: Bool -> Assertion
+{-# INLINE predicate #-}
 predicate p = Assertion $ \report msg -> unless p $ report $ msg ""
 
 equal :: (Eq a, Show a) => a -> a -> Assertion
+{-# INLINE equal #-}
 equal x y =
   Assertion $ \report msg ->
     if x /= y
@@ -202,9 +210,11 @@ equal x y =
       else pure ()
 
 acquire :: IO a -> (a -> IO ()) -> Test a
+{-# INLINE acquire #-}
 acquire acq rel = Test $ \_ -> bracket acq rel
 
 (=?) :: (Eq a, Show a) => a -> a -> Assertion
+{-# INLINE (=?) #-}
 (=?) x y =
   Assertion $ \report msg ->
     when (x /= y) $
@@ -214,18 +224,23 @@ acquire acq rel = Test $ \_ -> bracket acq rel
     showsPrec 10 x $ showString ", got " $ showsPrec 10 y ""
 
 (/=?) :: (Show a, Eq a) => a -> a -> Assertion
+{-# INLINE (/=?) #-}
 (/=?) = assertRelation "not equal to" (/=)
 
 (<?) :: (Show a, Ord a) => a -> a -> Assertion
+{-# INLINE (<?) #-}
 (<?) = assertRelation "greater than" (<)
 
 (>?) :: (Show a, Ord a) => a -> a -> Assertion
+{-# INLINE (>?) #-}
 (>?) = assertRelation "less than" (>)
 
 (<=?) :: (Show a, Ord a) => a -> a -> Assertion
+{-# INLINE (<=?) #-}
 (<=?) = assertRelation "no less than" (<=)
 
 (>=?) :: (Show a, Ord a) => a -> a -> Assertion
+{-# INLINE (>=?) #-}
 (>=?) = assertRelation "no greater than" (>=)
 
 assertRelation ::

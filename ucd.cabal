@@ -252,6 +252,7 @@ test-suite ucd-test
 test-suite ucd-test-icu
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
+  other-modules:       Test.Yocto
   ghc-options:         -Wall
                        -Wcompat
   if flag(Werror)
@@ -263,6 +264,7 @@ test-suite ucd-test-icu
                      , text
                      , bytestring
   hs-source-dirs:      test-icu
+                     , test-common
   default-language:    Haskell2010
 
 test-suite ucd-test-xml
