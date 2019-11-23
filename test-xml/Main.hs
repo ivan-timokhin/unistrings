@@ -358,6 +358,11 @@ testCP children getAttr cp =
         , test "Unicode 1 Name" $ do
             u1name <- requireAttr "na1"
             expect "Name mismatch" $ TE.encodeUtf8 u1name =? UCD.unicode1Name cp
+        , testMayEnumerated
+            "Indic positional category"
+            "InPC"
+            "NA"
+            UCD.indicPositionalCategory
         ]
     ]
   where

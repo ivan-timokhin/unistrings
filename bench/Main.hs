@@ -417,6 +417,13 @@ main =
                   udhr
                   (maybe 0 fromEnum . UCD.equivalentUnifiedIdeograph)
               ]
+          , C.bgroup
+              "Indic positional category"
+              [ C.bench "UCD" $
+                mkBenchmark
+                  udhr
+                  (maybe 0 fromEnum . UCD.indicPositionalCategory)
+              ]
           , C.bench "No-op" $ mkEnumBenchmark udhr id
           ]
     ]

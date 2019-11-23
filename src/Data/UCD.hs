@@ -115,6 +115,8 @@ module Data.UCD
   , BidiPairedBracketType(..)
   , equivalentUnifiedIdeograph
   , unicode1Name
+  , indicPositionalCategory
+  , IndicPositionalCategory(..)
   , EnumeratedProperty(..)
   ) where
 
@@ -173,6 +175,7 @@ import qualified Data.UCD.Internal.HangulSyllableType as HST
 import qualified Data.UCD.Internal.IdContinue as IC
 import qualified Data.UCD.Internal.IdStart as IS
 import qualified Data.UCD.Internal.Ideographic as Ide
+import qualified Data.UCD.Internal.IndicPositionalCategory as IPC
 import qualified Data.UCD.Internal.JamoShortNameLen as JSNLen
 import qualified Data.UCD.Internal.JamoShortNamePtr as JSNPtr
 import qualified Data.UCD.Internal.JoiningGroup as JG
@@ -228,6 +231,7 @@ import Data.UCD.Internal.Types
   , EnumeratedProperty(..)
   , GraphemeClusterBreak(..)
   , HangulSyllableType(..)
+  , IndicPositionalCategory(..)
   , JoiningGroup(..)
   , JoiningType(..)
   , LineBreak(..)
@@ -828,6 +832,9 @@ equivalentUnifiedIdeograph =
 unicode1Name :: IsCodePoint cp => cp -> ByteString
 unicode1Name =
   withCP $ \cp -> mkByteString (U1NL.retrieve cp) (U1NP.retrieve cp)
+
+indicPositionalCategory :: IsCodePoint cp => cp -> Maybe IndicPositionalCategory
+indicPositionalCategory = withCP IPC.retrieve
 
 withCP :: IsCodePoint cp => (Int -> a) -> cp -> a
 withCP f = f . fromEnum . toCodePoint

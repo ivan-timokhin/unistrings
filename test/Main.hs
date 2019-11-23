@@ -56,6 +56,10 @@ main = do
                   "Bidi Paired Bracket Type"
                   "bidi_paired_bracket_type"
                   UCD.bidiPairedBracketType
+              , testMayEnum
+                  "Indic positional category"
+                  "indic_positional_category"
+                  UCD.indicPositionalCategory
               ]
           , group
               "Names"

@@ -20,6 +20,7 @@ module Data.UCD.Internal.Types
   , WordBreak(..)
   , EastAsianWidth(..)
   , BidiPairedBracketType(..)
+  , IndicPositionalCategory(..)
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -2364,3 +2365,39 @@ instance EnumeratedProperty BidiPairedBracketType where
     case bpbt of
       Open -> "Open"
       Close -> "Close"
+
+data IndicPositionalCategory
+  = BottomIPC
+  | BottomAndLeftIPC
+  | BottomAndRightIPC
+  | LeftIPC
+  | LeftAndRightIPC
+  | OverstruckIPC
+  | RightIPC
+  | TopIPC
+  | TopAndBottomIPC
+  | TopAndBottomAndRightIPC
+  | TopAndLeftIPC
+  | TopAndLeftAndRightIPC
+  | TopAndRightIPC
+  | VisualOrderLeftIPC
+  deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
+
+instance EnumeratedProperty IndicPositionalCategory where
+  fullPropertyValueName ipc =
+    case ipc of
+      BottomIPC -> "Bottom"
+      BottomAndLeftIPC -> "Bottom_And_Left"
+      BottomAndRightIPC -> "Bottom_And_Right"
+      LeftIPC -> "Left"
+      LeftAndRightIPC -> "Left_And_Right"
+      OverstruckIPC -> "Overstruck"
+      RightIPC -> "Right"
+      TopIPC -> "Top"
+      TopAndBottomIPC -> "Top_And_Bottom"
+      TopAndBottomAndRightIPC -> "Top_And_Bottom_And_Right"
+      TopAndLeftIPC -> "Top_And_Left"
+      TopAndLeftAndRightIPC -> "Top_And_Left_And_Right"
+      TopAndRightIPC -> "Top_And_Right"
+      VisualOrderLeftIPC -> "Visual_Order_Left"
+  abbreviatedPropertyValueName = fullPropertyValueName

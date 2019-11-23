@@ -45,6 +45,7 @@ import Data.UCD.Internal.Types
   , EastAsianWidth
   , GraphemeClusterBreak
   , HangulSyllableType
+  , IndicPositionalCategory
   , JoiningGroup
   , JoiningType
   , LineBreak
@@ -188,6 +189,9 @@ deriving via TableMayEnum JoiningGroup instance
 
 deriving via TableMayEnum BidiPairedBracketType instance
          TableValue (Maybe BidiPairedBracketType)
+
+deriving via TableMayEnum IndicPositionalCategory instance
+         TableValue (Maybe IndicPositionalCategory)
 
 newtype TableIntegral i =
   TableIntegral

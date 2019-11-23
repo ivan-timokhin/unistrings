@@ -61,6 +61,7 @@ import qualified UCD.EastAsianWidth
 import qualified UCD.EquivalentUnifiedIdeograph
 import qualified UCD.GraphemeBreakProperty
 import qualified UCD.HangulSyllableType
+import qualified UCD.IndicPositionalCategory
 import qualified UCD.Jamo
 import qualified UCD.LineBreak
 import qualified UCD.NameAliases
@@ -444,6 +445,9 @@ main = do
     , do eui <- UCD.EquivalentUnifiedIdeograph.fetch
          generateSources fullPartitionings "equivalent_unified_ideograph" $
            UCD.Common.tableToVector Nothing $ fmap Just eui
+    , do ipc <- UCD.IndicPositionalCategory.fetch
+         processTable fullPartitionings "indic_positional_category" $
+           UCD.Common.tableToVector Nothing $ fmap Just ipc
     ]
 
 printLong :: Show a => [a] -> IO ()

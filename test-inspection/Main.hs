@@ -105,5 +105,10 @@ equivalentUnifiedIdeograph c = isJust (UCD.equivalentUnifiedIdeograph c)
 
 inspect $ 'equivalentUnifiedIdeograph `hasNoType` ''Maybe
 
+indicPositionalCategory :: UCD.CodePoint -> Bool
+indicPositionalCategory c = isJust (UCD.indicPositionalCategory c)
+
+inspect $ 'indicPositionalCategory `hasNoType` ''Maybe
+
 main :: IO ()
 main = pure ()
