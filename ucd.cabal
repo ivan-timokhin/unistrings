@@ -241,7 +241,6 @@ test-suite ucd-test
   if flag(Werror)
     ghc-options:       -Werror
   build-depends:       base
-                     , HUnit
                      , ucd
                      , attoparsec
                      , bytestring
@@ -258,7 +257,6 @@ test-suite ucd-test-icu
   if flag(Werror)
     ghc-options:       -Werror
   build-depends:       base
-                     , HUnit
                      , ucd
                      , text-icu
                      , text
@@ -276,7 +274,6 @@ test-suite ucd-test-xml
   if flag(Werror)
     ghc-options:       -Werror
   build-depends:       base
-                     , HUnit
                      , ucd
                      , bytestring
                      , text
