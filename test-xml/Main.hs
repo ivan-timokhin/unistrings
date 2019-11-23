@@ -9,10 +9,11 @@ import Data.Bits ((.|.))
 import qualified Data.ByteString as B
 import Data.Char (toUpper)
 import Data.Foldable (for_)
+import Data.Functor ((<&>))
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
 import Data.Maybe (fromJust, mapMaybe)
-import Data.Ratio ((%), denominator, numerator)
+import Data.Ratio ((%))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
@@ -220,49 +221,42 @@ testCP children getAttr cp =
                 , ("Titlecase", "tc", UCD.titlecaseMapping)
                 , ("Folding", "cf", UCD.caseFolding)
                 ]
-        , test "Numeric properties" $
-          case getAttr "nt" of
-            Nothing -> criticalFailure "Can't locate numeric type"
-            Just ntStr ->
-              case getAttr "nv" of
-                Nothing -> criticalFailure "Can't locate numeric value"
-                Just nvStr ->
-                  let ucdNum = UCD.numeric cp
-                   in case ntStr of
-                        "None" -> expect "Not numeric" $ Nothing =? ucdNum
-                        "De" ->
-                          case ucdNum of
-                            Just (UCD.Decimal n) ->
-                              expect "Numeric decimal" $
-                              read (T.unpack nvStr) =? toInteger n
-                            _ ->
-                              failure $ "Expected decimal, got " ++ show ucdNum
-                        "Di" ->
-                          case ucdNum of
-                            Just (UCD.Digit n) ->
-                              expect "Numeric digit" $
-                              read (T.unpack nvStr) =? toInteger n
-                            _ -> failure $ "Expected digit, got " ++ show ucdNum
-                        "Nu" ->
-                          case ucdNum of
-                            Just (UCD.Numeric r) ->
-                              let (numStr, mdenomStr) =
-                                    break (== '/') $ T.unpack nvStr
-                                  numer = read numStr
-                                  denom =
-                                    case mdenomStr of
-                                      "" -> 1
-                                      (_:denomStr) -> read denomStr
-                                  r' =
-                                    toInteger (numerator r) %
-                                    toInteger (denominator r)
-                               in expect "Numeric numeric" $
-                                  (numer % denom) =? r'
-                            _ ->
-                              failure $ "Expected numeric, got " ++ show ucdNum
-                        _ ->
-                          criticalFailure $
-                          "Unrecognised numeric type: " ++ show ntStr
+        , group
+            "Numeric properties"
+            [ test "Type" $ do
+                xmlTy <- requireAttr "nt"
+                let ucdTy =
+                      case UCD.numeric cp of
+                        Nothing -> "None"
+                        Just n ->
+                          case n of
+                            UCD.Decimal _ -> "De"
+                            UCD.Digit _ -> "Di"
+                            UCD.Numeric _ -> "Nu"
+                expect "Attribute mismatch" $ xmlTy =? ucdTy
+            , test "Value" $ do
+                xmlVal <-
+                  requireAttr "nv" >>= \case
+                    "NaN" -> pure Nothing
+                    str -> do
+                      let (numStr, denomStr) = break (== '/') $ T.unpack str
+                      num <-
+                        requireJust ("Numerator " ++ show numStr) $
+                        readMaybe numStr
+                      denom <-
+                        case denomStr of
+                          "" -> pure 1
+                          (_:dstr) ->
+                            requireJust ("Denominator " ++ show dstr) $
+                            readMaybe dstr
+                      pure $ Just $ num % denom
+                let ucdVal =
+                      UCD.numeric cp <&> \case
+                        UCD.Decimal v -> fromIntegral v
+                        UCD.Digit v -> fromIntegral v
+                        UCD.Numeric v -> v
+                expect "Attribute mismatch" $ xmlVal =? ucdVal
+            ]
         , testMayEnumerated
             "Decomposition type"
             "dt"
