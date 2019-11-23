@@ -27,7 +27,7 @@ module Test.Yocto
   , with
   , with_
   , defaultMain
-  , testSuite
+  , withT_
   ) where
 
 import Control.Exception (bracket)
@@ -114,16 +114,16 @@ with :: IO a -> (a -> IO b) -> (a -> Suite) -> Suite
 with acq rel suite =
   Suite $ \report -> bracket acq rel $ \a -> runSuite (suite a) report
 
-with_ :: IO a -> (a -> Suite) -> Suite
+with_ :: IO Suite -> Suite
 {-# INLINE with_ #-}
-with_ acq suite =
+with_ acq =
   Suite $ \report -> do
-    a <- acq
-    runSuite (suite a) report
+    suite <- acq
+    runSuite suite report
 
-testSuite :: Test Suite -> Suite
-{-# INLINE testSuite #-}
-testSuite ts =
+withT_ :: Test Suite -> Suite
+{-# INLINE withT_ #-}
+withT_ ts =
   Suite $ \report -> runTest ts (report []) $ \suite -> runSuite suite report
 
 defaultMain :: Suite -> IO ()

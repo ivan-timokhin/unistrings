@@ -77,7 +77,7 @@ testGroup n elGroup = group ("Group #" ++ show n) [validRecordTypes, cpTests]
         let testCP' =
               testCP (elementChildren el) $ \nm ->
                 M.lookup nm (elementAttributes el) <|> M.lookup nm attrs
-         in testSuite $
+         in withT_ $
             case M.lookup "first-cp" (elementAttributes el) of
               Just startStr -> do
                 start <- readHex startStr
