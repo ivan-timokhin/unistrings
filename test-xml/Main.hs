@@ -17,6 +17,7 @@ import Data.Ratio ((%), denominator, numerator)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Read as TR
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import Numeric (showHex)
 import Test.Yocto
 import Text.XML
@@ -28,7 +29,6 @@ import Text.XML
   , documentRoot
   , sinkDoc
   )
-import GHC.Stack (HasCallStack, withFrozenCallStack)
 
 import qualified Data.UCD as UCD
 
@@ -46,8 +46,7 @@ main = do
         find ((== "blocks") . nameLocalName . elementName) $
         elementChildren $ documentRoot ucd
   let tests =
-        group
-          ""
+        group_
           [ group "groups" $ groupsOnly groups : zipWith testGroup [0 ..] groups
           , group "blocks" $ map testBlock blocks
           ]
@@ -86,7 +85,7 @@ testGroup n elGroup = group ("Group #" ++ show n) [validRecordTypes, cpTests]
                   requireJust
                     "Missing \"last-cp\" attribute"
                     (M.lookup "last-cp" (elementAttributes el))
-                pure $ group "" $ map testCP' [toEnum start .. toEnum end]
+                pure $ group_ $ map testCP' [toEnum start .. toEnum end]
               Nothing ->
                 case M.lookup "cp" (elementAttributes el) of
                   Just cpStr -> do

@@ -21,6 +21,9 @@ module Test.Yocto
   , Suite
   , test
   , group
+  , test_
+  , group_
+  , label
   , with
   , with_
   , defaultMain
@@ -88,13 +91,23 @@ newtype Suite =
 
 test :: String -> Test a -> Suite
 {-# INLINE test #-}
-test name t = Suite $ \report -> runTest t (report [name]) (const $ pure ())
+test name = label name . test_
+
+test_ :: Test a -> Suite
+{-# INLINE test_ #-}
+test_ t = Suite $ \report -> runTest t (report []) (const $ pure ())
 
 group :: Foldable f => String -> f Suite -> Suite
 {-# INLINE group #-}
-group name suites =
-  Suite $ \report ->
-    for_ suites $ \suite -> runSuite suite $ \context -> report (name : context)
+group name = label name . group_
+
+group_ :: Foldable f => f Suite -> Suite
+{-# INLINE group_ #-}
+group_ suites = Suite $ \report -> for_ suites $ \suite -> runSuite suite report
+
+label :: String -> Suite -> Suite
+{-# INLINE label #-}
+label name suite = Suite $ \report -> runSuite suite $ report . (name :)
 
 with :: IO a -> (a -> IO b) -> (a -> Suite) -> Suite
 {-# INLINE with #-}
