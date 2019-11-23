@@ -764,6 +764,7 @@ nfkcCaseFold =
 data NFKCCaseFold
   = ShortCF {-# UNPACK #-}!CodePoint
   | LongCF [CodePoint]
+  deriving (Show, Eq)
 
 changesWhenNFKCCasefolded :: IsCodePoint cp => cp -> Bool
 changesWhenNFKCCasefolded = withCP CWNC.retrieve
