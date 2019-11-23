@@ -5,7 +5,6 @@ module Main where
 
 import Codec.Archive.Zip (mkEntrySelector, sourceEntry, withArchive)
 import Control.Applicative ((<|>), liftA2)
-import Control.Monad.IO.Class (liftIO)
 import Data.Bits ((.|.))
 import qualified Data.ByteString as B
 import Data.Char (toUpper)
@@ -20,6 +19,7 @@ import qualified Data.Text.Read as TR
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import Numeric (showHex)
 import Test.Yocto
+import Text.Read (readMaybe)
 import Text.XML
   ( Document
   , Element(..)
@@ -358,7 +358,10 @@ testCP children getAttr cp =
         ]
     ]
   where
-    canonicalCombiningClass = liftIO . readIO . T.unpack =<< requireAttr "ccc"
+    canonicalCombiningClass = do
+      cccText <- requireAttr "ccc"
+      requireJust ("Can't parse canonical combining class " ++ show cccText) $
+        readMaybe $ T.unpack cccText
     name = TE.encodeUtf8 . T.replace "#" hexStr <$> requireAttr "na"
     hexStr =
       T.pack $
