@@ -118,7 +118,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [ ] Emoji_Modifier_Base
 - [ ] Emoji_Component
 - [ ] Extended_Pictographic
-* Miscellaneous code tasks [6/8]
+* Miscellaneous code tasks [7/8]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
 ** DONE Add missing instances to enums
@@ -151,7 +151,11 @@ CLOSED: [2019-11-15 Пт 14:56]
 This should omit redundant (if we set our tables up correctly) bounds
 checks and accelerate the whole thing somewhat.  Somewhat similar in
 spirit to using ~:%~ instead of ~%~ in numeric value property.
-** TODO Consider switching to =megaparsec=
+** DONE Consider switching to =megaparsec=
+CLOSED: [2019-11-24 Вс 22:55]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2019-11-24 Вс 22:55]
+:END:
 Or any other parser combinator library with good error messages.  One
 consistent feature of parsing UCD files so far was uninformative
 ~endOfInput~ error message on parse failure; this is somewhat

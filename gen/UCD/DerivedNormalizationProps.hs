@@ -6,18 +6,22 @@ module UCD.DerivedNormalizationProps
   ) where
 
 import Control.Applicative ((<|>), many)
-import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString.Char8 (ByteString)
 import Data.Functor (void)
 import qualified Data.Vector as V
 import Data.Word (Word32)
 
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Byte as MB
+import qualified Text.Megaparsec.Byte.Lexer as MBL
+
 import UCD.Common
-  ( Table
+  ( Parser_
+  , Table(Table)
   , comments
   , fetchGeneral
   , range
-  , tableParser
+  , semicolon
   , tableToVector
   )
 
@@ -36,11 +40,11 @@ data Contents =
     }
   deriving (Show)
 
-parser :: A.Parser Contents
+parser :: Parser_ Contents
 parser = do
   comments
   skipTable "FC_NFKC"
-  fce <- tableParser $ True <$ A.string "Full_Composition_Exclusion"
+  fce <- tableParser $ True <$ MB.string "Full_Composition_Exclusion"
   nfdQC <- decomposedQC "NFD_QC"
   nfcQC <- composedQC "NFC_QC"
   nfkdQC <- decomposedQC "NFKD_QC"
@@ -51,9 +55,10 @@ parser = do
   skipTable "Expands_On_NFKC"
   nfkcCF <-
     tableParser $ do
-      _ <- A.string "NFKC_CF;"
-      many (A.skipSpace *> A.hexadecimal)
-  cnfkcCF <- tableParser $ True <$ A.string "Changes_When_NFKC_Casefolded"
+      _ <- MB.string "NFKC_CF;"
+      MB.space
+      many (MBL.hexadecimal <* MB.space1)
+  cnfkcCF <- tableParser $ True <$ MB.string "Changes_When_NFKC_Casefolded"
   pure $
     Contents
       { fullCompositionExclusion = fce
@@ -65,26 +70,40 @@ parser = do
       , changesWhenNFKCCaseFolded = cnfkcCF
       }
 
-skipTable :: ByteString -> A.Parser ()
+skipTable :: ByteString -> Parser_ ()
 skipTable name =
   void $
-  many $ do
-    _ <- range
-    _ <- A.string name
-    A.skipWhile (/= '#')
+  many $
+  M.try $ do
     comments
+    _ <- range
+    _ <- MB.string name
+    M.takeWhileP Nothing (/= 0x23) -- '#'
 
-decomposedQC :: ByteString -> A.Parser (Table () () Bool)
+decomposedQC :: ByteString -> Parser_ (Table () () Bool)
 decomposedQC name =
   tableParser $ do
-    _ <- A.string name
-    _ <- A.string "; N"
+    _ <- MB.string name
+    _ <- MB.string "; N"
     pure False
 
-composedQC :: ByteString -> A.Parser (Table () () (Maybe Bool))
+composedQC :: ByteString -> Parser_ (Table () () (Maybe Bool))
 composedQC name =
   tableParser $ do
-    _ <- A.string name
-    _ <- A.char ';'
-    A.skipSpace
-    Just False <$ A.string "N" <|> Nothing <$ A.string "M"
+    _ <- MB.string name
+    semicolon
+    MB.space
+    Just False <$ MB.string "N" <|> Nothing <$ MB.string "M"
+
+tableParser :: Parser_ a -> Parser_ (Table () () a)
+tableParser p = do
+  comments
+  Table <$> many record
+  where
+    record =
+      M.try $ do
+        rng <- range
+        v <- p
+        MB.space
+        comments
+        pure $ v <$ rng

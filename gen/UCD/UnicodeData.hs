@@ -15,13 +15,11 @@ module UCD.UnicodeData
 
 import Control.Applicative ((<|>), many, optional)
 import Control.Monad (guard)
-import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Char as C
 import Data.Char (toLower)
 import Data.Foldable (foldl')
-import Data.Functor (void)
 import Data.Int (Int32)
 import qualified Data.IntMap.Strict as IM
 import Data.IntMap.Strict (IntMap)
@@ -29,14 +27,20 @@ import Data.Maybe (mapMaybe)
 import Data.Ratio ((%))
 import qualified Data.Vector as V
 import Data.Word (Word32, Word8)
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Byte as MB
+import qualified Text.Megaparsec.Byte.Lexer as MBL
 
 import Data.UCD.Internal.Types (BidiClass, DecompositionType(Canonical))
 import Trie (deduplicate)
 import UCD.Common
-  ( Range(Range, Single)
+  ( Parser_
+  , Range(Range, Single)
   , Table(Table, getTable)
+  , char8
   , enumeratedAbbrP
   , fetchGeneral
+  , semicolon
   , tableP
   , tableToVector
   )
@@ -177,18 +181,18 @@ data NumericProperties
   | Numeric Rational
   deriving (Eq, Show)
 
-parser :: A.Parser [Record]
-parser = many (pRecord <* A.char '\n')
+parser :: Parser_ [Record]
+parser = many (pRecord <* MB.eol)
 
-pRecord :: A.Parser Record
+pRecord :: Parser_ Record
 pRecord = do
-  code <- A.hexadecimal A.<?> "code point"
+  code <- MBL.hexadecimal M.<?> "code point"
   sep
   ty <- pType
   sep
   gc <- pCategory
   sep
-  ccc <- A.decimal A.<?> "canonical combining class"
+  ccc <- MBL.decimal M.<?> "canonical combining class"
   sep
   bidi <- pBidiClass
   sep
@@ -197,18 +201,19 @@ pRecord = do
   nprops <- pNumericProperties
   sep
   mirrored <-
-    True <$ A.char 'Y' <|> False <$ A.char 'N' A.<?> "bidi mirrored property"
+    True <$ char8 'Y' <|> False <$ char8 'N' M.<?> "bidi mirrored property"
   sep
-  u1name <- A.takeWhile (/= ';')
+  u1name <-
+    M.takeWhileP (Just "Unicode 1 Name") (/= fromIntegral (fromEnum ';'))
   sep
   -- Here should have been ISO_Comment, but they've purged it from the
   -- database
   sep
-  uppercase <- optional A.hexadecimal A.<?> "simple uppercase mapping"
+  uppercase <- optional MBL.hexadecimal M.<?> "simple uppercase mapping"
   sep
-  lowercase <- optional A.hexadecimal A.<?> "simple lowercase mapping"
+  lowercase <- optional MBL.hexadecimal M.<?> "simple lowercase mapping"
   sep
-  titlecase <- optional A.hexadecimal A.<?> "simple titlecase mapping"
+  titlecase <- optional MBL.hexadecimal M.<?> "simple titlecase mapping"
   pure $
     Record
       { recordType = ty
@@ -228,13 +233,16 @@ pRecord = do
             }
       }
   where
-    sep = void $ A.char ';'
+    sep = semicolon
 
-pType :: A.Parser RecordType
-pType = (special <|> regular) A.<?> "unicode character name"
+pType :: Parser_ RecordType
+pType = (special <|> regular) M.<?> "unicode character name"
   where
     special = do
-      field <- A.char '<' *> A.takeWhile1 (/= '>') <* A.char '>'
+      field <-
+        char8 '<' *>
+        M.takeWhile1P (Just "Range name") (/= fromIntegral (fromEnum '>')) <*
+        char8 '>'
       pure $
         case B.stripSuffix ", First" field of
           Just range -> RangeStart range
@@ -242,51 +250,54 @@ pType = (special <|> regular) A.<?> "unicode character name"
             case B.stripSuffix ", Last" field of
               Just range -> RangeEnd range
               Nothing -> Regular $ Unnamed field
-    regular = Regular . Name <$> A.takeWhile1 (/= ';')
+    regular =
+      Regular . Name <$>
+      M.takeWhile1P (Just "Name") (/= fromIntegral (fromEnum ';'))
 
-pCategory :: A.Parser C.GeneralCategory
-pCategory = enumeratedAbbrP A.<?> "general category"
+pCategory :: Parser_ C.GeneralCategory
+pCategory = enumeratedAbbrP M.<?> "general category"
 
-pBidiClass :: A.Parser BidiClass
-pBidiClass = enumeratedAbbrP A.<?> "bidirectional class"
+pBidiClass :: Parser_ BidiClass
+pBidiClass = enumeratedAbbrP M.<?> "bidirectional class"
 
-pDecompositionMapping :: A.Parser (DecompositionType, [Word32])
+pDecompositionMapping :: Parser_ (DecompositionType, [Word32])
 pDecompositionMapping =
   (do tag <-
-        (A.char '<' *>
+        (char8 '<' *>
          tableP
            (map
               (\val -> (B.pack $ lowerFst $ show val, val))
               [minBound .. maxBound]) <*
-         A.string "> ") <|>
+         MB.string "> ") <|>
         pure Canonical
-      decomposition <- A.hexadecimal `A.sepBy1` A.char ' '
-      pure (tag, decomposition)) A.<?>
+      decomposition <- MBL.hexadecimal `M.sepBy1` char8 ' '
+      pure (tag, decomposition)) M.<?>
   "decomposition mapping"
   where
     lowerFst (c:cs) = toLower c : cs
     lowerFst [] = []
 
-pNumericProperties :: A.Parser (Maybe NumericProperties)
+pNumericProperties :: Parser_ (Maybe NumericProperties)
 pNumericProperties =
   decimal <|>
-  A.char ';' *>
-  (digit <|> A.char ';' *> (numeric <|> pure Nothing)) A.<?>
+  semicolon *>
+  (digit <|> semicolon *> (numeric <|> pure Nothing)) M.<?>
   "numeric type and value"
   where
     decimal = do
       (val, rep) <- field
-      _ <- A.char ';' *> rep *> A.char ';' *> rep
+      _ <- semicolon *> rep *> semicolon *> rep
       pure $ Just $ Decimal val
     digit = do
       (val, rep) <- field
-      _ <- A.char ';' *> rep
+      _ <- semicolon *> rep
       pure $ Just $ Digit val
     numeric =
-      fmap (Just . Numeric) $
-      ((%) <$> A.signed A.decimal <* A.char '/' <*> A.decimal) <|>
-      A.signed ((fromIntegral :: Integer -> Rational) <$> A.decimal)
+      fmap (Just . Numeric) $ do
+        numerator <- MBL.signed (pure ()) MBL.decimal
+        denominator <- (char8 '/' *> MBL.decimal) <|> pure 1
+        pure $ numerator % denominator
     field = do
-      val <- A.decimal
+      val <- MBL.decimal
       guard $ 0 <= val && val <= 9
-      pure (val, A.string $ B.pack $ show val)
+      pure (val, MB.string $ B.pack $ show val)

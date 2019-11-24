@@ -5,16 +5,18 @@ module UCD.Blocks where
 import Control.Applicative (many)
 import Control.Arrow ((&&&))
 import Control.Monad (guard)
-import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.Bits ((.&.), shiftR)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (toLower)
 import Data.List (find)
 import qualified Data.Vector as V
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Byte as MB
+import qualified Text.Megaparsec.Byte.Lexer as MBL
 
 import Data.UCD.Internal.Types (Block, fullPropertyValueName)
-import UCD.Common (comments, unicodeTableSize, fetchGeneral)
+import UCD.Common (Parser_, comments, fetchGeneral, semicolon, unicodeTableSize)
 
 fetch :: IO (V.Vector (Maybe Block))
 fetch =
@@ -25,23 +27,23 @@ fetch =
       blocks >>= \(start, end, block) ->
         [(i, Just block) | i <- [start `shiftR` 4 .. end `shiftR` 4]]
 
-parser :: A.Parser [(Int, Int, Block)]
+parser :: Parser_ [(Int, Int, Block)]
 parser = do
   comments
-  records <- many $ record <* A.char '\n'
+  records <- many $ record <* MB.eol
   comments
   pure records
 
-record :: A.Parser (Int, Int, Block)
+record :: Parser_ (Int, Int, Block)
 record = do
-  start <- A.hexadecimal
+  start <- MBL.hexadecimal
   guard $ start .&. 0xf == 0
-  _ <- A.string ".."
-  end <- A.hexadecimal
+  _ <- MB.string ".."
+  end <- MBL.hexadecimal
   guard $ end .&. 0xf == 0xf
-  _ <- A.char ';'
-  A.skipSpace
-  blockName <- A.takeWhile (/= '\n')
+  semicolon
+  MB.space
+  blockName <- M.takeWhile1P (Just "Block name") (/= 0xA)
   let normalised = normalise blockName
   case find ((== normalised) . fst) candidates of
     Just (_, block) -> pure (start, end, block)

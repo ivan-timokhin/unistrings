@@ -1,5 +1,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module UCD.Common where
@@ -7,9 +9,9 @@ module UCD.Common where
 import Control.Applicative ((<|>), many, optional)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict (StateT, execStateT, modify)
-import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import Data.Foldable (asum)
 import Data.Functor (void)
 import Data.List (sortOn)
 import Data.Map.Strict (Map)
@@ -17,7 +19,12 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Ord (Down(Down))
 import qualified Data.Vector as V
+import Data.Void (Void)
 import Data.Word (Word32)
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Byte as MB
+import qualified Text.Megaparsec.Byte.Lexer as MBL
+import qualified Text.Megaparsec.Error as ME
 
 import Data.UCD.Internal.Types
   ( EnumeratedProperty(abbreviatedPropertyValueName,
@@ -55,44 +62,53 @@ adjustWith vec table = vec V.// assignments
 adjustWithM :: V.Vector a -> Table annS annR (Maybe a) -> V.Vector a
 adjustWithM vec table = vec `adjustWith` dropNothing table
 
-comment :: A.Parser ()
-comment = void (A.char '#' *> A.takeWhile (/= '\n')) A.<?> "comment"
+type Parser e = M.Parsec e ByteString
 
-comments :: A.Parser ()
-comments = void $ many $ optional comment <* A.char '\n'
+type Parser_ = Parser Void
 
-tableP :: [(ByteString, a)] -> A.Parser a
+char8 :: Ord e => Char -> Parser e ()
+char8 = void . M.single . fromIntegral . fromEnum
+
+semicolon :: Ord e => Parser e ()
+semicolon = char8 ';'
+
+comment :: Ord e => Parser e ()
+comment = MBL.skipLineComment "#"
+
+comments :: Ord e => Parser e ()
+comments = void $ many $ optional comment <* MB.eol
+
+tableP :: Ord e => [(ByteString, a)] -> Parser e a
 tableP =
-  A.choice .
-  map (\(str, a) -> a <$ A.string str) . sortOn (Down . B.length . fst)
+  asum . map (\(str, a) -> a <$ MB.string str) . sortOn (Down . B.length . fst)
 
-range :: A.Parser (Range () () ())
+range :: Ord e => Parser e (Range () () ())
 range = do
-  start <- A.hexadecimal
+  start <- MBL.hexadecimal
   rng <- fullRange start <|> pure (Single start () ())
-  A.skipSpace
-  _ <- A.char ';'
-  A.skipSpace
+  MB.space
+  semicolon
+  MB.space
   pure rng
   where
     fullRange start = do
-      _ <- A.string ".."
-      end <- A.hexadecimal
+      _ <- MB.string ".."
+      end <- MBL.hexadecimal
       pure $ Range start end () ()
 
-enumeratedFullP :: EnumeratedProperty p => A.Parser p
+enumeratedFullP :: (EnumeratedProperty p, Ord e) => Parser e p
 enumeratedFullP = enumeratedP fullPropertyValueName
 
-enumeratedAbbrP :: EnumeratedProperty p => A.Parser p
+enumeratedAbbrP :: (EnumeratedProperty p, Ord e) => Parser e p
 enumeratedAbbrP = enumeratedP abbreviatedPropertyValueName
 
-enumeratedP :: (Enum a, Bounded a) => (a -> ByteString) -> A.Parser a
+enumeratedP :: (Enum a, Bounded a, Ord e) => (a -> ByteString) -> Parser e a
 enumeratedP f = tableP $ flip map [minBound .. maxBound] $ \p -> (f p, p)
 
-fetchSimple :: Show a => FilePath -> A.Parser a -> IO (Table () () a)
+fetchSimple :: Show a => FilePath -> Parser_ a -> IO (Table () () a)
 fetchSimple file = fetchGeneral file . tableParser
 
-tableParser :: A.Parser a -> A.Parser (Table () () a)
+tableParser :: Ord e => Parser e a -> Parser e (Table () () a)
 tableParser p = do
   comments
   Table <$> many record
@@ -100,28 +116,29 @@ tableParser p = do
     record = do
       rng <- range
       v <- p
-      A.skipSpace
+      MB.space
       comments
       pure $ v <$ rng
 
 fetchBinaryMulti :: FilePath -> IO (Map ByteString (Table () () Bool))
 fetchBinaryMulti = flip fetchGeneral (fmap Table <$> parser)
   where
-    parser :: A.Parser (Map ByteString [Range () () Bool])
+    parser :: Parser_ (Map ByteString [Range () () Bool])
     parser =
       flip execStateT Map.empty $ do
         lift comments
         many record
-    record :: StateT (Map ByteString [Range () () Bool]) A.Parser ()
+    record :: StateT (Map ByteString [Range () () Bool]) Parser_ ()
     record = do
       rng <- lift range
-      prop <- lift $ A.takeWhile1 (not . A.isSpace)
-      lift $ A.skipSpace *> comments
+      prop <- M.takeWhile1P (Just "Property name") (/= 0x20) -- ' '
+      lift $ MB.space *> comments
       modify $ Map.alter (Just . ((True <$ rng) :) . fromMaybe []) prop
 
-fetchGeneral :: FilePath -> A.Parser a -> IO a
+fetchGeneral :: ME.ShowErrorComponent e => FilePath -> Parser e a -> IO a
 fetchGeneral file parser = do
   txt <- B.readFile file
-  case A.parseOnly (parser <* A.endOfInput) txt of
-    Left err -> fail $ "Fetching " ++ show file ++ ": " ++ show err
+  case M.parse (parser <* M.eof) file txt of
+    Left err ->
+      fail $ "Fetching " ++ show file ++ ": " ++ ME.errorBundlePretty err
     Right result -> pure result

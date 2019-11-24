@@ -3,25 +3,26 @@
 module UCD.Unihan.NumericValues where
 
 import Control.Applicative ((<|>), many)
-import qualified Data.Attoparsec.ByteString.Char8 as A
+import qualified Text.Megaparsec.Byte as MB
+import qualified Text.Megaparsec.Byte.Lexer as MBL
 
-import UCD.Common (Range(Single), Table(Table), comments, fetchGeneral)
+import UCD.Common (Parser_, Range(Single), Table(Table), comments, fetchGeneral)
 
 fetch :: IO (Table () annR Integer)
 fetch = fetchGeneral "data/latest/ucd/Unihan_NumericValues.txt" parser
 
-parser :: A.Parser (Table () annR Integer)
+parser :: Parser_ (Table () annR Integer)
 parser = do
   comments
-  records <- many (record <* A.char '\n')
+  records <- many (record <* MB.eol)
   comments
   pure $ Table records
 
-record :: A.Parser (Range () annR Integer)
+record :: Parser_ (Range () annR Integer)
 record = do
   _ <- "U+"
-  cp <- A.hexadecimal
-  A.skipSpace
+  cp <- MBL.hexadecimal
+  MB.space
   _ <- "k" *> ("Accounting" <|> "Other" <|> "Primary") <* "Numeric"
-  A.skipSpace
-  Single cp () <$> A.decimal
+  MB.space
+  Single cp () <$> MBL.decimal

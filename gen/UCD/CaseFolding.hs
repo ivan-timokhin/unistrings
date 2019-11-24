@@ -4,15 +4,20 @@
 module UCD.CaseFolding where
 
 import Control.Applicative (many)
-import qualified Data.Attoparsec.ByteString.Char8 as A
+import Data.Foldable (asum)
 import qualified Data.Vector as V
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Byte as MB
+import qualified Text.Megaparsec.Byte.Lexer as MBL
 
 import UCD.Common
-  ( Range(Single)
+  ( Parser_
+  , Range(Single)
   , Table(Table)
   , comments
   , dropNothing
   , fetchGeneral
+  , semicolon
   )
 
 data Contents =
@@ -52,26 +57,26 @@ data Record
   | Turkic Int
   | Full (V.Vector Int)
 
-parser :: A.Parser (Table () () Record)
+parser :: Parser_ (Table () () Record)
 parser = do
   comments
   Table <$> many record
 
-record :: A.Parser (Range () () Record)
+record :: Parser_ (Range () () Record)
 record = do
-  code <- A.hexadecimal
-  A.char ';' *> A.skipSpace
+  code <- MBL.hexadecimal
+  semicolon *> MB.space
   datum <-
-    A.choice
-      [ do "C;" *> A.skipSpace
-           Common <$> A.hexadecimal
-      , do "F;" *> A.skipSpace
-           mapping <- A.hexadecimal `A.sepBy1` A.skipSpace
+    asum
+      [ do "C;" *> MB.space
+           Common <$> MBL.hexadecimal
+      , do "F;" *> MB.space
+           mapping <- MBL.hexadecimal `M.sepBy1` MB.space1
            pure $ Full $ V.fromList mapping
-      , do "S;" *> A.skipSpace
-           Simple <$> A.hexadecimal
-      , do "T;" *> A.skipSpace
-           Turkic <$> A.hexadecimal
+      , do "S;" *> MB.space
+           Simple <$> MBL.hexadecimal
+      , do "T;" *> MB.space
+           Turkic <$> MBL.hexadecimal
       ]
-  A.char ';' *> A.skipSpace *> comments
+  semicolon *> MB.space *> comments
   pure $ Single code () datum
