@@ -164,10 +164,14 @@ parses will suddenly fail after UCD updates or something.
 
 I vaguely remember one of the parsers explicitly depending on
 =attoparsec='s automatic backtracking, so that will need to be fixed.
-* Organisational tasks [0/4]
-** NEXT Use ~extracted/~ files for numeric properties
+* Organisational tasks [1/4]
+** DONE Use ~extracted/~ files for numeric properties
+CLOSED: [2019-11-24 Вс 23:34]
+:LOGBOOK:
+- State "DONE"       from "NEXT"       [2019-11-24 Вс 23:34]
+:END:
 That will cut the dependency on Unihan.
-** TODO Remove the explicit version dependence
+** NEXT Remove the explicit version dependence
 Currently, everything hardcodes =latest= as a path component; I probably don't want that.
 ** TODO Sort out fetch scripts
 If the above is done, we'll only really need to download and unzip

@@ -51,8 +51,6 @@ generated/
 /data/latest/ucd/extracted/DerivedGeneralCategory.txt
 /data/latest/ucd/extracted/DerivedLineBreak.txt
 /data/latest/ucd/extracted/DerivedName.txt
-/data/latest/ucd/extracted/DerivedNumericType.txt
-/data/latest/ucd/extracted/DerivedNumericValues.txt
 /data/latest/ucd/auxiliary/GraphemeBreakTest.txt
 /data/latest/ucd/auxiliary/LineBreakTest.txt
 /data/latest/ucd/auxiliary/SentenceBreakTest.txt

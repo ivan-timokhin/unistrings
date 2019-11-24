@@ -349,7 +349,6 @@ executable ucd-gen
                      , UCD.HangulSyllableType
                      , UCD.SpecialCasing
                      , UCD.CaseFolding
-                     , UCD.Unihan.NumericValues
                      , UCD.DerivedNormalizationProps
                      , UCD.DerivedJoiningType
                      , UCD.DerivedJoiningGroup
@@ -365,6 +364,8 @@ executable ucd-gen
                      , UCD.EquivalentUnifiedIdeograph
                      , UCD.IndicPositionalCategory
                      , UCD.IndicSyllabicCategory
+                     , UCD.DerivedNumericType
+                     , UCD.DerivedNumericValues
                      , UCD.Common
                      , Trie
                      , TrieOpt

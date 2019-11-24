@@ -16,7 +16,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
 import Data.Functor ((<&>))
-import Data.Int (Int32, Int64)
+import Data.Int (Int32)
 import Data.Ratio (denominator, numerator)
 import qualified Data.Vector as V
 import Data.Word (Word8)
@@ -58,6 +58,8 @@ import qualified UCD.DerivedCoreProperties as UCD.DCP
 import qualified UCD.DerivedJoiningGroup
 import qualified UCD.DerivedJoiningType
 import qualified UCD.DerivedNormalizationProps as UCD.DNP
+import qualified UCD.DerivedNumericType
+import qualified UCD.DerivedNumericValues
 import qualified UCD.EastAsianWidth
 import qualified UCD.EquivalentUnifiedIdeograph
 import qualified UCD.GraphemeBreakProperty
@@ -73,7 +75,6 @@ import qualified UCD.Scripts
 import qualified UCD.SentenceBreakProperty
 import qualified UCD.SpecialCasing
 import qualified UCD.UnicodeData
-import qualified UCD.Unihan.NumericValues
 import qualified UCD.VerticalOrientation
 import qualified UCD.WordBreakProperty
 
@@ -286,40 +287,21 @@ main = do
            UCD.Common.tableToVector Nothing . fmap Just <$>
            UCD.HangulSyllableType.fetch
          processTable fullPartitionings "hangul_syllable_type" hst
-    , do unihanNumVals <- UCD.Unihan.NumericValues.fetch
-         let table =
-               UCD.Common.tableToVector
-                 Nothing
-                 (fmap UCD.UnicodeData.propNumeric records) `adjustWith`
-               fmap (Just . UCD.UnicodeData.Numeric . fromInteger) unihanNumVals
-             typesTable =
-               flip fmap table $ \case
-                 Nothing -> (0 :: Word8)
-                 Just (UCD.UnicodeData.Decimal _) -> 1
-                 Just (UCD.UnicodeData.Digit _) -> 2
-                 Just (UCD.UnicodeData.Numeric _) -> 3
-             numeratorTable =
-               flip fmap table $ \case
-                 Nothing -> (0 :: Int64)
-                 Just (UCD.UnicodeData.Decimal n) -> fromIntegral n
-                 Just (UCD.UnicodeData.Digit n) -> fromIntegral n
-                 Just (UCD.UnicodeData.Numeric r) -> fromIntegral $ numerator r
-             denominatorTable =
-               flip fmap table $ \case
-                 Just (UCD.UnicodeData.Numeric r) ->
-                   fromIntegral $ denominator r
-                 _ -> (1 :: Int64)
+    , do nt <- UCD.DerivedNumericType.fetch
+         let typesV =
+               UCD.Common.tableToVector (0 :: Word8) $
+               nt <&> \case
+                 UCD.DerivedNumericType.Decimal -> 1
+                 UCD.DerivedNumericType.Digit -> 2
+                 UCD.DerivedNumericType.Numeric -> 3
+         generateSources fullPartitionings "numeric_type" typesV
+    , do nv <- UCD.DerivedNumericValues.fetch
+         let valuesTable = UCD.Common.tableToVector 0 nv
          concurrently_
-           (concurrently_
-              (generateSources fullPartitionings "numeric_type" typesTable)
-              (generateSources
-                 fullPartitionings
-                 "numeric_numerator"
-                 numeratorTable))
-           (generateSources
-              fullPartitionings
-              "numeric_denominator"
-              denominatorTable)
+           (generateSources fullPartitionings "numeric_numerator" $
+            fmap numerator valuesTable)
+           (generateSources fullPartitionings "numeric_denominator" $
+            fmap denominator valuesTable)
     , processTable fullPartitionings "decomposition_type" $
       UCD.Common.tableToVector Nothing $
       fmap fst . UCD.UnicodeData.propDecompositionMapping <$> records
