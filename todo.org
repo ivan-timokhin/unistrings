@@ -118,7 +118,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [ ] Emoji_Modifier_Base
 - [ ] Emoji_Component
 - [ ] Extended_Pictographic
-* Miscellaneous code tasks [6/7]
+* Miscellaneous code tasks [6/8]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
 ** DONE Add missing instances to enums
@@ -151,7 +151,24 @@ CLOSED: [2019-11-15 Пт 14:56]
 This should omit redundant (if we set our tables up correctly) bounds
 checks and accelerate the whole thing somewhat.  Somewhat similar in
 spirit to using ~:%~ instead of ~%~ in numeric value property.
-* Organisational tasks [0/1]
+** TODO Consider switching to =megaparsec=
+Or any other parser combinator library with good error messages.  One
+consistent feature of parsing UCD files so far was uninformative
+~endOfInput~ error message on parse failure; this is somewhat
+tolerable when actively working on them, less so when a whole bunch of
+parses will suddenly fail after UCD updates or something.
+
+I vaguely remember one of the parsers explicitly depending on
+=attoparsec='s automatic backtracking, so that will need to be fixed.
+* Organisational tasks [0/4]
+** NEXT Use ~extracted/~ files for numeric properties
+That will cut the dependency on Unihan.
+** TODO Remove the explicit version dependence
+Currently, everything hardcodes =latest= as a path component; I probably don't want that.
+** TODO Sort out fetch scripts
+If the above is done, we'll only really need to download and unzip
+=UCD.zip=; the script should probably take an argument to specify
+version.  Oh, and =ucd.nounihan.grouped.zip= XML version.
 ** TODO Move =ucd-gen= to a separate .cabal package
 So it doesn't show up on Hackage and does not end up confusing anyone.
 * TODO Other UCD Files
