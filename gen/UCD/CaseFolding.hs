@@ -30,7 +30,7 @@ data Contents =
 
 fetch :: IO Contents
 fetch =
-  fetchGeneral "data/latest/ucd/CaseFolding.txt" $ do
+  fetchGeneral "CaseFolding.txt" $ do
     combined <- parser
     pure $
       Contents

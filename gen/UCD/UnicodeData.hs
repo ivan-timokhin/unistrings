@@ -47,7 +47,7 @@ import UCD.Common
 
 fetch :: IO (Table Name ByteString Properties)
 fetch =
-  fetchGeneral "data/latest/ucd/UnicodeData.txt" $ do
+  fetchGeneral "UnicodeData.txt" $ do
     records <- parser
     case rangeify records of
       Left err -> fail err

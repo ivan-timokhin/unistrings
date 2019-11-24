@@ -8,7 +8,7 @@ import UCD.Common (Table, enumeratedAbbrP, fetchSimple, semicolon)
 
 fetch :: IO (Table () () (Int, BidiPairedBracketType))
 fetch =
-  fetchSimple "data/latest/ucd/BidiBrackets.txt" $ do
+  fetchSimple "BidiBrackets.txt" $ do
     cp <- MBL.hexadecimal
     semicolon *> MB.space
     ty <- enumeratedAbbrP

@@ -27,7 +27,7 @@ import UCD.Common
 
 fetch :: IO (Table () a (V.Vector (NameAliasType, ByteString)))
 fetch =
-  fetchGeneral "data/latest/ucd/NameAliases.txt" $ do
+  fetchGeneral "NameAliases.txt" $ do
     aliases <- parser
     let imap = IM.fromListWith (++) $ map (fmap (: [])) aliases
     pure $

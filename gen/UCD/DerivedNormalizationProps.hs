@@ -26,7 +26,7 @@ import UCD.Common
   )
 
 fetch :: IO Contents
-fetch = fetchGeneral "data/latest/ucd/DerivedNormalizationProps.txt" parser
+fetch = fetchGeneral "DerivedNormalizationProps.txt" parser
 
 data Contents =
   Contents

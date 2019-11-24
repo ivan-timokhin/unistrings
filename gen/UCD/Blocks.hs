@@ -20,7 +20,7 @@ import UCD.Common (Parser_, comments, fetchGeneral, semicolon, unicodeTableSize)
 
 fetch :: IO (V.Vector (Maybe Block))
 fetch =
-  fetchGeneral "data/latest/ucd/Blocks.txt" $ do
+  fetchGeneral "Blocks.txt" $ do
     blocks <- parser
     pure $
       (V.replicate (unicodeTableSize `shiftR` 4) Nothing V.//) $

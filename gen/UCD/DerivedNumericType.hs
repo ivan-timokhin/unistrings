@@ -13,5 +13,5 @@ data NumericType
 
 fetch :: IO (Table () () NumericType)
 fetch =
-  fetchSimple "data/latest/ucd/extracted/DerivedNumericType.txt" $
+  fetchSimple "extracted/DerivedNumericType.txt" $
   Decimal <$ "Decimal" <|> Digit <$ "Digit" <|> Numeric <$ "Numeric"

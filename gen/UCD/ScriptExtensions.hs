@@ -11,5 +11,5 @@ import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () (V.Vector Script))
 fetch =
-  fetchSimple "data/latest/ucd/ScriptExtensions.txt" $
+  fetchSimple "ScriptExtensions.txt" $
   fmap V.fromList $ some $ enumeratedAbbrP <* MB.space1

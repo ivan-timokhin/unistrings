@@ -23,7 +23,7 @@ import UCD.Common
   )
 
 fetch :: IO (Table () () Record)
-fetch = fetchGeneral "data/latest/ucd/SpecialCasing.txt" parser
+fetch = fetchGeneral "SpecialCasing.txt" parser
 
 data Record =
   Record

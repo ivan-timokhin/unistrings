@@ -10,7 +10,7 @@ import UCD.Common (Table, char8, fetchSimple, semicolon)
 
 fetch :: IO (Table () () (Ratio Int64))
 fetch =
-  fetchSimple "data/latest/ucd/extracted/DerivedNumericValues.txt" $ do
+  fetchSimple "extracted/DerivedNumericValues.txt" $ do
     _ <- MBL.signed (pure ()) MBL.scientific
     MB.space
     semicolon

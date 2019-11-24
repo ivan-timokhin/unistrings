@@ -14,7 +14,7 @@ import UCD.Common (Parser_, comment, comments, fetchGeneral)
 
 fetch :: IO (V.Vector ByteString)
 fetch =
-  fetchGeneral "data/latest/ucd/Jamo.txt" $ do
+  fetchGeneral "Jamo.txt" $ do
     shortNames <- parser
     pure $
       V.replicate 0xC3 "" V.//

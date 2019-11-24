@@ -39,7 +39,7 @@ data Props =
 
 fetch :: IO Props
 fetch = do
-  m <- fetchBinaryMulti "data/latest/ucd/PropList.txt"
+  m <- fetchBinaryMulti "PropList.txt"
   let get prop =
         case Map.lookup prop m of
           Nothing -> fail $ "Can't find property " ++ show prop
