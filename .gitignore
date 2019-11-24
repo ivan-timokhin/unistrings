@@ -46,3 +46,4 @@ generated/
 /data/ucd/auxiliary/LineBreakTest.txt
 /data/ucd/auxiliary/SentenceBreakTest.txt
 /data/ucd/auxiliary/WordBreakTest.txt
+/data/ucd/*.pdf

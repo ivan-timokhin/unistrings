@@ -164,7 +164,7 @@ parses will suddenly fail after UCD updates or something.
 
 I vaguely remember one of the parsers explicitly depending on
 =attoparsec='s automatic backtracking, so that will need to be fixed.
-* Organisational tasks [2/4]
+* Organisational tasks [3/4]
 ** DONE Use ~extracted/~ files for numeric properties
 CLOSED: [2019-11-24 Вс 23:34]
 :LOGBOOK:
@@ -177,11 +177,15 @@ CLOSED: [2019-11-25 Пн 00:13]
 - State "DONE"       from "NEXT"       [2019-11-25 Пн 00:13]
 :END:
 Currently, everything hardcodes =latest= as a path component; I probably don't want that.
-** NEXT Sort out fetch scripts
+** DONE Sort out fetch scripts
+CLOSED: [2019-11-25 Пн 00:50]
+:LOGBOOK:
+- State "DONE"       from "NEXT"       [2019-11-25 Пн 00:50]
+:END:
 If the above is done, we'll only really need to download and unzip
 =UCD.zip=; the script should probably take an argument to specify
 version.  Oh, and =ucd.nounihan.grouped.zip= XML version.
-** TODO Move =ucd-gen= to a separate .cabal package
+** NEXT Move =ucd-gen= to a separate .cabal package
 So it doesn't show up on Hackage and does not end up confusing anyone.
 * TODO Other UCD Files
 UCD contains an enormous amount of various crap: emoji sources, tangut
