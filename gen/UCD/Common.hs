@@ -105,7 +105,7 @@ enumeratedAbbrP = enumeratedP abbreviatedPropertyValueName
 enumeratedP :: (Enum a, Bounded a, Ord e) => (a -> ByteString) -> Parser e a
 enumeratedP f = tableP $ flip map [minBound .. maxBound] $ \p -> (f p, p)
 
-fetchSimple :: Show a => FilePath -> Parser_ a -> IO (Table () () a)
+fetchSimple :: FilePath -> Parser_ a -> IO (Table () () a)
 fetchSimple file = fetchGeneral file . tableParser
 
 tableParser :: Ord e => Parser e a -> Parser e (Table () () a)
