@@ -137,7 +137,7 @@ fetchBinaryMulti = flip fetchGeneral (fmap Table <$> parser)
 
 fetchGeneral :: ME.ShowErrorComponent e => FilePath -> Parser e a -> IO a
 fetchGeneral file parser = do
-  txt <- B.readFile $ "data/latest/ucd/" ++ file
+  txt <- B.readFile $ "data/ucd/" ++ file
   case M.parse (parser <* M.eof) file txt of
     Left err ->
       fail $ "Fetching " ++ show file ++ ": " ++ ME.errorBundlePretty err
