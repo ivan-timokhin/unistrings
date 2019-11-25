@@ -495,7 +495,7 @@ readBoolean txt =
 readUCD :: IO Document
 readUCD = do
   selector <- mkEntrySelector "ucd.nounihan.grouped.xml"
-  withArchive "data/ucdxml/ucd.nounihan.grouped.zip" $
+  withArchive "../data/ucdxml/ucd.nounihan.grouped.zip" $
     sourceEntry selector (sinkDoc def)
 
 elementChildren :: Element -> [Element]

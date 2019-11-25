@@ -81,9 +81,9 @@ import qualified UCD.WordBreakProperty
 main :: IO ()
 main = do
   records <- UCD.UnicodeData.fetch
-  createDirectoryIfMissing True "generated/cbits"
-  createDirectoryIfMissing True "generated/hs/Data/UCD/Internal"
-  createDirectoryIfMissing True "generated/test_data"
+  createDirectoryIfMissing True "ucd/generated/cbits"
+  createDirectoryIfMissing True "ucd/generated/hs/Data/UCD/Internal"
+  createDirectoryIfMissing True "ucd/generated/test_data"
   let fullPartitionings = (4, 16)
   mapConcurrently_
     id

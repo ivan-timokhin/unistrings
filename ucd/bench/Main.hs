@@ -487,7 +487,7 @@ evalPairsList xs = go xs `seq` 0
 
 readUDHR :: IO (V.Vector Char)
 readUDHR =
-  withFile "data/udhr/full_all.txt" ReadMode $ \h -> do
+  withFile "../data/udhr/full_all.txt" ReadMode $ \h -> do
     hSetEncoding h utf8
     contents <- hGetContents h
     evaluate $ V.fromList contents

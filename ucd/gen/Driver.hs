@@ -315,7 +315,7 @@ generateSources ::
 generateSources (maxLayers, maxBits) snakeName values = do
   putStrLn $ show snakeName ++ " " ++ show p
   putStrLn $ show snakeName ++ " " ++ show cost
-  let hsFile = "generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
+  let hsFile = "ucd/generated/hs/Data/UCD/Internal/" <> hsModuleName <> ".hs"
   B.writeFile (B.unpack hsFile) $
     B.unlines $
     "{-# OPTIONS_GHC -Wno-unused-imports -Wno-identities #-}" :
@@ -323,7 +323,7 @@ generateSources (maxLayers, maxBits) snakeName values = do
     "{-# LANGUAGE MagicHash #-}" :
     ("module Data.UCD.Internal." <> hsModuleName <> " (retrieve) where\n") :
     moduleHs modul
-  B.writeFile (B.unpack $ "generated/cbits/" <> snakeName <> ".c") $
+  B.writeFile (B.unpack $ "ucd/generated/cbits/" <> snakeName <> ".c") $
     B.unlines $ moduleC modul
   where
     hsModuleName = snake2camel snakeName
@@ -342,8 +342,9 @@ generateSources (maxLayers, maxBits) snakeName values = do
 generateTests :: Show a => ByteString -> V.Vector a -> IO ()
 {-# INLINEABLE generateTests #-}
 generateTests snakeName values =
-  withFile (B.unpack $ "generated/test_data/" <> snakeName <> ".txt") WriteMode $ \h ->
-    for_ values $ hPrint h
+  withFile
+    (B.unpack $ "ucd/generated/test_data/" <> snakeName <> ".txt")
+    WriteMode $ \h -> for_ values $ hPrint h
 
 snake2camel :: ByteString -> ByteString
 snake2camel = B.concat . map titlecase . B.split '_'
