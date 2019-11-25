@@ -9,10 +9,6 @@
   . ((nil
       . ((dante-target
           . "ucd:ucd-bench")))))
- ("ucd/gen"
-  . ((nil
-      . ((dante-target
-          . "ucd:ucd-gen")))))
  ("ucd/src"
   . ((nil
       . ((dante-target
@@ -32,4 +28,8 @@
  ("ucd/common"
   . ((nil
       . ((dante-target
-          . "ucd:ucd"))))))
+          . "ucd:ucd")))))
+ ("gen/ucd"
+  . ((nil
+      . ((dante-target
+          . "gen:ucd"))))))
