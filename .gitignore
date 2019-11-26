@@ -27,7 +27,7 @@ data/ucd/TangutSources.txt
 data/ucd/UCD.zip
 data/ucd/USourceData.txt
 data/ucd/Unihan.zip
-generated/
+/ucd/generated/test_data/
 /data/ucdxml/ucdxml.readme.txt
 /data/ucdxml/ucd.unihan.grouped.zip
 /data/ucdxml/ucd.unihan.flat.zip
