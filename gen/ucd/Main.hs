@@ -35,11 +35,19 @@ import Data.UCD.Internal.Types
   , WordBreak(OtherWB)
   )
 import Driver
-  ( generateASCIITableSources
+  ( bool
+  , enum
+  , ffiVector
+  , generateASCIITableSources
   , generateASCIIVectorTableSources
-  , generateSources
+  , generateSourcesAs
   , generateTests
-  , processTable
+  , integral
+  , maybeBool
+  , maybeEnum
+  , maybeIntegral
+  , processTableAs
+  , smallEnumVector
   )
 import qualified UCD.Age
 import qualified UCD.BidiBrackets
@@ -87,10 +95,10 @@ main = do
   let fullPartitionings = (4, 16)
   mapConcurrently_
     id
-    [ processTable fullPartitionings "general_category" $
+    [ processTableAs enum fullPartitionings "general_category" $
       UCD.UnicodeData.tableToVector NotAssigned $
       fmap UCD.UnicodeData.propCategory records
-    , processTable fullPartitionings "canonical_combining_class" $
+    , processTableAs integral fullPartitionings "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
     , let identityMapping = V.generate unicodeTableSize fromIntegral
@@ -99,7 +107,7 @@ main = do
                 diffTable =
                   V.imap (\cp mapping -> fromIntegral mapping - cp) table
              in do generateTests name table
-                   generateSources fullPartitionings name diffTable
+                   generateSourcesAs integral fullPartitionings name diffTable
        in mapConcurrently_
             id
             [ processSimpleCaseMapping
@@ -129,7 +137,8 @@ main = do
                forConcurrently_ [0 .. maxLen - 1] $ \i ->
                  let ithCPSparse = fmap (V.!? i) sparseTable
                      ithCPFull = zeroMapping `adjustWithM` ithCPSparse
-                  in generateSources
+                  in generateSourcesAs
+                       integral
                        fullPartitionings
                        (name <> "_" <> B.pack (show i))
                        ithCPFull
@@ -157,7 +166,8 @@ main = do
              maxLen = 3
          concurrently_
            (do generateTests "simple_case_folding" fullSimpleTable
-               generateSources
+               generateSourcesAs
+                 integral
                  fullPartitionings
                  "simple_case_folding"
                  diffSimpleTable)
@@ -169,7 +179,8 @@ main = do
                      ithFullMap =
                        V.replicate unicodeTableSize 0 `adjustWithM`
                        ithSparseTable
-                  in generateSources
+                  in generateSourcesAs
+                       integral
                        fullPartitionings
                        ("full_case_folding_" <> B.pack (show i))
                        ithFullMap)
@@ -199,27 +210,32 @@ main = do
                 fullPartitionings
                 "name_aliases_aliases" $
               fmap (fmap snd) aliases)
-             (generateSources
+             (generateSourcesAs
+                ffiVector
                 fullPartitionings
                 "name_aliases_types"
                 (fmap (fmap ((toEnum :: Int -> Word8) . fromEnum . fst)) aliases))
     , do blocks <- UCD.Blocks.fetch
-         generateSources (4, 12) "blocks" blocks
+         generateSourcesAs maybeEnum (4, 12) "blocks" blocks
     , do ages <- UCD.Common.tableToVector Nothing . fmap Just <$> UCD.Age.fetch
-         processTable fullPartitionings "age" ages
+         processTableAs maybeEnum fullPartitionings "age" ages
     , do scripts <- UCD.Common.tableToVector UnknownScript <$> UCD.Scripts.fetch
-         processTable fullPartitionings "script" scripts
+         processTableAs enum fullPartitionings "script" scripts
     , do scriptExts <-
            UCD.Common.tableToVector V.empty <$> UCD.ScriptExtensions.fetch
          concurrently_
            (concurrently_
-              (generateSources fullPartitionings "script_exts_ptr" scriptExts)
-              (generateSources fullPartitionings "script_exts_len" $
+              (generateSourcesAs
+                 smallEnumVector
+                 fullPartitionings
+                 "script_exts_ptr"
+                 scriptExts)
+              (generateSourcesAs integral fullPartitionings "script_exts_len" $
                fmap V.length scriptExts))
            (generateTests "script_exts" scriptExts)
     , do props <- UCD.PropList.fetch
          let processProp snakeName getter =
-               processTable fullPartitionings snakeName $
+               processTableAs bool fullPartitionings snakeName $
                UCD.Common.tableToVector False $ getter props
              (~>) = (,)
          mapConcurrently_
@@ -259,7 +275,7 @@ main = do
            ]
     , do props <- UCD.DCP.fetch
          let processProp snakeName getter =
-               processTable fullPartitionings snakeName $
+               processTableAs bool fullPartitionings snakeName $
                UCD.Common.tableToVector False $ getter props
              (~>) = (,)
          mapConcurrently_
@@ -286,7 +302,7 @@ main = do
     , do hst <-
            UCD.Common.tableToVector Nothing . fmap Just <$>
            UCD.HangulSyllableType.fetch
-         processTable fullPartitionings "hangul_syllable_type" hst
+         processTableAs maybeEnum fullPartitionings "hangul_syllable_type" hst
     , do nt <- UCD.DerivedNumericType.fetch
          let typesV =
                UCD.Common.tableToVector (0 :: Word8) $
@@ -294,34 +310,42 @@ main = do
                  UCD.DerivedNumericType.Decimal -> 1
                  UCD.DerivedNumericType.Digit -> 2
                  UCD.DerivedNumericType.Numeric -> 3
-         generateSources fullPartitionings "numeric_type" typesV
+         generateSourcesAs integral fullPartitionings "numeric_type" typesV
     , do nv <- UCD.DerivedNumericValues.fetch
          let valuesTable = UCD.Common.tableToVector 0 nv
          concurrently_
-           (generateSources fullPartitionings "numeric_numerator" $
+           (generateSourcesAs integral fullPartitionings "numeric_numerator" $
             fmap numerator valuesTable)
-           (generateSources fullPartitionings "numeric_denominator" $
+           (generateSourcesAs integral fullPartitionings "numeric_denominator" $
             fmap denominator valuesTable)
-    , processTable fullPartitionings "decomposition_type" $
+    , processTableAs maybeEnum fullPartitionings "decomposition_type" $
       UCD.Common.tableToVector Nothing $
       fmap fst . UCD.UnicodeData.propDecompositionMapping <$> records
     , let canonicalDecomposition =
             UCD.UnicodeData.tableToDecompositionVector False records
        in concurrently_
-            (generateSources
+            (generateSourcesAs
+               ffiVector
                fullPartitionings
                "canonical_decomposition_ptr"
                canonicalDecomposition)
-            (generateSources fullPartitionings "canonical_decomposition_len" $
+            (generateSourcesAs
+               integral
+               fullPartitionings
+               "canonical_decomposition_len" $
              fmap V.length canonicalDecomposition)
     , let compatibilityDecomposition =
             UCD.UnicodeData.tableToDecompositionVector True records
        in concurrently_
-            (generateSources
+            (generateSourcesAs
+               ffiVector
                fullPartitionings
                "compatibility_decomposition_ptr"
                compatibilityDecomposition)
-            (generateSources fullPartitionings "compatibility_decomposition_len" $
+            (generateSourcesAs
+               integral
+               fullPartitionings
+               "compatibility_decomposition_len" $
              fmap V.length compatibilityDecomposition)
     , do nps <- UCD.DNP.fetch
          let fullCompositionExclusion =
@@ -333,23 +357,25 @@ main = do
                  (\i -> fullCompositionExclusion V.! fromIntegral i)
                  records
          concurrently_
-           (generateSources
+           (generateSourcesAs
+              maybeIntegral
               fullPartitionings
               "canonical_composition_top"
               topCompositionTable)
-           (generateSources
+           (generateSourcesAs
+              integral
               fullPartitionings
               "canonical_composition_bottom"
               bottomCompositionTable)
          mapConcurrently_
            id
-           [ processTable fullPartitionings "nfd_quick_check" $
+           [ processTableAs bool fullPartitionings "nfd_quick_check" $
              UCD.DNP.nfdQuickCheck nps
-           , processTable fullPartitionings "nfc_quick_check" $
+           , processTableAs maybeBool fullPartitionings "nfc_quick_check" $
              UCD.DNP.nfcQuickCheck nps
-           , processTable fullPartitionings "nfkd_quick_check" $
+           , processTableAs bool fullPartitionings "nfkd_quick_check" $
              UCD.DNP.nfkdQuickCheck nps
-           , processTable fullPartitionings "nfkc_quick_check" $
+           , processTableAs maybeBool fullPartitionings "nfkc_quick_check" $
              UCD.DNP.nfkcQuickCheck nps
            ]
          let identityMapping = V.generate unicodeTableSize fromIntegral
@@ -368,72 +394,90 @@ main = do
              allNFKCCFL =
                tableToVector (1 :: Int) $ length <$> UCD.DNP.nfkcCaseFold nps
          concurrently_
-           (generateSources
+           (generateSourcesAs
+              integral
               fullPartitionings
               "simple_nfkc_casefold"
               simpleNFKCCF)
            (concurrently_
-              (generateSources
+              (generateSourcesAs
+                 ffiVector
                  fullPartitionings
                  "complex_nfkc_casefold_ptr"
                  complexNFKCCF)
-              (generateSources
+              (generateSourcesAs
+                 integral
                  fullPartitionings
                  "complex_nfkc_casefold_len"
                  allNFKCCFL))
-         processTable fullPartitionings "changes_when_nfkc_casefolded" $
+         processTableAs bool fullPartitionings "changes_when_nfkc_casefolded" $
            UCD.Common.tableToVector False $
            UCD.DNP.changesWhenNFKCCaseFolded nps
     , do joiningType <- UCD.DerivedJoiningType.fetch
-         processTable fullPartitionings "joining_type" $
+         processTableAs enum fullPartitionings "joining_type" $
            UCD.Common.tableToVector NonJoining joiningType
     , do joiningGroup <- UCD.DerivedJoiningGroup.fetch
-         processTable fullPartitionings "joining_group" $
+         processTableAs maybeEnum fullPartitionings "joining_group" $
            UCD.Common.tableToVector Nothing $ Just <$> joiningGroup
     , do verticalOrientation <- UCD.VerticalOrientation.fetch
-         processTable fullPartitionings "vertical_orientation" $
+         processTableAs enum fullPartitionings "vertical_orientation" $
            UCD.Common.tableToVector Rotated verticalOrientation
     , do lineBreak <- UCD.LineBreak.fetch
-         processTable fullPartitionings "line_break" $
+         processTableAs enum fullPartitionings "line_break" $
            UCD.Common.tableToVector UnknownLB lineBreak
     , do graphemeClusterBreak <- UCD.GraphemeBreakProperty.fetch
-         processTable fullPartitionings "grapheme_cluster_break" $
+         processTableAs enum fullPartitionings "grapheme_cluster_break" $
            UCD.Common.tableToVector OtherGCB graphemeClusterBreak
     , do sentenceBreak <- UCD.SentenceBreakProperty.fetch
-         processTable fullPartitionings "sentence_break" $
+         processTableAs enum fullPartitionings "sentence_break" $
            UCD.Common.tableToVector OtherSB sentenceBreak
     , do wordBreak <- UCD.WordBreakProperty.fetch
-         processTable fullPartitionings "word_break" $
+         processTableAs enum fullPartitionings "word_break" $
            UCD.Common.tableToVector OtherWB wordBreak
     , do eaw <- UCD.EastAsianWidth.fetch
-         processTable fullPartitionings "east_asian_width" $
+         processTableAs enum fullPartitionings "east_asian_width" $
            UCD.Common.tableToVector NeutralEAW eaw
     , do bc <- UCD.DerivedBidiClass.fetch
-         processTable fullPartitionings "bidi_class" $
+         processTableAs enum fullPartitionings "bidi_class" $
            UCD.Common.tableToVector LeftToRightBC bc
-    , processTable fullPartitionings "bidi_mirrored" $
+    , processTableAs bool fullPartitionings "bidi_mirrored" $
       UCD.Common.tableToVector False $
       fmap UCD.UnicodeData.propBidiMirrored records
     , do bm <- UCD.BidiMirroring.fetch
          let identity = V.generate unicodeTableSize id
              withMappings = identity `adjustWith` bm
              diff = V.imap (flip (-)) withMappings
-         generateSources fullPartitionings "bidi_mirroring_glyph" diff
+         generateSourcesAs
+           integral
+           fullPartitionings
+           "bidi_mirroring_glyph"
+           diff
     , do bb <- UCD.BidiBrackets.fetch
          let types = tableToVector Nothing $ fmap (Just . snd) bb
              pairs =
                V.imap (flip (-)) $
                V.generate unicodeTableSize id `adjustWith` fmap fst bb
-         processTable fullPartitionings "bidi_paired_bracket_type" types
-         generateSources fullPartitionings "bidi_paired_bracket" pairs
+         processTableAs
+           maybeEnum
+           fullPartitionings
+           "bidi_paired_bracket_type"
+           types
+         generateSourcesAs
+           integral
+           fullPartitionings
+           "bidi_paired_bracket"
+           pairs
     , do eui <- UCD.EquivalentUnifiedIdeograph.fetch
-         generateSources fullPartitionings "equivalent_unified_ideograph" $
+         generateSourcesAs
+           maybeIntegral
+           fullPartitionings
+           "equivalent_unified_ideograph" $
            UCD.Common.tableToVector Nothing $ fmap Just eui
     , do ipc <- UCD.IndicPositionalCategory.fetch
-         processTable fullPartitionings "indic_positional_category" $
+         processTableAs maybeEnum fullPartitionings "indic_positional_category" $
            UCD.Common.tableToVector Nothing $ fmap Just ipc
     , do isc <- UCD.IndicSyllabicCategory.fetch
-         processTable fullPartitionings "indic_syllabic_category" $
+         processTableAs enum fullPartitionings "indic_syllabic_category" $
            UCD.Common.tableToVector Other isc
     ]
 
