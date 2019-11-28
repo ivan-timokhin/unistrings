@@ -132,6 +132,7 @@ main = do
                                 then Nothing
                                 else Just field)
                        special
+                   fullTable :: V.Vector (V.Vector Int)
                    fullTable = tableToVector V.empty sparseTable
                generateTests name fullTable
                forConcurrently_ [0 .. maxLen - 1] $ \i ->
@@ -257,8 +258,9 @@ main = do
              UCD.PropList.prependedConcatenationMark
            ]
          let mkTestsProp snakeName getter =
-               generateTests snakeName $
-               UCD.Common.tableToVector False $ getter props
+               generateTests
+                 snakeName
+                 (UCD.Common.tableToVector False (getter props) :: V.Vector Bool)
          mapConcurrently_
            (uncurry mkTestsProp)
            [ "white_space" ~> UCD.PropList.whiteSpace
