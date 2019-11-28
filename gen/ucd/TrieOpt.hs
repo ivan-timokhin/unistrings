@@ -6,13 +6,14 @@ module TrieOpt
   ) where
 
 import Data.Bits (shiftL, shiftR)
-import Data.Foldable (fold, foldl')
+import Data.Foldable (foldl')
 import Data.List (tails)
 import Data.Maybe (fromJust)
 import Data.Semigroup (Arg(Arg), Min(Min))
 import qualified Data.Set as S
 import Data.Traversable (mapAccumL)
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
 
 data Layer a =
   Layer
@@ -22,19 +23,19 @@ data Layer a =
     }
 
 findOptimalPartitioning ::
-     Ord a
+     (Ord (v a), VG.Vector v a)
   => ((Integer, Integer) -> Int)
   -> (Int -> Int)
   -> Int
   -> Int
-  -> V.Vector a
+  -> v a
   -> (Int, [Int])
 findOptimalPartitioning rangeCost baseCost maxBits maxLayers xs =
   (\(Min (Arg cost layers)) -> (cost, reverse $ map lowBits layers)) $
   fromJust $
   foldMap
     (\layers ->
-       Just $ Min $ Arg (totalCost baseCost (V.length xs) layers) layers) $
+       Just $ Min $ Arg (totalCost baseCost (VG.length xs) layers) layers) $
   subsequences maxLayers $ map (layerCost rangeCost) $ bitLayers maxBits xs
 
 -- | Generate all subsequences with no more than the given number of
@@ -63,24 +64,24 @@ layerCost :: ((Integer, Integer) -> Int) -> Layer () -> Layer Int
 layerCost rangeCost l =
   l {annotation = rangeCost (0, toInteger (classesCount l) - 1)}
 
-bitLayers :: Ord a => Int -> V.Vector a -> [Layer ()]
+bitLayers :: (Ord (v a), VG.Vector v a) => Int -> v a -> [Layer ()]
 bitLayers maxBits xs =
   reverse $ snd $ mapAccumL step xs [maxBits,maxBits - 1 .. 0]
   where
     step ys nbits =
-      ( fold classes
+      ( VG.concat $ S.toList classes
       , Layer {lowBits = nbits, classesCount = S.size classes, annotation = ()})
       where
         classes = equivalenceClasses $ matricise (1 `shiftL` nbits) ys
 
-matricise :: Int -> V.Vector a -> V.Vector (V.Vector a)
+matricise :: VG.Vector v a => Int -> v a -> V.Vector (v a)
 matricise rowSize xs
   | remainder /= 0 =
     error "matricise: row size does not evenly divide full size"
   | otherwise =
-    V.generate columnSize $ \rowIdx -> V.slice (rowIdx * rowSize) rowSize xs
+    V.generate columnSize $ \rowIdx -> VG.slice (rowIdx * rowSize) rowSize xs
   where
-    fullSize = V.length xs
+    fullSize = VG.length xs
     (columnSize, remainder) = fullSize `divMod` rowSize
 
 equivalenceClasses :: (Foldable f, Ord a) => f a -> S.Set a

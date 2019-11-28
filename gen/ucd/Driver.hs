@@ -11,7 +11,7 @@ import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Data.Char (toUpper)
-import Data.Foldable (fold, for_)
+import Data.Foldable (fold)
 import Data.Functor.Identity (Identity)
 import Data.Typeable
   ( Proxy(Proxy)
@@ -22,6 +22,7 @@ import Data.Typeable
   , typeRepTyCon
   )
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
 import Data.Word (Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
@@ -64,15 +65,15 @@ moduleName ::
   => ByteString
 moduleName = B.pack $ tyConModule $ typeRepTyCon $ typeRep $ Proxy @a
 
-data TableValue a bv bt =
+data TableValue sv dv a bv bt =
   TableValue
-    { typeValues :: V.Vector a -> (bt, V.Vector bv)
+    { typeValues :: sv a -> (bt, dv bv)
     , generateModule :: ByteString -> TrieDesc Identity IntegralType bt bv -> Module
     }
 
 enum ::
      forall e. (Enum e, Typeable e)
-  => TableValue e e IntegralType
+  => TableValue V.Vector V.Vector e e IntegralType
 enum =
   TableValue
     { typeValues = typeEnum &&& id
@@ -88,7 +89,7 @@ enum =
 
 maybeEnum ::
      forall e. (Enum e, Typeable e)
-  => TableValue (Maybe e) (Maybe e) IntegralType
+  => TableValue V.Vector V.Vector (Maybe e) (Maybe e) IntegralType
 maybeEnum =
   TableValue
     { typeValues = typeMEnum &&& id
@@ -104,7 +105,7 @@ maybeEnum =
 
 integral ::
      forall i. (Integral i, Typeable i)
-  => TableValue i i IntegralType
+  => TableValue V.Vector V.Vector i i IntegralType
 integral =
   TableValue
     { typeValues = typeIntegral &&& id
@@ -115,7 +116,7 @@ integral =
 
 maybeIntegral ::
      forall i. (Integral i, Typeable i)
-  => TableValue (Maybe i) (Maybe i) IntegralType
+  => TableValue V.Vector V.Vector (Maybe i) (Maybe i) IntegralType
 maybeIntegral =
   TableValue
     { typeValues = typeMIntegral &&& id
@@ -124,7 +125,7 @@ maybeIntegral =
           generateMayIntegral IntSpec {isCPrefix = prefix, isHsType = "Int"}
     }
 
-bool :: TableValue Bool Bool IntegralType
+bool :: TableValue V.Vector V.Vector Bool Bool IntegralType
 bool =
   TableValue
     { typeValues = typeEnum &&& id
@@ -138,7 +139,7 @@ bool =
               }
     }
 
-maybeBool :: TableValue (Maybe Bool) (Maybe Bool) IntegralType
+maybeBool :: TableValue V.Vector V.Vector (Maybe Bool) (Maybe Bool) IntegralType
 maybeBool =
   TableValue
     { typeValues = typeMEnum &&& id
@@ -156,7 +157,8 @@ maybeBool =
 -- contain Word8
 smallEnumVector ::
      (Enum e, Ord e)
-  => TableValue (V.Vector e) Int (IntegralType, V.Vector Word8)
+  => TableValue V.Vector V.Vector (V.Vector e) Int ( IntegralType
+                                                   , V.Vector Word8)
 smallEnumVector =
   TableValue
     { typeValues =
@@ -164,7 +166,8 @@ smallEnumVector =
     , generateModule = generateMonoContainer
     }
 
-byteString :: TableValue ByteString Int (IntegralType, ByteString)
+byteString ::
+     TableValue V.Vector V.Vector ByteString Int (IntegralType, ByteString)
 byteString =
   TableValue
     { typeValues = typeASCII
@@ -172,17 +175,18 @@ byteString =
     }
 
 ffiVector ::
-     FFIIntegralType i => TableValue (V.Vector i) Int (IntegralType, V.Vector i)
+     FFIIntegralType i
+  => TableValue V.Vector V.Vector (V.Vector i) Int (IntegralType, V.Vector i)
 ffiVector =
   TableValue
     {typeValues = typeContainer, generateModule = generateMonoContainer}
 
 processTableAs ::
-     (Show a, Ord bv, SizedTy bt)
-  => TableValue a bv bt
+     (Show a, Ord bv, Ord (dv bv), SizedTy bt, VG.Vector sv a, VG.Vector dv bv)
+  => TableValue sv dv a bv bt
   -> (Int, Int)
   -> ByteString
-  -> V.Vector a
+  -> sv a
   -> IO ()
 {-# INLINE processTableAs #-}
 processTableAs tv partitionings snakeName values = do
@@ -230,11 +234,11 @@ generateASCIIVectorTableSources partitionings snakeName values =
        (fmap fold values))
 
 generateSourcesAs ::
-     (Ord bv, SizedTy bt)
-  => TableValue a bv bt
+     (Ord (dv bv), Ord bv, SizedTy bt, VG.Vector dv bv, VG.Vector sv a)
+  => TableValue sv dv a bv bt
   -> (Int, Int)
   -> ByteString
-  -> V.Vector a
+  -> sv a
   -> IO ()
 {-# INLINEABLE generateSourcesAs #-}
 generateSourcesAs tv (maxLayers, maxBits) snakeName values = do
@@ -264,12 +268,12 @@ generateSourcesAs tv (maxLayers, maxBits) snakeName values = do
         bvals
     (bty, bvals) = typeValues tv values
 
-generateTests :: Show a => ByteString -> V.Vector a -> IO ()
+generateTests :: (VG.Vector v a, Show a) => ByteString -> v a -> IO ()
 {-# INLINEABLE generateTests #-}
 generateTests snakeName values =
   withFile
     (B.unpack $ "ucd/generated/test_data/" <> snakeName <> ".txt")
-    WriteMode $ \h -> for_ values $ hPrint h
+    WriteMode $ \h -> VG.forM_ values $ hPrint h
 
 snake2camel :: ByteString -> ByteString
 snake2camel = B.concat . map titlecase . B.split '_'
