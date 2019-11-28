@@ -35,6 +35,7 @@ import Data.List (find)
 import Data.Maybe (fromJust)
 import Data.Traversable (for)
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
 import Data.Word (Word16, Word8)
 
 import Gen.Cost (SizedTy(sizeInBytes))
@@ -73,24 +74,24 @@ instance FFIIntegralType Word8 where
 instance FFIIntegralType Int32 where
   itypeOf = int32
 
-typeEnum :: Enum a => V.Vector a -> IntegralType
-typeEnum = findTypeForTable (toInteger . fromEnum)
+typeEnum :: (VG.Vector v a, Enum a) => v a -> IntegralType
+typeEnum = findTypeForVector (toInteger . fromEnum)
 
 typeMEnum :: Enum a => V.Vector (Maybe a) -> IntegralType
-typeMEnum = findTypeForTable $ maybe 0 (toInteger . succ . fromEnum)
+typeMEnum = findTypeForVector $ maybe 0 (toInteger . succ . fromEnum)
 
-typeIntegral :: Integral a => V.Vector a -> IntegralType
-typeIntegral = findTypeForTable toInteger
+typeIntegral :: (VG.Vector v a, Integral a) => v a -> IntegralType
+typeIntegral = findTypeForVector toInteger
 
 typeMIntegral :: Integral a => V.Vector (Maybe a) -> IntegralType
-typeMIntegral = findTypeForTable $ maybe 0 (succ . toInteger)
+typeMIntegral = findTypeForVector $ maybe 0 (succ . toInteger)
 
 typeASCII :: V.Vector ByteString -> ((IntegralType, ByteString), V.Vector Int)
 typeASCII = typeContainer
 
 typeContainer ::
      Mono.Container c => V.Vector c -> ((IntegralType, c), V.Vector Int)
-typeContainer cs = ((findTypeForTable toInteger indices, collapsed), indices)
+typeContainer cs = ((findTypeForVector toInteger indices, collapsed), indices)
   where
     collapsed = fold cs
     indices =
@@ -108,7 +109,7 @@ typeContainerDedup ::
   => V.Vector (t a)
   -> ((IntegralType, t a), V.Vector Int)
 typeContainerDedup cs =
-  ((findTypeForTable toInteger indices, collapsed), csIndices)
+  ((findTypeForVector toInteger indices, collapsed), csIndices)
   where
     (csDedup, values) = deduplicate cs
     collapsed = fold values
@@ -129,10 +130,22 @@ typeLayers ::
   -> TrieDesc f IntegralType bottomAnnotation a
 typeLayers (Bottom ann xs) = Bottom ann xs
 typeLayers (Layer _ nbits xs rest) =
-  Layer (findTypeForTable toInteger (Compose xs)) nbits xs (typeLayers rest)
+  Layer
+    (findTypeForTable foldl' toInteger (Compose xs))
+    nbits
+    xs
+    (typeLayers rest)
 
-findTypeForTable :: Foldable f => (a -> Integer) -> f a -> IntegralType
-findTypeForTable f xs = findTypeForRange $ minMax 0 f xs
+findTypeForVector :: VG.Vector v a => (a -> Integer) -> v a -> IntegralType
+findTypeForVector = findTypeForTable VG.foldl'
+
+findTypeForTable ::
+     (forall b. (b -> a -> b) -> b -> v a -> b)
+  -> (a -> Integer)
+  -> v a
+  -> IntegralType
+{-# INLINE findTypeForTable #-}
+findTypeForTable fl' f xs = findTypeForRange $ minMax fl' 0 f xs
 
 integralType ::
      Integral a => ByteString -> ByteString -> a -> a -> Int -> IntegralType
@@ -164,10 +177,16 @@ data Pair a b =
 pair2tuple :: Pair a b -> (a, b)
 pair2tuple (Pair x y) = (x, y)
 
-minMax :: (Foldable f, Ord b) => b -> (a -> b) -> f a -> (b, b)
-minMax def f =
+minMax ::
+     Ord b
+  => (forall c. (c -> a -> c) -> c -> v a -> c)
+  -> b
+  -> (a -> b)
+  -> v a
+  -> (b, b)
+minMax fl' def f =
   pair2tuple .
-  foldl'
+  fl'
     (\(Pair curMin curMax) x ->
        let b = f x
         in Pair (min curMin b) (max curMax b))
