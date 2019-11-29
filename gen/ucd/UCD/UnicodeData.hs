@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module UCD.UnicodeData
@@ -26,6 +27,7 @@ import Data.IntMap.Strict (IntMap)
 import Data.Maybe (mapMaybe)
 import Data.Ratio ((%))
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
 import Data.Word (Word32, Word8)
 import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Byte as MB
@@ -88,23 +90,30 @@ tableToDecompositionVector compat table = decompositions
           | otherwise -> Nothing
 
 tableToCompositionTables ::
-     (Word32 -> Bool)
+     VG.Vector v Word32
+  => (Word32 -> Bool)
   -> Table annS annR Properties
-  -> (V.Vector (Maybe Int), V.Vector Word32)
+  -> (V.Vector (Maybe Int), v Word32)
 tableToCompositionTables exclude =
   nestedMapToTables 0 . tableToCompositionMap exclude
 
 nestedMapToTables ::
-     Ord a => a -> IntMap (IntMap a) -> (V.Vector (Maybe Int), V.Vector a)
+     (VG.Vector v a, Ord a)
+  => a
+  -> IntMap (IntMap a)
+  -> (V.Vector (Maybe Int), v a)
 nestedMapToTables def nmap = (topVec, bottomVec)
   where
     (topMap, bottomVecMap) = deduplicate nmap
     topVec =
       V.replicate unicodeTableSize Nothing V.// IM.toList (fmap Just topMap)
+    bottomMapsCount = V.length bottomVecMap
     bottomVec =
-      V.concatMap
-        (\m -> V.replicate unicodeTableSize def V.// IM.toList m)
-        bottomVecMap
+      VG.replicate (unicodeTableSize * bottomMapsCount) def VG.//
+      [ (tableNo * unicodeTableSize + i, v)
+      | (tableNo, table) <- V.toList (V.indexed bottomVecMap)
+      , (i, v) <- IM.toList table
+      ]
 
 tableToCompositionMap ::
      (Word32 -> Bool) -> Table annS annR Properties -> IntMap (IntMap Word32)
