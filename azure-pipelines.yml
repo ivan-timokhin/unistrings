@@ -15,6 +15,7 @@ jobs:
       set -ex
       sudo update-alternatives --set opt-ghc /opt/ghc/bin/ghc-${GHCVER}
       sudo update-alternatives --set opt-cabal /opt/cabal/bin/cabal-${CABALVER}
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
       ghc --version
       cabal --version
       cabal v2-test --test-show-details=direct ucd:ucd-test-xml ucd:ucd-test-inspection
