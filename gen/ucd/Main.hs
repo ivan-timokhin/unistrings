@@ -7,11 +7,6 @@
 
 module Main where
 
-import Control.Concurrent.Async
-  ( concurrently_
-  , forConcurrently_
-  , mapConcurrently_
-  )
 import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
@@ -88,6 +83,8 @@ import qualified UCD.UnicodeData
 import qualified UCD.VerticalOrientation
 import qualified UCD.WordBreakProperty
 
+import qualified Runner as R
+
 main :: IO ()
 main = do
   records <- UCD.UnicodeData.fetch
@@ -95,7 +92,7 @@ main = do
   createDirectoryIfMissing True "ucd/generated/hs/Data/UCD/Internal"
   createDirectoryIfMissing True "ucd/generated/test_data"
   let fullPartitionings = (4, 16)
-  mapConcurrently_
+  R.traverse_
     id
     [ processTableAs enum fullPartitionings "general_category" $
       UCD.UnicodeData.tableToVector NotAssigned $
@@ -110,7 +107,7 @@ main = do
                   VU.imap (\cp mapping -> fromIntegral mapping - cp) table
              in do generateTests name table
                    generateSourcesAs integral fullPartitionings name diffTable
-       in mapConcurrently_
+       in R.traverse_
             id
             [ processSimpleCaseMapping
                 "simple_uppercase_mapping"
@@ -137,7 +134,7 @@ main = do
                    fullTable :: V.Vector (V.Vector Int)
                    fullTable = tableToVector V.empty sparseTable
                generateTests name fullTable
-               forConcurrently_ [0 .. maxLen - 1] $ \i ->
+               R.for_ [0 .. maxLen - 1] $ \i ->
                  let ithCPSparse = fmap (V.!? i) sparseTable
                      ithCPFull = zeroMapping `adjustWithM` ithCPSparse
                   in generateSourcesAs
@@ -145,7 +142,7 @@ main = do
                        fullPartitionings
                        (name <> "_" <> B.pack (show i))
                        ithCPFull
-         mapConcurrently_
+         R.traverse_
            id
            [ processSpecialCaseMapping
                3
@@ -167,7 +164,7 @@ main = do
                UCD.CaseFolding.simple foldings
              diffSimpleTable = VU.imap (flip (-)) fullSimpleTable
              maxLen = 3
-         concurrently_
+         R.both_
            (do generateTests "simple_case_folding" fullSimpleTable
                generateSourcesAs
                  integral
@@ -177,7 +174,7 @@ main = do
            (do generateTests "full_case_folding" $
                  V.replicate unicodeTableSize V.empty `adjustWith`
                  UCD.CaseFolding.full foldings
-               forConcurrently_ [0 .. maxLen - 1] $ \i ->
+               R.for_ [0 .. maxLen - 1] $ \i ->
                  let ithSparseTable = (V.!? i) <$> UCD.CaseFolding.full foldings
                      ithFullMap =
                        VU.replicate unicodeTableSize 0 `adjustWithM`
@@ -207,8 +204,8 @@ main = do
     , do shortNames <- UCD.Jamo.fetch
          generateASCIITableSources (0, 0) "jamo_short_name" shortNames
     , do aliases <- tableToVector V.empty <$> UCD.NameAliases.fetch
-         concurrently_ (generateTests "name_aliases" aliases) $
-           concurrently_
+         R.both_ (generateTests "name_aliases" aliases) $
+           R.both_
              (generateASCIIVectorTableSources
                 fullPartitionings
                 "name_aliases_aliases" $
@@ -226,8 +223,8 @@ main = do
          processTableAs enum fullPartitionings "script" scripts
     , do scriptExts <-
            UCD.Common.tableToVector V.empty <$> UCD.ScriptExtensions.fetch
-         concurrently_
-           (concurrently_
+         R.both_
+           (R.both_
               (generateSourcesAs
                  smallEnumVector
                  fullPartitionings
@@ -241,7 +238,7 @@ main = do
                processTableAs bool fullPartitionings snakeName $
                UCD.Common.tableToVector False $ getter props
              (~>) = (,)
-         mapConcurrently_
+         R.traverse_
            (uncurry processProp)
            [ "bidi_control" ~> UCD.PropList.bidiControl
            , "dash" ~> UCD.PropList.dash
@@ -263,7 +260,7 @@ main = do
                generateTests
                  snakeName
                  (UCD.Common.tableToVector False (getter props) :: V.Vector Bool)
-         mapConcurrently_
+         R.traverse_
            (uncurry mkTestsProp)
            [ "white_space" ~> UCD.PropList.whiteSpace
            , "join_control" ~> UCD.PropList.joinControl
@@ -282,7 +279,7 @@ main = do
                processTableAs bool fullPartitionings snakeName $
                UCD.Common.tableToVector False $ getter props
              (~>) = (,)
-         mapConcurrently_
+         R.traverse_
            (uncurry processProp)
            [ "math" ~> UCD.DCP.math
            , "alphabetic" ~> UCD.DCP.alphabetic
@@ -318,7 +315,7 @@ main = do
     , do nv <- UCD.DerivedNumericValues.fetch
          let valuesTable :: V.Vector (Ratio Int64)
              valuesTable = UCD.Common.tableToVector 0 nv
-         concurrently_
+         R.both_
            (generateSourcesAs integral fullPartitionings "numeric_numerator" $
             VG.convert $ fmap numerator valuesTable)
            (generateSourcesAs integral fullPartitionings "numeric_denominator" $
@@ -328,7 +325,7 @@ main = do
       fmap fst . UCD.UnicodeData.propDecompositionMapping <$> records
     , let canonicalDecomposition =
             UCD.UnicodeData.tableToDecompositionVector False records
-       in concurrently_
+       in R.both_
             (generateSourcesAs
                ffiVector
                fullPartitionings
@@ -341,7 +338,7 @@ main = do
              VG.convert $ fmap V.length canonicalDecomposition)
     , let compatibilityDecomposition =
             UCD.UnicodeData.tableToDecompositionVector True records
-       in concurrently_
+       in R.both_
             (generateSourcesAs
                ffiVector
                fullPartitionings
@@ -361,7 +358,7 @@ main = do
                UCD.UnicodeData.tableToCompositionTables
                  (\i -> fullCompositionExclusion V.! fromIntegral i)
                  records
-         concurrently_
+         R.both_
            (generateSourcesAs
               maybeIntegral
               fullPartitionings
@@ -372,7 +369,7 @@ main = do
               fullPartitionings
               "canonical_composition_bottom"
               bottomCompositionTable)
-         mapConcurrently_
+         R.traverse_
            id
            [ processTableAs bool fullPartitionings "nfd_quick_check" $
              UCD.DNP.nfdQuickCheck nps
@@ -398,13 +395,13 @@ main = do
                  ws -> Just $ V.fromList $ map fromIntegral ws
              allNFKCCFL =
                tableToVector (1 :: Int) $ length <$> UCD.DNP.nfkcCaseFold nps
-         concurrently_
+         R.both_
            (generateSourcesAs
               integral
               fullPartitionings
               "simple_nfkc_casefold"
               simpleNFKCCF)
-           (concurrently_
+           (R.both_
               (generateSourcesAs
                  ffiVector
                  fullPartitionings

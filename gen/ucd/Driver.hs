@@ -6,7 +6,6 @@
 module Driver where
 
 import Control.Arrow ((&&&))
-import Control.Concurrent.Async (concurrently_)
 import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
@@ -55,6 +54,8 @@ import Gen.Type
   )
 import Trie (TrieDesc, mkTrie)
 import TrieOpt (findOptimalPartitioning)
+
+import qualified Runner as R
 
 typeName ::
      forall a. Typeable a
@@ -197,7 +198,7 @@ processTableAs tv partitionings snakeName values = do
 generateASCIITableSources ::
      (Int, Int) -> ByteString -> V.Vector ByteString -> IO ()
 generateASCIITableSources partitionings snakeName values =
-  concurrently_
+  R.both_
     (generateSourcesAs byteString partitionings (snakeName <> "_ptr") values)
     (generateSourcesAs
        integral
@@ -210,13 +211,13 @@ generateASCIITableSources partitionings snakeName values =
 generateASCIIVectorTableSources ::
      (Int, Int) -> ByteString -> V.Vector (V.Vector ByteString) -> IO ()
 generateASCIIVectorTableSources partitionings snakeName values =
-  concurrently_
+  R.both_
     (generateSourcesAs
        integral
        partitionings
        (snakeName <> "_len")
        (VG.convert $ VG.map V.length values)) $
-  concurrently_
+  R.both_
     (generateSourcesAs
        ffiVector
        partitionings
