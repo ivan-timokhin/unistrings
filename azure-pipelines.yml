@@ -1,0 +1,6 @@
+jobs:
+- job: linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: echo hello
