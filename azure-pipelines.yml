@@ -19,11 +19,13 @@ jobs:
       ghc --version
       cabal --version
 
-      cabal update
+      cabal v2-update
 
       case ${CABALVER%%.*} in
         2) export CABALFLAGS="--show-details=streaming"
+           ;;
         3) export CABALFLAGS="--test-show-details=streaming"
+           ;;
       esac
 
       cabal v2-test ${CABALFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
