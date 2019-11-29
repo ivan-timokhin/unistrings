@@ -28,4 +28,6 @@ jobs:
            ;;
       esac
 
+      cabal v2-test --help
+
       cabal v2-test ${CABALFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
