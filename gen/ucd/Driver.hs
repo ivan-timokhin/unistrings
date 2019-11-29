@@ -23,6 +23,7 @@ import Data.Typeable
   )
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as VG
+import qualified Data.Vector.Unboxed as VU
 import Data.Word (Word8)
 import System.IO (IOMode(WriteMode), hPrint, withFile)
 
@@ -104,8 +105,8 @@ maybeEnum =
     }
 
 integral ::
-     forall i. (Integral i, Typeable i)
-  => TableValue V.Vector V.Vector i i IntegralType
+     forall i. (Integral i, Typeable i, VU.Unbox i)
+  => TableValue VU.Vector VU.Vector i i IntegralType
 integral =
   TableValue
     { typeValues = typeIntegral &&& id
@@ -202,7 +203,7 @@ generateASCIITableSources partitionings snakeName values =
        integral
        partitionings
        (snakeName <> "_len")
-       (fmap B.length values))
+       (VG.convert $ VG.map B.length values))
 
 -- This assumes that the total length of all strings in a single
 -- element is <= 255
@@ -214,7 +215,7 @@ generateASCIIVectorTableSources partitionings snakeName values =
        integral
        partitionings
        (snakeName <> "_len")
-       (fmap V.length values)) $
+       (VG.convert $ VG.map V.length values)) $
   concurrently_
     (generateSourcesAs
        ffiVector

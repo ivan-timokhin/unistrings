@@ -16,9 +16,11 @@ import qualified Data.ByteString.Char8 as B
 import Data.Char (GeneralCategory(NotAssigned))
 import Data.Foldable (for_)
 import Data.Functor ((<&>))
-import Data.Int (Int32)
-import Data.Ratio (denominator, numerator)
+import Data.Int (Int32, Int64)
+import Data.Ratio (Ratio, denominator, numerator)
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
+import qualified Data.Vector.Unboxed as VU
 import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
@@ -101,11 +103,11 @@ main = do
     , processTableAs integral fullPartitionings "canonical_combining_class" $
       UCD.UnicodeData.tableToVector 0 $
       fmap UCD.UnicodeData.propCanonicalCombiningClass records
-    , let identityMapping = V.generate unicodeTableSize fromIntegral
+    , let identityMapping = VU.generate unicodeTableSize fromIntegral
           processSimpleCaseMapping name getter =
             let table = identityMapping `adjustWithM` fmap getter records
                 diffTable =
-                  V.imap (\cp mapping -> fromIntegral mapping - cp) table
+                  VU.imap (\cp mapping -> fromIntegral mapping - cp) table
              in do generateTests name table
                    generateSourcesAs integral fullPartitionings name diffTable
        in mapConcurrently_
@@ -121,7 +123,7 @@ main = do
                 UCD.UnicodeData.propSimpleTitlecaseMapping
             ]
     , do special <- UCD.SpecialCasing.fetch
-         let zeroMapping = V.replicate unicodeTableSize 0
+         let zeroMapping = VU.replicate unicodeTableSize 0
              processSpecialCaseMapping maxLen name getter = do
                let sparseTable =
                      dropNothing $
@@ -159,11 +161,11 @@ main = do
                UCD.SpecialCasing.title
            ]
     , do foldings <- UCD.CaseFolding.fetch
-         let identityMapping = V.generate unicodeTableSize id
+         let identityMapping = VU.generate unicodeTableSize id
              fullSimpleTable =
                identityMapping `adjustWith` UCD.CaseFolding.common foldings `adjustWith`
                UCD.CaseFolding.simple foldings
-             diffSimpleTable = V.imap (flip (-)) fullSimpleTable
+             diffSimpleTable = VU.imap (flip (-)) fullSimpleTable
              maxLen = 3
          concurrently_
            (do generateTests "simple_case_folding" fullSimpleTable
@@ -178,7 +180,7 @@ main = do
                forConcurrently_ [0 .. maxLen - 1] $ \i ->
                  let ithSparseTable = (V.!? i) <$> UCD.CaseFolding.full foldings
                      ithFullMap =
-                       V.replicate unicodeTableSize 0 `adjustWithM`
+                       VU.replicate unicodeTableSize 0 `adjustWithM`
                        ithSparseTable
                   in generateSourcesAs
                        integral
@@ -232,7 +234,7 @@ main = do
                  "script_exts_ptr"
                  scriptExts)
               (generateSourcesAs integral fullPartitionings "script_exts_len" $
-               fmap V.length scriptExts))
+               VG.convert $ fmap V.length scriptExts))
            (generateTests "script_exts" scriptExts)
     , do props <- UCD.PropList.fetch
          let processProp snakeName getter =
@@ -314,12 +316,13 @@ main = do
                  UCD.DerivedNumericType.Numeric -> 3
          generateSourcesAs integral fullPartitionings "numeric_type" typesV
     , do nv <- UCD.DerivedNumericValues.fetch
-         let valuesTable = UCD.Common.tableToVector 0 nv
+         let valuesTable :: V.Vector (Ratio Int64)
+             valuesTable = UCD.Common.tableToVector 0 nv
          concurrently_
            (generateSourcesAs integral fullPartitionings "numeric_numerator" $
-            fmap numerator valuesTable)
+            VG.convert $ fmap numerator valuesTable)
            (generateSourcesAs integral fullPartitionings "numeric_denominator" $
-            fmap denominator valuesTable)
+            VG.convert $ fmap denominator valuesTable)
     , processTableAs maybeEnum fullPartitionings "decomposition_type" $
       UCD.Common.tableToVector Nothing $
       fmap fst . UCD.UnicodeData.propDecompositionMapping <$> records
@@ -335,7 +338,7 @@ main = do
                integral
                fullPartitionings
                "canonical_decomposition_len" $
-             fmap V.length canonicalDecomposition)
+             VG.convert $ fmap V.length canonicalDecomposition)
     , let compatibilityDecomposition =
             UCD.UnicodeData.tableToDecompositionVector True records
        in concurrently_
@@ -348,7 +351,7 @@ main = do
                integral
                fullPartitionings
                "compatibility_decomposition_len" $
-             fmap V.length compatibilityDecomposition)
+             VG.convert $ fmap V.length compatibilityDecomposition)
     , do nps <- UCD.DNP.fetch
          let fullCompositionExclusion =
                UCD.Common.tableToVector
@@ -380,9 +383,9 @@ main = do
            , processTableAs maybeBool fullPartitionings "nfkc_quick_check" $
              UCD.DNP.nfkcQuickCheck nps
            ]
-         let identityMapping = V.generate unicodeTableSize fromIntegral
+         let identityMapping = VU.generate unicodeTableSize fromIntegral
              simpleNFKCCF =
-               V.imap (\cp m -> fromIntegral m - cp) $
+               VU.imap (\cp m -> fromIntegral m - cp) $
                identityMapping `adjustWithM`
                (UCD.DNP.nfkcCaseFold nps <&> \case
                   [cp] -> Just cp
@@ -446,9 +449,9 @@ main = do
       UCD.Common.tableToVector False $
       fmap UCD.UnicodeData.propBidiMirrored records
     , do bm <- UCD.BidiMirroring.fetch
-         let identity = V.generate unicodeTableSize id
+         let identity = VU.generate unicodeTableSize id
              withMappings = identity `adjustWith` bm
-             diff = V.imap (flip (-)) withMappings
+             diff = VU.imap (flip (-)) withMappings
          generateSourcesAs
            integral
            fullPartitionings
@@ -457,8 +460,8 @@ main = do
     , do bb <- UCD.BidiBrackets.fetch
          let types = tableToVector Nothing $ fmap (Just . snd) bb
              pairs =
-               V.imap (flip (-)) $
-               V.generate unicodeTableSize id `adjustWith` fmap fst bb
+               VU.imap (flip (-)) $
+               VU.generate unicodeTableSize id `adjustWith` fmap fst bb
          processTableAs
            maybeEnum
            fullPartitionings
