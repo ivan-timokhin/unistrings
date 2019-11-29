@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Trie
@@ -20,6 +21,7 @@ import Data.Maybe (fromMaybe)
 import Data.Traversable (for)
 import Data.Tuple (swap)
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
 
 data TrieDesc t layerAnnotation bottomAnnotation a
   = Bottom bottomAnnotation (t (V.Vector a))
@@ -39,18 +41,23 @@ deriving instance
           Show layerAnnotation, Show bottomAnnotation) =>
          Show (TrieDesc t layerAnnotation bottomAnnotation a)
 
-mkTrie :: Ord a => V.Vector a -> [Int] -> TrieDesc Identity () () a
-mkTrie xs [] = Bottom () (Identity xs)
+mkTrie ::
+     forall v a. (VG.Vector v a, Ord (v a))
+  => v a
+  -> [Int]
+  -> TrieDesc Identity () () a
+mkTrie xs [] = Bottom () (Identity $ VG.convert xs)
 mkTrie xs (lowBits:rest) = split (go rest) lowBits (Identity xs)
   where
-    go [] = Bottom ()
+    go :: [Int] -> V.Vector (v a) -> TrieDesc V.Vector () () a
+    go [] = Bottom () . V.map VG.convert
     go (lb:lbs) = split (go lbs) lb
 
 split ::
-     (Traversable t, Ord a)
-  => (V.Vector (V.Vector a) -> TrieDesc V.Vector () () a)
+     (Traversable t, Ord (v a), VG.Vector v a)
+  => (V.Vector (v a) -> TrieDesc V.Vector () () a)
   -> Int
-  -> t (V.Vector a)
+  -> t (v a)
   -> TrieDesc t () () a
 {-# INLINE split #-}
 split recur lowBits xs = Layer () lowBits indices $ recur compressed
@@ -58,14 +65,14 @@ split recur lowBits xs = Layer () lowBits indices $ recur compressed
     (Compose indices, compressed) =
       deduplicate $ Compose $ fmap (matricise lowBits) xs
 
-matricise :: Int -> V.Vector a -> V.Vector (V.Vector a)
+matricise :: VG.Vector v a => Int -> v a -> V.Vector (v a)
 matricise lowBits xs
   | remainder /= 0 =
     error "matricise: row size does not evenly divide full size"
   | otherwise =
-    V.generate columnSize $ \rowIdx -> V.slice (rowIdx * rowSize) rowSize xs
+    V.generate columnSize $ \rowIdx -> VG.slice (rowIdx * rowSize) rowSize xs
   where
-    fullSize = V.length xs
+    fullSize = VG.length xs
     rowSize = 1 `shiftL` lowBits
     (columnSize, remainder) = fullSize `divMod` rowSize
 

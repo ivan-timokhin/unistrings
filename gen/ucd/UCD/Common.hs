@@ -18,7 +18,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Ord (Down(Down))
-import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
 import Data.Void (Void)
 import Data.Word (Word32)
 import qualified Text.Megaparsec as M
@@ -48,18 +48,18 @@ dropNothing (Table tbl) = Table $ mapMaybe sequence tbl
 unicodeTableSize :: Int
 unicodeTableSize = 0x110000
 
-tableToVector :: a -> Table annS annR a -> V.Vector a
-tableToVector def table = V.replicate unicodeTableSize def `adjustWith` table
+tableToVector :: VG.Vector v a => a -> Table annS annR a -> v a
+tableToVector def table = VG.replicate unicodeTableSize def `adjustWith` table
 
-adjustWith :: V.Vector a -> Table annS annR a -> V.Vector a
-adjustWith vec table = vec V.// assignments
+adjustWith :: VG.Vector v a => v a -> Table annS annR a -> v a
+adjustWith vec table = vec VG.// assignments
   where
     assignments =
       getTable table >>= \case
         Single code _ udata -> [(fromIntegral code, udata)]
         Range lo hi _ udata -> [(fromIntegral i, udata) | i <- [lo .. hi]]
 
-adjustWithM :: V.Vector a -> Table annS annR (Maybe a) -> V.Vector a
+adjustWithM :: VG.Vector v a => v a -> Table annS annR (Maybe a) -> v a
 adjustWithM vec table = vec `adjustWith` dropNothing table
 
 type Parser e = M.Parsec e ByteString
