@@ -18,4 +18,12 @@ jobs:
       export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
       ghc --version
       cabal --version
-      cabal v2-test --test-show-details=direct ucd:ucd-test-xml ucd:ucd-test-inspection
+
+      cabal update
+
+      case ${CABALVER%%.*} in
+        2) export CABALFLAGS="--show-details=streaming"
+        3) export CABALFLAGS="--test-show-details=streaming"
+      esac
+
+      cabal v2-test ${CABALFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
