@@ -48,3 +48,22 @@ jobs:
       esac
 
       cabal v2-test ${CABAL_FLAGS} ${CABALDFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
+
+- job: windows
+  pool:
+    vmImage: 'windows-latest'
+  variables:
+    CABAL_FLAGS: "-fWerror"
+  steps:
+  - bash: |
+      set -ex
+      choco install cabal ghc
+
+      cabal --version
+      ghc --version
+
+      cabal v2-update
+
+      ls $(Pipeline.Workspace)
+
+      cabal v2-test --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
