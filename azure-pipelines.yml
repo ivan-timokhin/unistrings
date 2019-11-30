@@ -38,6 +38,7 @@ jobs:
       path: $(Pipeline.Workspace)/.cabal/store
 
   - script: |
+      set -ex
       export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
       case ${CABALVER%%.*} in
         2) export CABALDFLAGS=""
