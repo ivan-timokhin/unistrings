@@ -6,10 +6,12 @@ jobs:
     matrix:
       cabal-8.6.5:
         GHCVER: 8.6.5
-        CABALVER: 2.4
+        CABALVER: 3.0
       cabal-8.8.1:
         GHCVER: 8.8.1
         CABALVER: 3.0
+  variables:
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
   steps:
   - script: |
       set -ex
@@ -21,6 +23,21 @@ jobs:
 
       cabal v2-update
 
+      mkdir -p $(CABAL_STORE_FOLDER)
+
+      sed -i "s%-- store-dir:%store-dir: $(CABAL_STORE_FOLDER)%" $HOME/.cabal/config
+
+      cabal v2-freeze --enable-tests
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"  | cabal.project.freeze'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+      path: $(Pipeline.Workspace)/.cabal/store
+
+  - script: |
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
       case ${CABALVER%%.*} in
         2) export CABALFLAGS=""
            ;;
