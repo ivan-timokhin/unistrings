@@ -12,6 +12,7 @@ jobs:
         CABALVER: 3.0
   variables:
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
+    CABAL_FLAGS: "-fWerror"
   steps:
   - script: |
       set -ex
@@ -27,7 +28,7 @@ jobs:
 
       sed -i "s%-- store-dir:%store-dir: $(CABAL_STORE_FOLDER)%" $HOME/.cabal/config
 
-      cabal v2-freeze --enable-tests
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
 
   - task: Cache@2
     inputs:
@@ -39,10 +40,10 @@ jobs:
   - script: |
       export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
       case ${CABALVER%%.*} in
-        2) export CABALFLAGS=""
+        2) export CABALDFLAGS=""
            ;;
-        3) export CABALFLAGS="--test-show-details=streaming"
+        3) export CABALDFLAGS="--test-show-details=streaming"
            ;;
       esac
 
-      cabal v2-test ${CABALFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
+      cabal v2-test ${CABAL_FLAGS} ${CABALDFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
