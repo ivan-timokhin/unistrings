@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP #-}
 
 module Test.Yocto
   ( Test
@@ -48,6 +49,10 @@ import GHC.Stack
   )
 import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
+
+#if !MIN_VERSION_base(4, 13, 0)
+import Control.Monad.Fail (MonadFail(fail))
+#endif
 
 data Level
   = Expected
