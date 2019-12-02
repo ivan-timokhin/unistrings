@@ -83,4 +83,5 @@ jobs:
 
       dir $(Pipeline.Workspace)
 
+      cabal v2-test --test-show-details=streaming ucd:ucd-test-inspection
       cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
