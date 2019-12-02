@@ -55,22 +55,16 @@ jobs:
   variables:
     CABAL_FLAGS: "-fWerror"
   steps:
-  - bash: |
-      set -ex
+  - pwsh: |
       choco install cabal ghc
 
-  - bash: |
-      set -ex
-
-      export PATH=/c/ProgramData/chocolatey/lib/ghc/tools/ghc-8.8.1/bin:$PATH
-
-      echo ${PATH}
+      refreshenv
 
       cabal --version
       ghc --version
 
       cabal v2-update
 
-      ls $(Pipeline.Workspace)
+      dir $(Pipeline.Workspace)
 
       cabal v2-test --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
