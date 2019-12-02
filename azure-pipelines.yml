@@ -59,6 +59,11 @@ jobs:
       set -ex
       choco install cabal ghc
 
+  - bash: |
+      set -ex
+
+      echo ${PATH}
+
       cabal --version
       ghc --version
 
