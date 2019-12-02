@@ -62,6 +62,8 @@ jobs:
   - bash: |
       set -ex
 
+      export PATH=/c/ProgramData/chocolatey/lib/ghc/tools/ghc-8.8.1/bin:$PATH
+
       echo ${PATH}
 
       cabal --version
