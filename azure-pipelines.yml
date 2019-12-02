@@ -71,6 +71,11 @@ jobs:
 
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${GHCVER}\bin"
 
+      echo "${env:PATH}"
+      echo "${GHCVER}"
+
+      dir "C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${GHCVER}\bin"
+
       cabal --version
       ghc --version
 
