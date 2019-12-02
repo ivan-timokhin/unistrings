@@ -63,18 +63,18 @@ jobs:
       Set-PSDebug -Trace 2
 
       choco install cabal
-      choco install ghc --version=${GHCVER}
+      choco install ghc --version=${env:GHCVER}
 
       refreshenv
 
       echo "${env:PATH}"
 
-      $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${GHCVER}\bin"
+      $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
       echo "${env:PATH}"
-      echo "${GHCVER}"
+      echo "${env:GHCVER}"
 
-      dir "C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${GHCVER}\bin"
+      dir "C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
       cabal --version
       ghc --version
