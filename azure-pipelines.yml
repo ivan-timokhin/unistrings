@@ -52,13 +52,24 @@ jobs:
 - job: windows
   pool:
     vmImage: 'windows-latest'
+  strategy:
+    matrix:
+      ghc-8.8.1:
+        GHCVER: 8.8.1
   variables:
     CABAL_FLAGS: "-fWerror"
   steps:
   - pwsh: |
-      choco install cabal ghc
+      Set-PSDebug -Trace 2
+
+      choco install cabal
+      choco install ghc --version=${GHCVER}
 
       refreshenv
+
+      echo "${env:PATH}"
+
+      $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${GHCVER}\bin"
 
       cabal --version
       ghc --version
