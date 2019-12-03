@@ -24,9 +24,7 @@ jobs:
 
       cabal v2-update
 
-      mkdir -p $(CABAL_STORE_FOLDER)
-
-      sed -i "s%-- store-dir:%store-dir: $(CABAL_STORE_FOLDER)%" $HOME/.cabal/config
+      cabal user-config update --augment="store-dir: $(CABAL_STORE_FOLDER)"
 
       cabal v2-freeze ${CABAL_FLAGS} --enable-tests
 
@@ -35,6 +33,7 @@ jobs:
       key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"  | cabal.project.freeze'
       restoreKeys: |
         "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
       path: $(Pipeline.Workspace)/.cabal/store
 
   - script: |
@@ -56,6 +55,7 @@ jobs:
     matrix:
       ghc-8.8.1:
         GHCVER: 8.8.1
+        CABALVER: 3.0.0.0
   variables:
     CABAL_FLAGS: "-fWerror"
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
@@ -63,19 +63,10 @@ jobs:
   - pwsh: |
       Set-PSDebug -Trace 2
 
-      choco install cabal
+      choco install cabal --version=${env:CABALVER}
       choco install ghc --version=${env:GHCVER}
 
-      refreshenv
-
-      echo "${env:PATH}"
-
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
-
-      echo "${env:PATH}"
-      echo "${env:GHCVER}"
-
-      dir "C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
       cabal --version
       ghc --version
@@ -91,12 +82,11 @@ jobs:
       key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"  | cabal.project.freeze'
       restoreKeys: |
         "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
       path: $(CABAL_STORE_FOLDER)
 
   - pwsh: |
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
-
-      dir $(Pipeline.Workspace)
 
       cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
