@@ -58,6 +58,7 @@ jobs:
         GHCVER: 8.8.1
   variables:
     CABAL_FLAGS: "-fWerror"
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -81,7 +82,7 @@ jobs:
 
       cabal v2-update
 
-      (get-content ${env:HOME}\.cabal\config) | % { $_ -replace "-- store-dir:", "store-dir: $(Pipeline.Workspace)\cabal" } | set-content ${env:HOME}\.cabal\config
+      cabal user-config update --augment="store-dir: $(CABAL_STORE_FOLDER)"
 
   - pwsh: |
       Set-PSDebug -Trace 2
