@@ -90,3 +90,42 @@ jobs:
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
       cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
+
+- job: macOS
+  pool:
+    vmImage: 'macOS-latest'
+  strategy:
+    matrix:
+      ghc-8.6.5:
+        GHCVER: 8.6
+      ghc-8.8.1:
+        GHCVER: 8.8
+  variables:
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
+    CABAL_FLAGS: "-fWerror"
+  steps:
+  - bash: |
+      set -ex
+
+      brew install "ghc@${GHCVER}" cabal-install
+
+      ghc --version
+      cabal --version
+
+      cabal v2-update
+
+      cabal user-config update --augment="store-dir: $(CABAL_STORE_FOLDER)"
+
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | cabal.project.freeze'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+      path: $(CABAL_STORE_FOLDER)
+
+  - bash: |
+      set -ex
+
+      cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
