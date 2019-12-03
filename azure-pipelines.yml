@@ -84,10 +84,19 @@ jobs:
 
       cabal user-config update --augment="store-dir: $(CABAL_STORE_FOLDER)"
 
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"  | cabal.project.freeze'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+      path: $(CABAL_STORE_FOLDER)
+
   - pwsh: |
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
       dir $(Pipeline.Workspace)
 
-      cabal v2-test -v --test-show-details=streaming ucd:ucd-test-xml
+      cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
