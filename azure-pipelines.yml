@@ -109,6 +109,8 @@ jobs:
 
       brew install "ghc@${GHCVER}" cabal-install
 
+      export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
+
       ghc --version
       cabal --version
 
@@ -127,5 +129,7 @@ jobs:
 
   - bash: |
       set -ex
+
+      export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
 
       cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
