@@ -81,7 +81,12 @@ jobs:
 
       cabal v2-update
 
+      (get-content ${env:HOME}\.cabal\config) | % { $_ -replace "-- store-dir:", "store-dir: $(Pipeline.Workspace)\cabal" } | set-content ${env:HOME}\.cabal\config
+
+  - pwsh: |
+      Set-PSDebug -Trace 2
+      $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
+
       dir $(Pipeline.Workspace)
 
-      cabal v2-test --test-show-details=streaming ucd:ucd-test-inspection
-      cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
+      cabal v2-test -v --test-show-details=streaming ucd:ucd-test-xml
