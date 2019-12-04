@@ -133,3 +133,48 @@ jobs:
       export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
 
       cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
+
+- job: genLinux
+  pool:
+    vmImage: 'ubuntu-latest'
+  variables:
+    GHCVER: 8.8.1
+    CABALVER: 3.0
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
+    CABAL_FLAGS: "-fWerror -f-threaded"
+  steps:
+  - script: |
+      set -ex
+      sudo update-alternatives --set opt-ghc /opt/ghc/bin/ghc-${GHCVER}
+      sudo update-alternatives --set opt-cabal /opt/cabal/bin/cabal-${CABALVER}
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
+      ghc --version
+      cabal --version
+
+      cabal v2-update
+
+      cabal user-config update --augment="store-dir: ${CABAL_STORE_FOLDER}"
+
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+      path: $(CABAL_STORE_FOLDER)
+
+  - script: |
+      set -ex
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
+
+      mkdir -p reference/ucd
+      mv -v {,reference/}ucd/generated
+
+      cabal v2-run ${CABAL_FLAGS} gen:ucd
+
+      diff -sr {reference/,}ucd/generated/cbits
+      diff -sr {reference/,}ucd/generated/hs
+
+      cabal v2-test ${CABAL_FLAGS} ucd:ucd-test
