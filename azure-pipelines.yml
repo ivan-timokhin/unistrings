@@ -4,10 +4,10 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
-      cabal-8.6.5:
+      ghc-8.6.5:
         GHCVER: 8.6.5
         CABALVER: 3.0
-      cabal-8.8.1:
+      ghc-8.8.1:
         GHCVER: 8.8.1
         CABALVER: 3.0
   variables:
@@ -34,19 +34,13 @@ jobs:
       restoreKeys: |
         "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
         "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
-      path: $(Pipeline.Workspace)/.cabal/store
+      path: $(CABAL_STORE_FOLDER)
 
   - script: |
       set -ex
       export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
-      case ${CABALVER%%.*} in
-        2) export CABALDFLAGS=""
-           ;;
-        3) export CABALDFLAGS="--test-show-details=streaming"
-           ;;
-      esac
 
-      cabal v2-test ${CABAL_FLAGS} ${CABALDFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
+      cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
 
 - job: linuxStack
   pool:
