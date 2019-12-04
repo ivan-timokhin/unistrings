@@ -240,7 +240,7 @@ jobs:
 
   - script: |
       set -ex
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection
+      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection
 
 - job: genLinux
   pool:
