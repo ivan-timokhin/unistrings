@@ -55,6 +55,8 @@ jobs:
     matrix:
       lts-14.16:
         RESOLVER: lts-14.16
+  variables:
+    STACK_ROOT: $(Pipeline.Workspace)/.stack
   steps:
   - script: |
       set -ex
@@ -63,10 +65,21 @@ jobs:
       echo "resolver: ${RESOLVER}" >> stack.yaml
 
       stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run
+      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run 2>&1 | tee stack.dry-run.log
 
       cat stack.yaml.lock
+      cat stack.dry-run.log
 
+  - task: Cache@2
+    inputs:
+      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | stack.yaml.lock | stack.dry-run.log'
+      restoreKeys: |
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | stack.yaml.lock
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
+      path: $(STACK_ROOT)
+
+  - script: |
+      set -ex
       stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection
 
 - job: windowsCabal
