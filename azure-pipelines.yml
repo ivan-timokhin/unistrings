@@ -135,14 +135,14 @@ jobs:
   variables:
     STACK_ROOT: $(Pipeline.Workspace)\_stack
   steps:
-  - pwsh: |
-      Set-PSDebug -Trace 2
+  - bash: |
+      set -ex
 
       choco install haskell-stack
 
       stack --version
 
-      Add-Content -Path ./stack.yaml -Value "resolver: ${env:RESOLVER}"
+      echo "resolver: ${env:RESOLVER}" >> stack.yaml
 
       stack --no-terminal test --pedantic ucd:ucd-test-xml --dry-run
       stack --no-terminal test --pedantic ucd:ucd-test-xml --dry-run 2>&1 | tee stack.dry-run.log
@@ -158,8 +158,8 @@ jobs:
         "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
       path: $(STACK_ROOT)
 
-  - pwsh: |
-      Set-PSDebug -Trace 2
+  - bash: |
+      set -ex
       stack --no-terminal test --pedantic ucd:ucd-test-xml
 
 - job: macOSCabal
