@@ -144,8 +144,8 @@ jobs:
 
       Add-Content -Path ./stack.yaml -Value "resolver: ${env:RESOLVER}"
 
-      stack test --pedantic ucd:ucd-test-xml --dry-run
-      stack test --pedantic ucd:ucd-test-xml --dry-run 2>&1 | tee stack.dry-run.log
+      stack --no-terminal test --pedantic ucd:ucd-test-xml --dry-run
+      stack --no-terminal test --pedantic ucd:ucd-test-xml --dry-run 2>&1 | tee stack.dry-run.log
 
       cat stack.yaml.lock
       cat stack.dry-run.log
@@ -160,7 +160,7 @@ jobs:
 
   - pwsh: |
       Set-PSDebug -Trace 2
-      stack test --pedantic ucd:ucd-test-xml
+      stack --no-terminal test --pedantic ucd:ucd-test-xml
 
 - job: macOSCabal
   pool:
