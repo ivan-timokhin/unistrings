@@ -218,7 +218,7 @@ jobs:
   - script: |
       set -ex
 
-      brew install haskell-stack
+      brew install haskell-stack icu4c
 
       stack --version
 
