@@ -126,6 +126,7 @@ jobs:
       cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
 
 - job: windowsStack
+  condition: false
   pool:
     vmImage: 'windows-latest'
   strategy:
