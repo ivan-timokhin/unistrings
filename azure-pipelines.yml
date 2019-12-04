@@ -138,7 +138,8 @@ jobs:
   - bash: |
       set -ex
 
-      choco install haskell-stack
+      curl -sSkL http://www.stackage.org/stack/windows-x86_64 -o /usr/bin/stack.zip
+      unzip -o /usr/bin/stack.zip -d /usr/bin/
 
       stack --version
 
