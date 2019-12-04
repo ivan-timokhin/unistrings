@@ -1,5 +1,5 @@
 jobs:
-- job: linux
+- job: linuxCabal
   pool:
     vmImage: 'ubuntu-latest'
   strategy:
@@ -48,7 +48,28 @@ jobs:
 
       cabal v2-test ${CABAL_FLAGS} ${CABALDFLAGS} ucd:ucd-test-xml ucd:ucd-test-inspection
 
-- job: windows
+- job: linuxStack
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      lts-14.16:
+        RESOLVER: lts-14.16
+  steps:
+  - script: |
+      set -ex
+      stack --version
+
+      echo "resolver: ${RESOLVER}" >> stack.yaml
+
+      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run
+      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run
+
+      cat stack.yaml.lock
+
+      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection
+
+- job: windowsCabal
   pool:
     vmImage: 'windows-latest'
   strategy:
@@ -91,7 +112,7 @@ jobs:
 
       cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
 
-- job: macOS
+- job: macOSCabal
   pool:
     vmImage: 'macOS-latest'
   strategy:
