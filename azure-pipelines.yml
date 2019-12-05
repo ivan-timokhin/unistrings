@@ -56,6 +56,7 @@ jobs:
       lts-14.16:
         RESOLVER: lts-14.16
   variables:
+    STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_TEST_TARGETS: |
       ucd:ucd-test-xml
@@ -65,19 +66,19 @@ jobs:
       set -ex
       stack --version
 
-      echo "resolver: ${RESOLVER}" >> stack.yaml
+      echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
 
       stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
       stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
-      cat stack.yaml.lock
+      cat azure.stack.yaml.lock
       cat stack.dry-run.log
 
   - task: Cache@2
     inputs:
-      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | stack.yaml.lock | stack.dry-run.log'
+      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
       restoreKeys: |
-        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | stack.yaml.lock
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock
         "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
       path: $(STACK_ROOT)
 
@@ -192,6 +193,7 @@ jobs:
         RESOLVER: lts-14.16
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
+    STACK_YAML: azure.stack.yaml
     STACK_TEST_TARGETS: |
       ucd:ucd-test-xml
       ucd:ucd-test-inspection
@@ -203,19 +205,19 @@ jobs:
 
       stack --version
 
-      echo "resolver: ${RESOLVER}" >> stack.yaml
+      echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
 
       stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
       stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
-      cat stack.yaml.lock
+      cat azure.stack.yaml.lock
       cat stack.dry-run.log
 
   - task: Cache@2
     inputs:
-      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | stack.yaml.lock | stack.dry-run.log'
+      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
       restoreKeys: |
-        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | stack.yaml.lock
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock
         "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
       path: $(STACK_ROOT)
 
