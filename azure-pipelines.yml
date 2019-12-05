@@ -54,6 +54,9 @@ jobs:
         RESOLVER: lts-14.16
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
+    STACK_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
   steps:
   - script: |
       set -ex
@@ -61,8 +64,8 @@ jobs:
 
       echo "resolver: ${RESOLVER}" >> stack.yaml
 
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run 2>&1 | tee stack.dry-run.log
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat stack.yaml.lock
       cat stack.dry-run.log
@@ -77,7 +80,7 @@ jobs:
 
   - script: |
       set -ex
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection
+      stack test --pedantic ${STACK_TEST_TARGETS}
 
 - job: windowsCabal
   pool:
@@ -90,6 +93,8 @@ jobs:
   variables:
     CABAL_FLAGS: "-fWerror"
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test-xml
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -120,7 +125,7 @@ jobs:
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
-      cabal v2-test --test-show-details=streaming ucd:ucd-test-xml
+      cabal v2-test --test-show-details=streaming ${env:CABAL_TEST_TARGETS}
 
 - job: windowsStack
   condition: false
@@ -132,6 +137,8 @@ jobs:
         RESOLVER: lts-14.16
   variables:
     STACK_ROOT: $(Pipeline.Workspace)\_stack
+    STACK_TEST_TARGETS: |
+      ucd:ucd-test-xml
   steps:
   - bash: |
       set -ex
@@ -143,8 +150,8 @@ jobs:
 
       echo "resolver: ${env:RESOLVER}" >> stack.yaml
 
-      stack --no-terminal test --pedantic ucd:ucd-test-xml --dry-run
-      stack --no-terminal test --pedantic ucd:ucd-test-xml --dry-run 2>&1 | tee stack.dry-run.log
+      stack --no-terminal test --pedantic ${env:STACK_TEST_TARGETS} --dry-run
+      stack --no-terminal test --pedantic ${env:STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat stack.yaml.lock
       cat stack.dry-run.log
@@ -159,7 +166,7 @@ jobs:
 
   - bash: |
       set -ex
-      stack --no-terminal test --pedantic ucd:ucd-test-xml
+      stack --no-terminal test --pedantic ${env:STACK_TEST_TARGETS}
 
 - job: macOSCabal
   pool:
@@ -173,6 +180,9 @@ jobs:
   variables:
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
     CABAL_FLAGS: "-fWerror"
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
   steps:
   - bash: |
       set -ex
@@ -202,7 +212,7 @@ jobs:
 
       export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
 
-      cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ucd:ucd-test-xml ucd:ucd-test-inspection
+      cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ${CABAL_TEST_TARGETS}
 
 - job: macOSStack
   pool:
@@ -213,6 +223,9 @@ jobs:
         RESOLVER: lts-14.16
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
+    STACK_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
   steps:
   - script: |
       set -ex
@@ -223,8 +236,8 @@ jobs:
 
       echo "resolver: ${RESOLVER}" >> stack.yaml
 
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run
-      stack test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection --dry-run 2>&1 | tee stack.dry-run.log
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat stack.yaml.lock
       cat stack.dry-run.log
@@ -239,7 +252,7 @@ jobs:
 
   - script: |
       set -ex
-      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ucd:ucd-test-xml ucd:ucd-test-inspection
+      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_TEST_TARGETS}
 
 - job: genLinux
   pool:
@@ -249,6 +262,8 @@ jobs:
     CABALVER: 3.0
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
     CABAL_FLAGS: "-fWerror -f-threaded"
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test
   steps:
   - script: |
       set -ex
@@ -284,4 +299,4 @@ jobs:
       diff -sr {reference/,}ucd/generated/cbits
       diff -sr {reference/,}ucd/generated/hs
 
-      cabal v2-test ${CABAL_FLAGS} ucd:ucd-test
+      cabal v2-test ${CABAL_FLAGS} ${CABAL_TEST_TARGETS}
