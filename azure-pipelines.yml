@@ -1,0 +1,275 @@
+jobs:
+- job: linuxCabal
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      ghc-8.6.5:
+        GHCVER: 8.6.5
+        CABALVER: 3.0
+      ghc-8.8.1:
+        GHCVER: 8.8.1
+        CABALVER: 3.0
+  variables:
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
+    CABAL_FLAGS: "-fWerror"
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
+  steps:
+  - script: |
+      set -ex
+      sudo update-alternatives --set opt-ghc /opt/ghc/bin/ghc-${GHCVER}
+      sudo update-alternatives --set opt-cabal /opt/cabal/bin/cabal-${CABALVER}
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
+      ghc --version
+      cabal --version
+
+      cabal v2-update
+
+      cabal user-config update --augment="store-dir: $(CABAL_STORE_FOLDER)"
+
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
+
+      cabal v2-test ${CABAL_FLAGS} --dry-run ${CABAL_TEST_TARGETS} | tee cabal.dry-run.log
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze | cabal.dry-run.log'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+      path: $(CABAL_STORE_FOLDER)
+
+  - script: |
+      set -ex
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
+
+      cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ${CABAL_TEST_TARGETS}
+
+- job: linuxStack
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      lts-14.16:
+        RESOLVER: lts-14.16
+  variables:
+    STACK_YAML: azure.stack.yaml
+    STACK_ROOT: $(Pipeline.Workspace)/.stack
+    STACK_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
+  steps:
+  - script: |
+      set -ex
+      stack --version
+
+      echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
+
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
+
+      cat azure.stack.yaml.lock
+      cat stack.dry-run.log
+
+  - task: Cache@2
+    inputs:
+      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
+      restoreKeys: |
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
+      path: $(STACK_ROOT)
+
+  - script: |
+      set -ex
+      stack test --pedantic ${STACK_TEST_TARGETS}
+
+- job: windowsCabal
+  pool:
+    vmImage: 'windows-latest'
+  strategy:
+    matrix:
+      ghc-8.8.1:
+        GHCVER: 8.8.1
+        CABALVER: 3.0.0.0
+  variables:
+    CABAL_FLAGS: "-fWerror"
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test-xml
+  steps:
+  - pwsh: |
+      Set-PSDebug -Trace 2
+
+      choco install cabal --version=${env:CABALVER}
+      choco install ghc --version=${env:GHCVER}
+
+      $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
+
+      cabal --version
+      ghc --version
+
+      cabal v2-update
+
+      cabal user-config update --augment="store-dir: ${env:CABAL_STORE_FOLDER}"
+
+      cabal v2-freeze ${env:CABAL_FLAGS} --enable-tests
+
+      cabal v2-test ${env:CABAL_FLAGS} --dry-run ${env:CABAL_TEST_TARGETS} | tee cabal.dry-run.log
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze | cabal.dry-run.log'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+      path: $(CABAL_STORE_FOLDER)
+
+  - pwsh: |
+      Set-PSDebug -Trace 2
+      $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
+
+      cabal v2-test --test-show-details=streaming ${env:CABAL_TEST_TARGETS}
+
+- job: macOSCabal
+  pool:
+    vmImage: 'macOS-latest'
+  strategy:
+    matrix:
+      ghc-8.6.5:
+        GHCVER: 8.6
+      ghc-8.8.1:
+        GHCVER: 8.8
+  variables:
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
+    CABAL_FLAGS: "-fWerror"
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
+  steps:
+  - bash: |
+      set -ex
+
+      brew install "ghc@${GHCVER}" cabal-install
+
+      export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
+
+      ghc --version
+      cabal --version
+
+      cabal v2-update
+
+      cabal user-config update --augment="store-dir: $(CABAL_STORE_FOLDER)"
+
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
+
+      cabal v2-test ${CABAL_FLAGS} --dry-run ${CABAL_TEST_TARGETS} | tee cabal.dry-run.log
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze | cabal.dry-run.log'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+      path: $(CABAL_STORE_FOLDER)
+
+  - bash: |
+      set -ex
+
+      export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
+
+      cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ${CABAL_TEST_TARGETS}
+
+- job: macOSStack
+  pool:
+    vmImage: 'macOS-latest'
+  strategy:
+    matrix:
+      lts-14.16:
+        RESOLVER: lts-14.16
+  variables:
+    STACK_ROOT: $(Pipeline.Workspace)/.stack
+    STACK_YAML: azure.stack.yaml
+    STACK_TEST_TARGETS: |
+      ucd:ucd-test-xml
+      ucd:ucd-test-inspection
+  steps:
+  - script: |
+      set -ex
+
+      brew install haskell-stack icu4c
+
+      stack --version
+
+      echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
+
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
+
+      cat azure.stack.yaml.lock
+      cat stack.dry-run.log
+
+  - task: Cache@2
+    inputs:
+      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
+      restoreKeys: |
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock
+        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
+      path: $(STACK_ROOT)
+
+  - script: |
+      set -ex
+      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_TEST_TARGETS}
+
+- job: genLinux
+  pool:
+    vmImage: 'ubuntu-latest'
+  variables:
+    GHCVER: 8.8.1
+    CABALVER: 3.0
+    CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
+    CABAL_FLAGS: "-fWerror -f-threaded"
+    CABAL_TEST_TARGETS: |
+      ucd:ucd-test
+  steps:
+  - script: |
+      set -ex
+      sudo update-alternatives --set opt-ghc /opt/ghc/bin/ghc-${GHCVER}
+      sudo update-alternatives --set opt-cabal /opt/cabal/bin/cabal-${CABALVER}
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
+      ghc --version
+      cabal --version
+
+      cabal v2-update
+
+      cabal user-config update --augment="store-dir: ${CABAL_STORE_FOLDER}"
+
+      cabal v2-freeze ${CABAL_FLAGS} --enable-tests
+      cabal v2-build ${CABAL_FLAGS} --dry-run gen:ucd ${CABAL_TEST_TARGETS} | tee cabal.dry-run.log
+
+  - task: Cache@2
+    inputs:
+      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze | cabal.dry-run.log'
+      restoreKeys: |
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
+        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+      path: $(CABAL_STORE_FOLDER)
+
+  - script: |
+      set -ex
+      export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
+
+      mkdir -p reference/ucd
+      mv -v {,reference/}ucd/generated
+
+      cabal v2-run ${CABAL_FLAGS} gen:ucd
+
+      diff -sr {reference/,}ucd/generated/cbits
+      diff -sr {reference/,}ucd/generated/hs
+
+      cabal v2-test ${CABAL_FLAGS} ${CABAL_TEST_TARGETS}
