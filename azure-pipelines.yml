@@ -64,12 +64,16 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
+        STACK_FLAGS: --flag ucd:-inspection
       lts-11.22:
         RESOLVER: lts-11.22
+        STACK_FLAGS:
       lts-12.26:
         RESOLVER: lts-12.26
+        STACK_FLAGS:
       lts-14.16:
         RESOLVER: lts-14.16
+        STACK_FLAGS:
   variables:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
@@ -83,8 +87,8 @@ jobs:
 
       echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
 
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat azure.stack.yaml.lock
       cat stack.dry-run.log
@@ -99,7 +103,7 @@ jobs:
 
   - script: |
       set -ex
-      stack test --pedantic ${STACK_TEST_TARGETS}
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS}
 
 - job: windowsCabal
   pool:
@@ -220,12 +224,16 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
+        STACK_FLAGS: --flag ucd:-inspection
       lts-11.22:
         RESOLVER: lts-11.22
+        STACK_FLAGS:
       lts-12.26:
         RESOLVER: lts-12.26
+        STACK_FLAGS:
       lts-14.16:
         RESOLVER: lts-14.16
+        STACK_FLAGS:
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
@@ -242,8 +250,8 @@ jobs:
 
       echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
 
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat azure.stack.yaml.lock
       cat stack.dry-run.log
@@ -258,7 +266,7 @@ jobs:
 
   - script: |
       set -ex
-      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_TEST_TARGETS}
+      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS}
 
 - job: genLinux
   pool:
