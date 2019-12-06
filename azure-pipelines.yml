@@ -4,6 +4,15 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
+      ghc-8.0.2:
+        GHCVER: 8.0.2
+        CABALVER: 3.0
+      ghc-8.2.2:
+        GHCVER: 8.2.2
+        CABALVER: 3.0
+      ghc-8.4.4:
+        GHCVER: 8.4.4
+        CABALVER: 3.0
       ghc-8.6.5:
         GHCVER: 8.6.5
         CABALVER: 3.0
@@ -53,14 +62,32 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
+      lts-9.21:
+        RESOLVER: lts-9.21
+        STACK_FLAGS: --flag ucd:-inspection --flag ucd:zippath
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+      lts-11.22:
+        RESOLVER: lts-11.22
+        STACK_FLAGS:
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+          ucd:ucd-test-inspection
+      lts-12.26:
+        RESOLVER: lts-12.26
+        STACK_FLAGS:
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+          ucd:ucd-test-inspection
       lts-14.16:
         RESOLVER: lts-14.16
+        STACK_FLAGS:
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+          ucd:ucd-test-inspection
   variables:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
-    STACK_TEST_TARGETS: |
-      ucd:ucd-test-xml
-      ucd:ucd-test-inspection
   steps:
   - script: |
       set -ex
@@ -68,8 +95,8 @@ jobs:
 
       echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
 
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat azure.stack.yaml.lock
       cat stack.dry-run.log
@@ -84,13 +111,25 @@ jobs:
 
   - script: |
       set -ex
-      stack test --pedantic ${STACK_TEST_TARGETS}
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS}
 
 - job: windowsCabal
   pool:
     vmImage: 'windows-latest'
   strategy:
     matrix:
+      ghc-8.0.2:
+        GHCVER: 8.0.2
+        CABALVER: 3.0.0.0
+      ghc-8.2.2:
+        GHCVER: 8.2.2
+        CABALVER: 3.0.0.0
+      ghc-8.4.4:
+        GHCVER: 8.4.4
+        CABALVER: 3.0.0.0
+      ghc-8.6.5:
+        GHCVER: 8.6.5
+        CABALVER: 3.0.0.0
       ghc-8.8.1:
         GHCVER: 8.8.1
         CABALVER: 3.0.0.0
@@ -139,6 +178,8 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
+      ghc-8.2.2:
+        GHCVER: 8.2
       ghc-8.6.5:
         GHCVER: 8.6
       ghc-8.8.1:
@@ -189,14 +230,32 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
+      lts-9.21:
+        RESOLVER: lts-9.21
+        STACK_FLAGS: --flag ucd:-inspection --flag ucd:zippath
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+      lts-11.22:
+        RESOLVER: lts-11.22
+        STACK_FLAGS:
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+          ucd:ucd-test-inspection
+      lts-12.26:
+        RESOLVER: lts-12.26
+        STACK_FLAGS:
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+          ucd:ucd-test-inspection
       lts-14.16:
         RESOLVER: lts-14.16
+        STACK_FLAGS:
+        STACK_TEST_TARGETS: |
+          ucd:ucd-test-xml
+          ucd:ucd-test-inspection
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
-    STACK_TEST_TARGETS: |
-      ucd:ucd-test-xml
-      ucd:ucd-test-inspection
   steps:
   - script: |
       set -ex
@@ -207,8 +266,8 @@ jobs:
 
       echo "resolver: ${RESOLVER}" >> ${STACK_YAML}
 
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run
-      stack test --pedantic ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run
+      stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS} --dry-run 2>&1 | tee stack.dry-run.log
 
       cat azure.stack.yaml.lock
       cat stack.dry-run.log
@@ -223,7 +282,7 @@ jobs:
 
   - script: |
       set -ex
-      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_TEST_TARGETS}
+      stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS}
 
 - job: genLinux
   pool:

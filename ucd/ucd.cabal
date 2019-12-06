@@ -21,6 +21,14 @@ flag Werror
                        (for use in development and CI only)
   default:             False
   manual:              True
+flag inspection
+  description:         Enable inspection-testing test suite
+  default:             True
+  manual:              True
+flag zippath
+  description:         Whether the version of zip available uses typed paths
+  default:             False
+  manual:              False
 
 library
   exposed-modules:     Data.UCD
@@ -235,7 +243,7 @@ library
                      , generated/cbits/equivalent_unified_ideograph.c
                      , generated/cbits/indic_positional_category.c
                      , generated/cbits/indic_syllabic_category.c
-  build-depends:       base >=4.12 && <4.14
+  build-depends:       base >=4.9 && <4.14
                      , bytestring >= 0.10.8 && < 0.11
   hs-source-dirs:      src
                      , generated/hs
@@ -288,8 +296,12 @@ test-suite ucd-test-xml
                      , bytestring
                      , text
                      , xml-conduit
-                     , zip
                      , containers
+  if flag(zippath)
+    build-depends:     zip < 0.2
+                     , path
+  else
+    build-depends:     zip >= 0.2
   hs-source-dirs:      test-xml
                      , test-common
   default-language:    Haskell2010
@@ -304,6 +316,8 @@ test-suite ucd-test-inspection
   build-depends:       base
                      , inspection-testing
                      , ucd
+  if !flag(inspection)
+    buildable:         False
   hs-source-dirs:      test-inspection
   default-language:    Haskell2010
 
