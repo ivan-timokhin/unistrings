@@ -25,6 +25,10 @@ flag inspection
   description:         Enable inspection-testing test suite
   default:             True
   manual:              True
+flag zippath
+  description:         Whether the version of zip available uses typed paths
+  default:             False
+  manual:              False
 
 library
   exposed-modules:     Data.UCD
@@ -292,8 +296,12 @@ test-suite ucd-test-xml
                      , bytestring
                      , text
                      , xml-conduit
-                     , zip
                      , containers
+  if flag(zippath)
+    build-depends:     zip < 0.2
+                     , path
+  else
+    build-depends:     zip >= 0.2
   hs-source-dirs:      test-xml
                      , test-common
   default-language:    Haskell2010

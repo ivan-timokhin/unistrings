@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE CPP #-}
 
 module Main
   ( main
@@ -31,6 +32,9 @@ import Text.XML
   , documentRoot
   , sinkDoc
   )
+#if !MIN_VERSION_zip(0, 2, 0)
+import Path.Internal (Path(Path))
+#endif
 
 import qualified Data.UCD as UCD
 
@@ -492,10 +496,17 @@ readBoolean txt =
   withFrozenCallStack $ criticalFailure $ "Unable to read boolean: " ++ show txt
 
 readUCD :: IO Document
+#if MIN_VERSION_zip(0, 2, 0)
 readUCD = do
   selector <- mkEntrySelector "ucd.nounihan.grouped.xml"
   withArchive "../data/ucdxml/ucd.nounihan.grouped.zip" $
     sourceEntry selector (sinkDoc def)
+#else
+readUCD = do
+  selector <- mkEntrySelector $ Path "ucd.nounihan.grouped.xml"
+  withArchive (Path "../data/ucdxml/ucd.nounihan.grouped.zip") $
+    sourceEntry selector (sinkDoc def)
+#endif
 
 elementChildren :: Element -> [Element]
 elementChildren =

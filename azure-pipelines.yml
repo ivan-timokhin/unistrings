@@ -64,7 +64,7 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
-        STACK_FLAGS: --flag ucd:-inspection
+        STACK_FLAGS: --flag ucd:-inspection --flag ucd:zippath
         STACK_TEST_TARGETS: |
           ucd:ucd-test-xml
       lts-11.22:
@@ -232,7 +232,7 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
-        STACK_FLAGS: --flag ucd:-inspection
+        STACK_FLAGS: --flag ucd:-inspection --flag ucd:zippath
         STACK_TEST_TARGETS: |
           ucd:ucd-test-xml
       lts-11.22:
