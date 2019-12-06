@@ -53,7 +53,7 @@ import System.IO (hPutStrLn, stderr)
 #if !MIN_VERSION_base(4, 13, 0)
 import Control.Monad.Fail (MonadFail(fail))
 #endif
-#if !MIN_VERSION_base(4, 11, 0)
+#if !MIN_VERSION_base(4, 11, 0) && MIN_VERSION_base(4, 10, 0)
 import Data.Semigroup (Semigroup)
 #endif
 
@@ -95,7 +95,11 @@ newtype Suite =
   Suite
     { runSuite :: ([String] -> Failure -> IO ()) -> IO ()
     }
-  deriving (Semigroup, Monoid)
+  deriving (
+#if MIN_VERSION_base(4, 10, 0)
+    Semigroup,
+#endif
+    Monoid)
 
 test :: String -> Test a -> Suite
 {-# INLINE test #-}
