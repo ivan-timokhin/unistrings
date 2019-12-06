@@ -4,6 +4,15 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
+      ghc-8.0.2:
+        GHCVER: 8.0.2
+        CABALVER: 3.0
+      ghc-8.2.2:
+        GHCVER: 8.2.2
+        CABALVER: 3.0
+      ghc-8.4.4:
+        GHCVER: 8.4.4
+        CABALVER: 3.0
       ghc-8.6.5:
         GHCVER: 8.6.5
         CABALVER: 3.0
@@ -53,6 +62,12 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
+      lts-9.21:
+        RESOLVER: lts-9.21
+      lts-11.22:
+        RESOLVER: lts-11.22
+      lts-12.26:
+        RESOLVER: lts-12.26
       lts-14.16:
         RESOLVER: lts-14.16
   variables:
@@ -91,6 +106,18 @@ jobs:
     vmImage: 'windows-latest'
   strategy:
     matrix:
+      ghc-8.0.2:
+        GHCVER: 8.0.2.2
+        CABALVER: 3.0.0.0
+      ghc-8.2.2:
+        GHCVER: 8.2.2
+        CABALVER: 3.0.0.0
+      ghc-8.4.4:
+        GHCVER: 8.4.4
+        CABALVER: 3.0.0.0
+      ghc-8.6.5:
+        GHCVER: 8.6.5
+        CABALVER: 3.0.0.0
       ghc-8.8.1:
         GHCVER: 8.8.1
         CABALVER: 3.0.0.0
@@ -139,6 +166,8 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
+      ghc-8.2.2:
+        GHCVER: 8.2
       ghc-8.6.5:
         GHCVER: 8.6
       ghc-8.8.1:
@@ -189,6 +218,12 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
+      lts-9.21:
+        RESOLVER: lts-9.21
+      lts-11.22:
+        RESOLVER: lts-11.22
+      lts-12.26:
+        RESOLVER: lts-12.26
       lts-14.16:
         RESOLVER: lts-14.16
   variables:
