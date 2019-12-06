@@ -119,7 +119,7 @@ jobs:
   strategy:
     matrix:
       ghc-8.0.2:
-        GHCVER: 8.0.2.2
+        GHCVER: 8.0.2
         CABALVER: 3.0.0.0
       ghc-8.2.2:
         GHCVER: 8.2.2
