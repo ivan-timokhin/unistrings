@@ -11,7 +11,6 @@ import Data.Bits ((.|.))
 import qualified Data.ByteString as B
 import Data.Char (toUpper)
 import Data.Foldable (for_)
-import Data.Functor ((<&>))
 import Data.List (find, sort)
 import qualified Data.Map.Lazy as M
 import Data.Maybe (fromJust, mapMaybe)
@@ -253,7 +252,7 @@ testCP children getAttr cp =
                             readMaybe dstr
                       pure $ Just $ num % denom
                 let ucdVal =
-                      UCD.numeric cp <&> \case
+                      flip fmap (UCD.numeric cp) $ \case
                         UCD.Decimal v -> fromIntegral v
                         UCD.Digit v -> fromIntegral v
                         UCD.Numeric v -> v
