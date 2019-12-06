@@ -1,4 +1,4 @@
-module Data.UCD.Internal
+module Data.UCD.Unsafe
   ( CodePoint(CodePoint, getCodePoint)
   ) where
 

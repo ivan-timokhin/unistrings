@@ -37,7 +37,7 @@ flag zippath
 
 library
   exposed-modules:     Data.UCD
-                     , Data.UCD.Internal
+                     , Data.UCD.Unsafe
   other-modules:       Data.UCD.Internal.Ptr
                      , Data.UCD.Internal.Int
                      , Data.UCD.Internal.ByteString

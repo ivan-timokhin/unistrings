@@ -130,7 +130,6 @@ import Data.Word (Word8)
 import Foreign.Ptr (plusPtr)
 import GHC.Real (Ratio((:%)))
 
-import Data.UCD.Internal (CodePoint(CodePoint))
 import qualified Data.UCD.Internal.Age as Age
 import qualified Data.UCD.Internal.Alphabetic as A
 import qualified Data.UCD.Internal.BidiClass as BCl
@@ -253,6 +252,7 @@ import qualified Data.UCD.Internal.VerticalOrientation as VO
 import qualified Data.UCD.Internal.WordBreak as WB
 import qualified Data.UCD.Internal.XidContinue as XIC
 import qualified Data.UCD.Internal.XidStart as XIS
+import Data.UCD.Unsafe (CodePoint(CodePoint))
 
 class IsCodePoint c where
   toCodePoint :: c -> CodePoint
