@@ -53,8 +53,8 @@ import System.IO (hPutStrLn, stderr)
 #if !MIN_VERSION_base(4, 13, 0)
 import Control.Monad.Fail (MonadFail(fail))
 #endif
-#if !MIN_VERSION_base(4, 11, 0) && MIN_VERSION_base(4, 10, 0)
-import Data.Semigroup (Semigroup)
+#if !MIN_VERSION_base(4, 11, 0)
+import Data.Semigroup (Semigroup((<>)))
 #endif
 
 data Level
@@ -95,11 +95,15 @@ newtype Suite =
   Suite
     { runSuite :: ([String] -> Failure -> IO ()) -> IO ()
     }
-  deriving (
-#if MIN_VERSION_base(4, 10, 0)
-    Semigroup,
+
+instance Semigroup Suite where
+  x <> y = Suite $ \report -> runSuite x report *> runSuite y report
+
+instance Monoid Suite where
+  mempty = Suite $ const $ pure ()
+#if !MIN_VERSION_base(4, 11, 0)
+  mappend = (<>)
 #endif
-    Monoid)
 
 test :: String -> Test a -> Suite
 {-# INLINE test #-}
