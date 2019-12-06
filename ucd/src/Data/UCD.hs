@@ -271,16 +271,17 @@ canonicalCombiningClass = withCP CCC.retrieve
 
 name :: IsCodePoint cp => cp -> ByteString
 name cp
-  | 0xAC00 <= icp && icp <= 0xD7A3 = "HANGUL SYLLABLE " <> hangulSyllableSuffix
+  | 0xAC00 <= icp && icp <= 0xD7A3 =
+    "HANGUL SYLLABLE " `mappend` hangulSyllableSuffix
   | otherwise =
     case prefix of
-      Just nameP -> nameP <> renderUnicodeInt icp
+      Just nameP -> nameP `mappend` renderUnicodeInt icp
       Nothing -> mkByteString (NameLen.retrieve icp) (NamePtr.retrieve icp)
   where
     icp = fromEnum $ toCodePoint cp
     hangulSyllableSuffix
-      | tindex > 0 = ljsn <> vjsn <> tjsn
-      | otherwise = ljsn <> vjsn
+      | tindex > 0 = ljsn `mappend` vjsn `mappend` tjsn
+      | otherwise = ljsn `mappend` vjsn
       where
         ljsn = mkByteString (JSNLen.retrieve lindex) (JSNPtr.retrieve lindex)
         vjsn = mkByteString (JSNLen.retrieve vpart) (JSNPtr.retrieve vpart)
