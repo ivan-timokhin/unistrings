@@ -20,7 +20,7 @@ module Data.UCD.Internal.Int
   ) where
 
 import GHC.Exts (Int#, word2Int#)
-import GHC.Int (Int16(I16#), Int32(I32#), Int64(I64#), Int8(I8#))
+import GHC.Int (Int16(I16#), Int32(I32#), Int8(I8#))
 import GHC.Word (Word16(W16#), Word8(W8#))
 
 class ToInt# a where
@@ -32,10 +32,6 @@ instance ToInt# Int16 where
 
 instance ToInt# Int32 where
   toInt# (I32# i) = i
-  {-# INLINE toInt# #-}
-
-instance ToInt# Int64 where
-  toInt# (I64# i) = i
   {-# INLINE toInt# #-}
 
 instance ToInt# Int8 where
