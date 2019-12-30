@@ -13,6 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
+{-# OPTIONS_HADDOCK show-extensions #-}
+
+{-|
+Module      : Data.UCD.Unsafe
+Description : Unsafe access to raw CodePoint values
+Copyright   : (c) Ivan Timokhin 2019
+License     : Apache-2.0
+Maintainer  : timokhin.iv@gmail.com
+Stability   : experimental
+
+
+-}
 module Data.UCD.Unsafe
   ( CodePoint(CodePoint, getCodePoint)
   ) where
@@ -22,8 +34,25 @@ import Data.Ix (Ix)
 import Data.Word (Word32)
 import Numeric (showHex)
 
--- TODO: Read
+-- | A Unicode code point, defined in the Unicode standard
+-- (definitions D9–D10), as an integer in the range from 0 to
+-- 0x10FFFF.
+--
+-- The specific representation is abstract (direct access is possible
+-- via "Data.UCD.Unsafe"); use 'Enum' instance to access integer
+-- value.
+--
+-- @since 0.1.0.0
 newtype CodePoint =
+  -- | Internally, code points are represented as 32-bit unsigned
+  -- integers.
+  --
+  -- Please do keep in mind that valid code points are restricted to
+  -- the range 0–0x10FFFF, and functions operating on this type may
+  -- assume that.  In particular, trying to call "Data.UCD" functions
+  -- on invalid code points will lead to out-of-bounds memory access.
+  --
+  -- @since 0.1.0.0
   CodePoint
     { getCodePoint :: Word32
     }

@@ -54,10 +54,37 @@ import Data.Data (Data)
 import Data.Ix (Ix)
 import GHC.Generics (Generic)
 
+-- | Access to property value aliases, as defined in the
+-- @PropertyValueAliases.txt@ file in the Unicode Character Database.
+--
+-- Specifically, this class offers access to the second and third
+-- columns in the file (typically, abbreviated and full name); while
+-- certain property values have more name aliases, they are not
+-- accessible via this class.
 class (Enum p, Bounded p) =>
       EnumeratedProperty p
   where
+  -- | The name given in the third column of
+  -- @PropertyValueAliases.txt@; typically, a full name of the
+  -- property value.
+  --
+  -- === __Examples__
+  --
+  -- >>> fullPropertyValueName ArabicPresentationFormsABlock
+  -- "Arabic_Presentation_Forms_A"
+  --
+  -- @since 0.1.0.0
   fullPropertyValueName :: p -> ByteString
+  -- | The name given in the second column of
+  -- @PropertyValueAliases.txt@; typically, an abbreviated name of the
+  -- property value.
+  --
+  -- === __Examples__
+  --
+  -- >>> abbreviatedPropertyValueName ArabicPresentationFormsABlock
+  -- "Arabic_PF_A"
+  --
+  -- @since 0.1.0.0
   abbreviatedPropertyValueName :: p -> ByteString
 
 instance EnumeratedProperty GeneralCategory where
@@ -126,29 +153,35 @@ instance EnumeratedProperty GeneralCategory where
       PrivateUse -> "Co"
       NotAssigned -> "Cn"
 
+-- | The Unicode Standard version in which the code point was
+-- assigned /or/ reserved.
+--
+-- See 'Data.UCD.age' for more details.
+--
+-- @since 0.1.0.0
 data Age
-  = V1_1
-  | V2_0
-  | V2_1
-  | V3_0
-  | V3_1
-  | V3_2
-  | V4_0
-  | V4_1
-  | V5_0
-  | V5_1
-  | V5_2
-  | V6_0
-  | V6_1
-  | V6_2
-  | V6_3
-  | V7_0
-  | V8_0
-  | V9_0
-  | V10_0
-  | V11_0
-  | V12_0
-  | V12_1
+  = V1_1 -- ^ @since 0.1.0.0
+  | V2_0 -- ^ @since 0.1.0.0
+  | V2_1 -- ^ @since 0.1.0.0
+  | V3_0 -- ^ @since 0.1.0.0
+  | V3_1 -- ^ @since 0.1.0.0
+  | V3_2 -- ^ @since 0.1.0.0
+  | V4_0 -- ^ @since 0.1.0.0
+  | V4_1 -- ^ @since 0.1.0.0
+  | V5_0 -- ^ @since 0.1.0.0
+  | V5_1 -- ^ @since 0.1.0.0
+  | V5_2 -- ^ @since 0.1.0.0
+  | V6_0 -- ^ @since 0.1.0.0
+  | V6_1 -- ^ @since 0.1.0.0
+  | V6_2 -- ^ @since 0.1.0.0
+  | V6_3 -- ^ @since 0.1.0.0
+  | V7_0 -- ^ @since 0.1.0.0
+  | V8_0 -- ^ @since 0.1.0.0
+  | V9_0 -- ^ @since 0.1.0.0
+  | V10_0 -- ^ @since 0.1.0.0
+  | V11_0 -- ^ @since 0.1.0.0
+  | V12_0 -- ^ @since 0.1.0.0
+  | V12_1 -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Age where
@@ -201,30 +234,33 @@ instance EnumeratedProperty Age where
       V12_0 -> "12.0"
       V12_1 -> "12.1"
 
+-- | See 'Data.UCD.bidiClass'
+--
+-- @since 0.1.0.0
 data BidiClass
-  = LeftToRightBC
-  | RightToLeftBC
-  | ArabicLetterBC
-  | EuropeanNumberBC
-  | EuropeanSeparatorBC
-  | EuropeanTerminatorBC
-  | ArabicNumberBC
-  | CommonSeparatorBC
-  | NonspacingMarkBC
-  | BoundaryNeutralBC
-  | ParagraphSeparatorBC
-  | SegmentSeparatorBC
-  | WhiteSpaceBC
-  | OtherNeutralBC
-  | LeftToRightEmbeddingBC
-  | LeftToRightOverrideBC
-  | RightToLeftEmbeddingBC
-  | RightToLeftOverrideBC
-  | PopDirectionalFormatBC
-  | LeftToRightIsolateBC
-  | RightToLeftIsolateBC
-  | FirstStrongIsolateBC
-  | PopDirectionalIsolateBC
+  = LeftToRightBC -- ^ @since 0.1.0.0
+  | RightToLeftBC -- ^ @since 0.1.0.0
+  | ArabicLetterBC -- ^ @since 0.1.0.0
+  | EuropeanNumberBC -- ^ @since 0.1.0.0
+  | EuropeanSeparatorBC -- ^ @since 0.1.0.0
+  | EuropeanTerminatorBC -- ^ @since 0.1.0.0
+  | ArabicNumberBC -- ^ @since 0.1.0.0
+  | CommonSeparatorBC -- ^ @since 0.1.0.0
+  | NonspacingMarkBC -- ^ @since 0.1.0.0
+  | BoundaryNeutralBC -- ^ @since 0.1.0.0
+  | ParagraphSeparatorBC -- ^ @since 0.1.0.0
+  | SegmentSeparatorBC -- ^ @since 0.1.0.0
+  | WhiteSpaceBC -- ^ @since 0.1.0.0
+  | OtherNeutralBC -- ^ @since 0.1.0.0
+  | LeftToRightEmbeddingBC -- ^ @since 0.1.0.0
+  | LeftToRightOverrideBC -- ^ @since 0.1.0.0
+  | RightToLeftEmbeddingBC -- ^ @since 0.1.0.0
+  | RightToLeftOverrideBC -- ^ @since 0.1.0.0
+  | PopDirectionalFormatBC -- ^ @since 0.1.0.0
+  | LeftToRightIsolateBC -- ^ @since 0.1.0.0
+  | RightToLeftIsolateBC -- ^ @since 0.1.0.0
+  | FirstStrongIsolateBC -- ^ @since 0.1.0.0
+  | PopDirectionalIsolateBC -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty BidiClass where
@@ -279,12 +315,17 @@ instance EnumeratedProperty BidiClass where
       SegmentSeparatorBC -> "S"
       WhiteSpaceBC -> "WS"
 
+-- | Types of Hangul jamo and precomposed syllables.
+--
+-- See 'Data.UCD.hangulSyllableType' for details.
+--
+-- @since 0.1.0.0
 data HangulSyllableType
-  = LeadingJamo
-  | VowelJamo
-  | TrailingJamo
-  | LVSyllable
-  | LVTSyllable
+  = LeadingJamo -- ^ @since 0.1.0.0
+  | VowelJamo -- ^ @since 0.1.0.0
+  | TrailingJamo -- ^ @since 0.1.0.0
+  | LVSyllable -- ^ @since 0.1.0.0
+  | LVTSyllable -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty HangulSyllableType where
@@ -303,315 +344,343 @@ instance EnumeratedProperty HangulSyllableType where
       LVSyllable -> "LV"
       LVTSyllable -> "LVT"
 
+-- | Type (or purpose) of the given name alias.
+--
+-- For more details, see 'Data.UCD.nameAliases'
+--
+-- @since 0.1.0.0
 data NameAliasType
   = CorrectionAlias
+  -- ^ Corrections for serious problems in code point names
+  --
+  -- @since 0.1.0.0
   | ControlAlias
+  -- ^ ISO 6429 names for C0 and C1 control functions, and other
+  -- commonly occurring names for control codes
+  --
+  -- @since 0.1.0.0
   | AlternateAlias
+  -- ^ Widely used alternate names for format characters
+  --
+  -- @since 0.1.0.0
   | FigmentAlias
+  -- ^ Several documented labels for C1 control code points which were
+  -- never actually approved in any standard
+  --
+  -- @since 0.1.0.0
   | AbbreviationAlias
+  -- ^ Commonly occurring abbreviations (or acronyms) for control
+  -- codes, format characters, spaces, and variation selectors
+  --
+  -- @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
+-- | A Unicode allocation block.
+--
+-- For more details, see 'Data.UCD.block'
+--
+-- @since 0.1.0.0
 data Block
-  = BasicLatinBlock
-  | Latin1SupplementBlock
-  | LatinExtendedABlock
-  | LatinExtendedBBlock
-  | IPAExtensionsBlock
-  | SpacingModifierLettersBlock
-  | CombiningDiacriticalMarksBlock
-  | GreekAndCopticBlock
-  | CyrillicBlock
-  | CyrillicSupplementBlock
-  | ArmenianBlock
-  | HebrewBlock
-  | ArabicBlock
-  | SyriacBlock
-  | ArabicSupplementBlock
-  | ThaanaBlock
-  | NKoBlock
-  | SamaritanBlock
-  | MandaicBlock
-  | SyriacSupplementBlock
-  | ArabicExtendedABlock
-  | DevanagariBlock
-  | BengaliBlock
-  | GurmukhiBlock
-  | GujaratiBlock
-  | OriyaBlock
-  | TamilBlock
-  | TeluguBlock
-  | KannadaBlock
-  | MalayalamBlock
-  | SinhalaBlock
-  | ThaiBlock
-  | LaoBlock
-  | TibetanBlock
-  | MyanmarBlock
-  | GeorgianBlock
-  | HangulJamoBlock
-  | EthiopicBlock
-  | EthiopicSupplementBlock
-  | CherokeeBlock
-  | UnifiedCanadianAboriginalSyllabicsBlock
-  | OghamBlock
-  | RunicBlock
-  | TagalogBlock
-  | HanunooBlock
-  | BuhidBlock
-  | TagbanwaBlock
-  | KhmerBlock
-  | MongolianBlock
-  | UnifiedCanadianAboriginalSyllabicsExtendedBlock
-  | LimbuBlock
-  | TaiLeBlock
-  | NewTaiLueBlock
-  | KhmerSymbolsBlock
-  | BugineseBlock
-  | TaiThamBlock
-  | CombiningDiacriticalMarksExtendedBlock
-  | BalineseBlock
-  | SundaneseBlock
-  | BatakBlock
-  | LepchaBlock
-  | OlChikiBlock
-  | CyrillicExtendedCBlock
-  | GeorgianExtendedBlock
-  | SundaneseSupplementBlock
-  | VedicExtensionsBlock
-  | PhoneticExtensionsBlock
-  | PhoneticExtensionsSupplementBlock
-  | CombiningDiacriticalMarksSupplementBlock
-  | LatinExtendedAdditionalBlock
-  | GreekExtendedBlock
-  | GeneralPunctuationBlock
-  | SuperscriptsAndSubscriptsBlock
-  | CurrencySymbolsBlock
-  | CombiningDiacriticalMarksForSymbolsBlock
-  | LetterlikeSymbolsBlock
-  | NumberFormsBlock
-  | ArrowsBlock
-  | MathematicalOperatorsBlock
-  | MiscellaneousTechnicalBlock
-  | ControlPicturesBlock
-  | OpticalCharacterRecognitionBlock
-  | EnclosedAlphanumericsBlock
-  | BoxDrawingBlock
-  | BlockElementsBlock
-  | GeometricShapesBlock
-  | MiscellaneousSymbolsBlock
-  | DingbatsBlock
-  | MiscellaneousMathematicalSymbolsABlock
-  | SupplementalArrowsABlock
-  | BraillePatternsBlock
-  | SupplementalArrowsBBlock
-  | MiscellaneousMathematicalSymbolsBBlock
-  | SupplementalMathematicalOperatorsBlock
-  | MiscellaneousSymbolsAndArrowsBlock
-  | GlagoliticBlock
-  | LatinExtendedCBlock
-  | CopticBlock
-  | GeorgianSupplementBlock
-  | TifinaghBlock
-  | EthiopicExtendedBlock
-  | CyrillicExtendedABlock
-  | SupplementalPunctuationBlock
-  | CJKRadicalsSupplementBlock
-  | KangxiRadicalsBlock
-  | IdeographicDescriptionCharactersBlock
-  | CJKSymbolsAndPunctuationBlock
-  | HiraganaBlock
-  | KatakanaBlock
-  | BopomofoBlock
-  | HangulCompatibilityJamoBlock
-  | KanbunBlock
-  | BopomofoExtendedBlock
-  | CJKStrokesBlock
-  | KatakanaPhoneticExtensionsBlock
-  | EnclosedCJKLettersAndMonthsBlock
-  | CJKCompatibilityBlock
-  | CJKUnifiedIdeographsExtensionABlock
-  | YijingHexagramSymbolsBlock
-  | CJKUnifiedIdeographsBlock
-  | YiSyllablesBlock
-  | YiRadicalsBlock
-  | LisuBlock
-  | VaiBlock
-  | CyrillicExtendedBBlock
-  | BamumBlock
-  | ModifierToneLettersBlock
-  | LatinExtendedDBlock
-  | SylotiNagriBlock
-  | CommonIndicNumberFormsBlock
-  | PhagsPaBlock
-  | SaurashtraBlock
-  | DevanagariExtendedBlock
-  | KayahLiBlock
-  | RejangBlock
-  | HangulJamoExtendedABlock
-  | JavaneseBlock
-  | MyanmarExtendedBBlock
-  | ChamBlock
-  | MyanmarExtendedABlock
-  | TaiVietBlock
-  | MeeteiMayekExtensionsBlock
-  | EthiopicExtendedABlock
-  | LatinExtendedEBlock
-  | CherokeeSupplementBlock
-  | MeeteiMayekBlock
-  | HangulSyllablesBlock
-  | HangulJamoExtendedBBlock
-  | HighSurrogatesBlock
-  | HighPrivateUseSurrogatesBlock
-  | LowSurrogatesBlock
-  | PrivateUseAreaBlock
-  | CJKCompatibilityIdeographsBlock
-  | AlphabeticPresentationFormsBlock
-  | ArabicPresentationFormsABlock
-  | VariationSelectorsBlock
-  | VerticalFormsBlock
-  | CombiningHalfMarksBlock
-  | CJKCompatibilityFormsBlock
-  | SmallFormVariantsBlock
-  | ArabicPresentationFormsBBlock
-  | HalfwidthAndFullwidthFormsBlock
-  | SpecialsBlock
-  | LinearBSyllabaryBlock
-  | LinearBIdeogramsBlock
-  | AegeanNumbersBlock
-  | AncientGreekNumbersBlock
-  | AncientSymbolsBlock
-  | PhaistosDiscBlock
-  | LycianBlock
-  | CarianBlock
-  | CopticEpactNumbersBlock
-  | OldItalicBlock
-  | GothicBlock
-  | OldPermicBlock
-  | UgariticBlock
-  | OldPersianBlock
-  | DeseretBlock
-  | ShavianBlock
-  | OsmanyaBlock
-  | OsageBlock
-  | ElbasanBlock
-  | CaucasianAlbanianBlock
-  | LinearABlock
-  | CypriotSyllabaryBlock
-  | ImperialAramaicBlock
-  | PalmyreneBlock
-  | NabataeanBlock
-  | HatranBlock
-  | PhoenicianBlock
-  | LydianBlock
-  | MeroiticHieroglyphsBlock
-  | MeroiticCursiveBlock
-  | KharoshthiBlock
-  | OldSouthArabianBlock
-  | OldNorthArabianBlock
-  | ManichaeanBlock
-  | AvestanBlock
-  | InscriptionalParthianBlock
-  | InscriptionalPahlaviBlock
-  | PsalterPahlaviBlock
-  | OldTurkicBlock
-  | OldHungarianBlock
-  | HanifiRohingyaBlock
-  | RumiNumeralSymbolsBlock
-  | OldSogdianBlock
-  | SogdianBlock
-  | ElymaicBlock
-  | BrahmiBlock
-  | KaithiBlock
-  | SoraSompengBlock
-  | ChakmaBlock
-  | MahajaniBlock
-  | SharadaBlock
-  | SinhalaArchaicNumbersBlock
-  | KhojkiBlock
-  | MultaniBlock
-  | KhudawadiBlock
-  | GranthaBlock
-  | NewaBlock
-  | TirhutaBlock
-  | SiddhamBlock
-  | ModiBlock
-  | MongolianSupplementBlock
-  | TakriBlock
-  | AhomBlock
-  | DograBlock
-  | WarangCitiBlock
-  | NandinagariBlock
-  | ZanabazarSquareBlock
-  | SoyomboBlock
-  | PauCinHauBlock
-  | BhaiksukiBlock
-  | MarchenBlock
-  | MasaramGondiBlock
-  | GunjalaGondiBlock
-  | MakasarBlock
-  | TamilSupplementBlock
-  | CuneiformBlock
-  | CuneiformNumbersAndPunctuationBlock
-  | EarlyDynasticCuneiformBlock
-  | EgyptianHieroglyphsBlock
-  | EgyptianHieroglyphFormatControlsBlock
-  | AnatolianHieroglyphsBlock
-  | BamumSupplementBlock
-  | MroBlock
-  | BassaVahBlock
-  | PahawhHmongBlock
-  | MedefaidrinBlock
-  | MiaoBlock
-  | IdeographicSymbolsAndPunctuationBlock
-  | TangutBlock
-  | TangutComponentsBlock
-  | KanaSupplementBlock
-  | KanaExtendedABlock
-  | SmallKanaExtensionBlock
-  | NushuBlock
-  | DuployanBlock
-  | ShorthandFormatControlsBlock
-  | ByzantineMusicalSymbolsBlock
-  | MusicalSymbolsBlock
-  | AncientGreekMusicalNotationBlock
-  | MayanNumeralsBlock
-  | TaiXuanJingSymbolsBlock
-  | CountingRodNumeralsBlock
-  | MathematicalAlphanumericSymbolsBlock
-  | SuttonSignWritingBlock
-  | GlagoliticSupplementBlock
-  | NyiakengPuachueHmongBlock
-  | WanchoBlock
-  | MendeKikakuiBlock
-  | AdlamBlock
-  | IndicSiyaqNumbersBlock
-  | OttomanSiyaqNumbersBlock
-  | ArabicMathematicalAlphabeticSymbolsBlock
-  | MahjongTilesBlock
-  | DominoTilesBlock
-  | PlayingCardsBlock
-  | EnclosedAlphanumericSupplementBlock
-  | EnclosedIdeographicSupplementBlock
-  | MiscellaneousSymbolsAndPictographsBlock
-  | EmoticonsBlock
-  | OrnamentalDingbatsBlock
-  | TransportAndMapSymbolsBlock
-  | AlchemicalSymbolsBlock
-  | GeometricShapesExtendedBlock
-  | SupplementalArrowsCBlock
-  | SupplementalSymbolsAndPictographsBlock
-  | ChessSymbolsBlock
-  | SymbolsAndPictographsExtendedABlock
-  | CJKUnifiedIdeographsExtensionBBlock
-  | CJKUnifiedIdeographsExtensionCBlock
-  | CJKUnifiedIdeographsExtensionDBlock
-  | CJKUnifiedIdeographsExtensionEBlock
-  | CJKUnifiedIdeographsExtensionFBlock
-  | CJKCompatibilityIdeographsSupplementBlock
-  | TagsBlock
-  | VariationSelectorsSupplementBlock
-  | SupplementaryPrivateUseAreaABlock
-  | SupplementaryPrivateUseAreaBBlock
+  = BasicLatinBlock -- ^ @since 0.1.0.0
+  | Latin1SupplementBlock -- ^ @since 0.1.0.0
+  | LatinExtendedABlock -- ^ @since 0.1.0.0
+  | LatinExtendedBBlock -- ^ @since 0.1.0.0
+  | IPAExtensionsBlock -- ^ @since 0.1.0.0
+  | SpacingModifierLettersBlock -- ^ @since 0.1.0.0
+  | CombiningDiacriticalMarksBlock -- ^ @since 0.1.0.0
+  | GreekAndCopticBlock -- ^ @since 0.1.0.0
+  | CyrillicBlock -- ^ @since 0.1.0.0
+  | CyrillicSupplementBlock -- ^ @since 0.1.0.0
+  | ArmenianBlock -- ^ @since 0.1.0.0
+  | HebrewBlock -- ^ @since 0.1.0.0
+  | ArabicBlock -- ^ @since 0.1.0.0
+  | SyriacBlock -- ^ @since 0.1.0.0
+  | ArabicSupplementBlock -- ^ @since 0.1.0.0
+  | ThaanaBlock -- ^ @since 0.1.0.0
+  | NKoBlock -- ^ @since 0.1.0.0
+  | SamaritanBlock -- ^ @since 0.1.0.0
+  | MandaicBlock -- ^ @since 0.1.0.0
+  | SyriacSupplementBlock -- ^ @since 0.1.0.0
+  | ArabicExtendedABlock -- ^ @since 0.1.0.0
+  | DevanagariBlock -- ^ @since 0.1.0.0
+  | BengaliBlock -- ^ @since 0.1.0.0
+  | GurmukhiBlock -- ^ @since 0.1.0.0
+  | GujaratiBlock -- ^ @since 0.1.0.0
+  | OriyaBlock -- ^ @since 0.1.0.0
+  | TamilBlock -- ^ @since 0.1.0.0
+  | TeluguBlock -- ^ @since 0.1.0.0
+  | KannadaBlock -- ^ @since 0.1.0.0
+  | MalayalamBlock -- ^ @since 0.1.0.0
+  | SinhalaBlock -- ^ @since 0.1.0.0
+  | ThaiBlock -- ^ @since 0.1.0.0
+  | LaoBlock -- ^ @since 0.1.0.0
+  | TibetanBlock -- ^ @since 0.1.0.0
+  | MyanmarBlock -- ^ @since 0.1.0.0
+  | GeorgianBlock -- ^ @since 0.1.0.0
+  | HangulJamoBlock -- ^ @since 0.1.0.0
+  | EthiopicBlock -- ^ @since 0.1.0.0
+  | EthiopicSupplementBlock -- ^ @since 0.1.0.0
+  | CherokeeBlock -- ^ @since 0.1.0.0
+  | UnifiedCanadianAboriginalSyllabicsBlock -- ^ @since 0.1.0.0
+  | OghamBlock -- ^ @since 0.1.0.0
+  | RunicBlock -- ^ @since 0.1.0.0
+  | TagalogBlock -- ^ @since 0.1.0.0
+  | HanunooBlock -- ^ @since 0.1.0.0
+  | BuhidBlock -- ^ @since 0.1.0.0
+  | TagbanwaBlock -- ^ @since 0.1.0.0
+  | KhmerBlock -- ^ @since 0.1.0.0
+  | MongolianBlock -- ^ @since 0.1.0.0
+  | UnifiedCanadianAboriginalSyllabicsExtendedBlock -- ^ @since 0.1.0.0
+  | LimbuBlock -- ^ @since 0.1.0.0
+  | TaiLeBlock -- ^ @since 0.1.0.0
+  | NewTaiLueBlock -- ^ @since 0.1.0.0
+  | KhmerSymbolsBlock -- ^ @since 0.1.0.0
+  | BugineseBlock -- ^ @since 0.1.0.0
+  | TaiThamBlock -- ^ @since 0.1.0.0
+  | CombiningDiacriticalMarksExtendedBlock -- ^ @since 0.1.0.0
+  | BalineseBlock -- ^ @since 0.1.0.0
+  | SundaneseBlock -- ^ @since 0.1.0.0
+  | BatakBlock -- ^ @since 0.1.0.0
+  | LepchaBlock -- ^ @since 0.1.0.0
+  | OlChikiBlock -- ^ @since 0.1.0.0
+  | CyrillicExtendedCBlock -- ^ @since 0.1.0.0
+  | GeorgianExtendedBlock -- ^ @since 0.1.0.0
+  | SundaneseSupplementBlock -- ^ @since 0.1.0.0
+  | VedicExtensionsBlock -- ^ @since 0.1.0.0
+  | PhoneticExtensionsBlock -- ^ @since 0.1.0.0
+  | PhoneticExtensionsSupplementBlock -- ^ @since 0.1.0.0
+  | CombiningDiacriticalMarksSupplementBlock -- ^ @since 0.1.0.0
+  | LatinExtendedAdditionalBlock -- ^ @since 0.1.0.0
+  | GreekExtendedBlock -- ^ @since 0.1.0.0
+  | GeneralPunctuationBlock -- ^ @since 0.1.0.0
+  | SuperscriptsAndSubscriptsBlock -- ^ @since 0.1.0.0
+  | CurrencySymbolsBlock -- ^ @since 0.1.0.0
+  | CombiningDiacriticalMarksForSymbolsBlock -- ^ @since 0.1.0.0
+  | LetterlikeSymbolsBlock -- ^ @since 0.1.0.0
+  | NumberFormsBlock -- ^ @since 0.1.0.0
+  | ArrowsBlock -- ^ @since 0.1.0.0
+  | MathematicalOperatorsBlock -- ^ @since 0.1.0.0
+  | MiscellaneousTechnicalBlock -- ^ @since 0.1.0.0
+  | ControlPicturesBlock -- ^ @since 0.1.0.0
+  | OpticalCharacterRecognitionBlock -- ^ @since 0.1.0.0
+  | EnclosedAlphanumericsBlock -- ^ @since 0.1.0.0
+  | BoxDrawingBlock -- ^ @since 0.1.0.0
+  | BlockElementsBlock -- ^ @since 0.1.0.0
+  | GeometricShapesBlock -- ^ @since 0.1.0.0
+  | MiscellaneousSymbolsBlock -- ^ @since 0.1.0.0
+  | DingbatsBlock -- ^ @since 0.1.0.0
+  | MiscellaneousMathematicalSymbolsABlock -- ^ @since 0.1.0.0
+  | SupplementalArrowsABlock -- ^ @since 0.1.0.0
+  | BraillePatternsBlock -- ^ @since 0.1.0.0
+  | SupplementalArrowsBBlock -- ^ @since 0.1.0.0
+  | MiscellaneousMathematicalSymbolsBBlock -- ^ @since 0.1.0.0
+  | SupplementalMathematicalOperatorsBlock -- ^ @since 0.1.0.0
+  | MiscellaneousSymbolsAndArrowsBlock -- ^ @since 0.1.0.0
+  | GlagoliticBlock -- ^ @since 0.1.0.0
+  | LatinExtendedCBlock -- ^ @since 0.1.0.0
+  | CopticBlock -- ^ @since 0.1.0.0
+  | GeorgianSupplementBlock -- ^ @since 0.1.0.0
+  | TifinaghBlock -- ^ @since 0.1.0.0
+  | EthiopicExtendedBlock -- ^ @since 0.1.0.0
+  | CyrillicExtendedABlock -- ^ @since 0.1.0.0
+  | SupplementalPunctuationBlock -- ^ @since 0.1.0.0
+  | CJKRadicalsSupplementBlock -- ^ @since 0.1.0.0
+  | KangxiRadicalsBlock -- ^ @since 0.1.0.0
+  | IdeographicDescriptionCharactersBlock -- ^ @since 0.1.0.0
+  | CJKSymbolsAndPunctuationBlock -- ^ @since 0.1.0.0
+  | HiraganaBlock -- ^ @since 0.1.0.0
+  | KatakanaBlock -- ^ @since 0.1.0.0
+  | BopomofoBlock -- ^ @since 0.1.0.0
+  | HangulCompatibilityJamoBlock -- ^ @since 0.1.0.0
+  | KanbunBlock -- ^ @since 0.1.0.0
+  | BopomofoExtendedBlock -- ^ @since 0.1.0.0
+  | CJKStrokesBlock -- ^ @since 0.1.0.0
+  | KatakanaPhoneticExtensionsBlock -- ^ @since 0.1.0.0
+  | EnclosedCJKLettersAndMonthsBlock -- ^ @since 0.1.0.0
+  | CJKCompatibilityBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionABlock -- ^ @since 0.1.0.0
+  | YijingHexagramSymbolsBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsBlock -- ^ @since 0.1.0.0
+  | YiSyllablesBlock -- ^ @since 0.1.0.0
+  | YiRadicalsBlock -- ^ @since 0.1.0.0
+  | LisuBlock -- ^ @since 0.1.0.0
+  | VaiBlock -- ^ @since 0.1.0.0
+  | CyrillicExtendedBBlock -- ^ @since 0.1.0.0
+  | BamumBlock -- ^ @since 0.1.0.0
+  | ModifierToneLettersBlock -- ^ @since 0.1.0.0
+  | LatinExtendedDBlock -- ^ @since 0.1.0.0
+  | SylotiNagriBlock -- ^ @since 0.1.0.0
+  | CommonIndicNumberFormsBlock -- ^ @since 0.1.0.0
+  | PhagsPaBlock -- ^ @since 0.1.0.0
+  | SaurashtraBlock -- ^ @since 0.1.0.0
+  | DevanagariExtendedBlock -- ^ @since 0.1.0.0
+  | KayahLiBlock -- ^ @since 0.1.0.0
+  | RejangBlock -- ^ @since 0.1.0.0
+  | HangulJamoExtendedABlock -- ^ @since 0.1.0.0
+  | JavaneseBlock -- ^ @since 0.1.0.0
+  | MyanmarExtendedBBlock -- ^ @since 0.1.0.0
+  | ChamBlock -- ^ @since 0.1.0.0
+  | MyanmarExtendedABlock -- ^ @since 0.1.0.0
+  | TaiVietBlock -- ^ @since 0.1.0.0
+  | MeeteiMayekExtensionsBlock -- ^ @since 0.1.0.0
+  | EthiopicExtendedABlock -- ^ @since 0.1.0.0
+  | LatinExtendedEBlock -- ^ @since 0.1.0.0
+  | CherokeeSupplementBlock -- ^ @since 0.1.0.0
+  | MeeteiMayekBlock -- ^ @since 0.1.0.0
+  | HangulSyllablesBlock -- ^ @since 0.1.0.0
+  | HangulJamoExtendedBBlock -- ^ @since 0.1.0.0
+  | HighSurrogatesBlock -- ^ @since 0.1.0.0
+  | HighPrivateUseSurrogatesBlock -- ^ @since 0.1.0.0
+  | LowSurrogatesBlock -- ^ @since 0.1.0.0
+  | PrivateUseAreaBlock -- ^ @since 0.1.0.0
+  | CJKCompatibilityIdeographsBlock -- ^ @since 0.1.0.0
+  | AlphabeticPresentationFormsBlock -- ^ @since 0.1.0.0
+  | ArabicPresentationFormsABlock -- ^ @since 0.1.0.0
+  | VariationSelectorsBlock -- ^ @since 0.1.0.0
+  | VerticalFormsBlock -- ^ @since 0.1.0.0
+  | CombiningHalfMarksBlock -- ^ @since 0.1.0.0
+  | CJKCompatibilityFormsBlock -- ^ @since 0.1.0.0
+  | SmallFormVariantsBlock -- ^ @since 0.1.0.0
+  | ArabicPresentationFormsBBlock -- ^ @since 0.1.0.0
+  | HalfwidthAndFullwidthFormsBlock -- ^ @since 0.1.0.0
+  | SpecialsBlock -- ^ @since 0.1.0.0
+  | LinearBSyllabaryBlock -- ^ @since 0.1.0.0
+  | LinearBIdeogramsBlock -- ^ @since 0.1.0.0
+  | AegeanNumbersBlock -- ^ @since 0.1.0.0
+  | AncientGreekNumbersBlock -- ^ @since 0.1.0.0
+  | AncientSymbolsBlock -- ^ @since 0.1.0.0
+  | PhaistosDiscBlock -- ^ @since 0.1.0.0
+  | LycianBlock -- ^ @since 0.1.0.0
+  | CarianBlock -- ^ @since 0.1.0.0
+  | CopticEpactNumbersBlock -- ^ @since 0.1.0.0
+  | OldItalicBlock -- ^ @since 0.1.0.0
+  | GothicBlock -- ^ @since 0.1.0.0
+  | OldPermicBlock -- ^ @since 0.1.0.0
+  | UgariticBlock -- ^ @since 0.1.0.0
+  | OldPersianBlock -- ^ @since 0.1.0.0
+  | DeseretBlock -- ^ @since 0.1.0.0
+  | ShavianBlock -- ^ @since 0.1.0.0
+  | OsmanyaBlock -- ^ @since 0.1.0.0
+  | OsageBlock -- ^ @since 0.1.0.0
+  | ElbasanBlock -- ^ @since 0.1.0.0
+  | CaucasianAlbanianBlock -- ^ @since 0.1.0.0
+  | LinearABlock -- ^ @since 0.1.0.0
+  | CypriotSyllabaryBlock -- ^ @since 0.1.0.0
+  | ImperialAramaicBlock -- ^ @since 0.1.0.0
+  | PalmyreneBlock -- ^ @since 0.1.0.0
+  | NabataeanBlock -- ^ @since 0.1.0.0
+  | HatranBlock -- ^ @since 0.1.0.0
+  | PhoenicianBlock -- ^ @since 0.1.0.0
+  | LydianBlock -- ^ @since 0.1.0.0
+  | MeroiticHieroglyphsBlock -- ^ @since 0.1.0.0
+  | MeroiticCursiveBlock -- ^ @since 0.1.0.0
+  | KharoshthiBlock -- ^ @since 0.1.0.0
+  | OldSouthArabianBlock -- ^ @since 0.1.0.0
+  | OldNorthArabianBlock -- ^ @since 0.1.0.0
+  | ManichaeanBlock -- ^ @since 0.1.0.0
+  | AvestanBlock -- ^ @since 0.1.0.0
+  | InscriptionalParthianBlock -- ^ @since 0.1.0.0
+  | InscriptionalPahlaviBlock -- ^ @since 0.1.0.0
+  | PsalterPahlaviBlock -- ^ @since 0.1.0.0
+  | OldTurkicBlock -- ^ @since 0.1.0.0
+  | OldHungarianBlock -- ^ @since 0.1.0.0
+  | HanifiRohingyaBlock -- ^ @since 0.1.0.0
+  | RumiNumeralSymbolsBlock -- ^ @since 0.1.0.0
+  | OldSogdianBlock -- ^ @since 0.1.0.0
+  | SogdianBlock -- ^ @since 0.1.0.0
+  | ElymaicBlock -- ^ @since 0.1.0.0
+  | BrahmiBlock -- ^ @since 0.1.0.0
+  | KaithiBlock -- ^ @since 0.1.0.0
+  | SoraSompengBlock -- ^ @since 0.1.0.0
+  | ChakmaBlock -- ^ @since 0.1.0.0
+  | MahajaniBlock -- ^ @since 0.1.0.0
+  | SharadaBlock -- ^ @since 0.1.0.0
+  | SinhalaArchaicNumbersBlock -- ^ @since 0.1.0.0
+  | KhojkiBlock -- ^ @since 0.1.0.0
+  | MultaniBlock -- ^ @since 0.1.0.0
+  | KhudawadiBlock -- ^ @since 0.1.0.0
+  | GranthaBlock -- ^ @since 0.1.0.0
+  | NewaBlock -- ^ @since 0.1.0.0
+  | TirhutaBlock -- ^ @since 0.1.0.0
+  | SiddhamBlock -- ^ @since 0.1.0.0
+  | ModiBlock -- ^ @since 0.1.0.0
+  | MongolianSupplementBlock -- ^ @since 0.1.0.0
+  | TakriBlock -- ^ @since 0.1.0.0
+  | AhomBlock -- ^ @since 0.1.0.0
+  | DograBlock -- ^ @since 0.1.0.0
+  | WarangCitiBlock -- ^ @since 0.1.0.0
+  | NandinagariBlock -- ^ @since 0.1.0.0
+  | ZanabazarSquareBlock -- ^ @since 0.1.0.0
+  | SoyomboBlock -- ^ @since 0.1.0.0
+  | PauCinHauBlock -- ^ @since 0.1.0.0
+  | BhaiksukiBlock -- ^ @since 0.1.0.0
+  | MarchenBlock -- ^ @since 0.1.0.0
+  | MasaramGondiBlock -- ^ @since 0.1.0.0
+  | GunjalaGondiBlock -- ^ @since 0.1.0.0
+  | MakasarBlock -- ^ @since 0.1.0.0
+  | TamilSupplementBlock -- ^ @since 0.1.0.0
+  | CuneiformBlock -- ^ @since 0.1.0.0
+  | CuneiformNumbersAndPunctuationBlock -- ^ @since 0.1.0.0
+  | EarlyDynasticCuneiformBlock -- ^ @since 0.1.0.0
+  | EgyptianHieroglyphsBlock -- ^ @since 0.1.0.0
+  | EgyptianHieroglyphFormatControlsBlock -- ^ @since 0.1.0.0
+  | AnatolianHieroglyphsBlock -- ^ @since 0.1.0.0
+  | BamumSupplementBlock -- ^ @since 0.1.0.0
+  | MroBlock -- ^ @since 0.1.0.0
+  | BassaVahBlock -- ^ @since 0.1.0.0
+  | PahawhHmongBlock -- ^ @since 0.1.0.0
+  | MedefaidrinBlock -- ^ @since 0.1.0.0
+  | MiaoBlock -- ^ @since 0.1.0.0
+  | IdeographicSymbolsAndPunctuationBlock -- ^ @since 0.1.0.0
+  | TangutBlock -- ^ @since 0.1.0.0
+  | TangutComponentsBlock -- ^ @since 0.1.0.0
+  | KanaSupplementBlock -- ^ @since 0.1.0.0
+  | KanaExtendedABlock -- ^ @since 0.1.0.0
+  | SmallKanaExtensionBlock -- ^ @since 0.1.0.0
+  | NushuBlock -- ^ @since 0.1.0.0
+  | DuployanBlock -- ^ @since 0.1.0.0
+  | ShorthandFormatControlsBlock -- ^ @since 0.1.0.0
+  | ByzantineMusicalSymbolsBlock -- ^ @since 0.1.0.0
+  | MusicalSymbolsBlock -- ^ @since 0.1.0.0
+  | AncientGreekMusicalNotationBlock -- ^ @since 0.1.0.0
+  | MayanNumeralsBlock -- ^ @since 0.1.0.0
+  | TaiXuanJingSymbolsBlock -- ^ @since 0.1.0.0
+  | CountingRodNumeralsBlock -- ^ @since 0.1.0.0
+  | MathematicalAlphanumericSymbolsBlock -- ^ @since 0.1.0.0
+  | SuttonSignWritingBlock -- ^ @since 0.1.0.0
+  | GlagoliticSupplementBlock -- ^ @since 0.1.0.0
+  | NyiakengPuachueHmongBlock -- ^ @since 0.1.0.0
+  | WanchoBlock -- ^ @since 0.1.0.0
+  | MendeKikakuiBlock -- ^ @since 0.1.0.0
+  | AdlamBlock -- ^ @since 0.1.0.0
+  | IndicSiyaqNumbersBlock -- ^ @since 0.1.0.0
+  | OttomanSiyaqNumbersBlock -- ^ @since 0.1.0.0
+  | ArabicMathematicalAlphabeticSymbolsBlock -- ^ @since 0.1.0.0
+  | MahjongTilesBlock -- ^ @since 0.1.0.0
+  | DominoTilesBlock -- ^ @since 0.1.0.0
+  | PlayingCardsBlock -- ^ @since 0.1.0.0
+  | EnclosedAlphanumericSupplementBlock -- ^ @since 0.1.0.0
+  | EnclosedIdeographicSupplementBlock -- ^ @since 0.1.0.0
+  | MiscellaneousSymbolsAndPictographsBlock -- ^ @since 0.1.0.0
+  | EmoticonsBlock -- ^ @since 0.1.0.0
+  | OrnamentalDingbatsBlock -- ^ @since 0.1.0.0
+  | TransportAndMapSymbolsBlock -- ^ @since 0.1.0.0
+  | AlchemicalSymbolsBlock -- ^ @since 0.1.0.0
+  | GeometricShapesExtendedBlock -- ^ @since 0.1.0.0
+  | SupplementalArrowsCBlock -- ^ @since 0.1.0.0
+  | SupplementalSymbolsAndPictographsBlock -- ^ @since 0.1.0.0
+  | ChessSymbolsBlock -- ^ @since 0.1.0.0
+  | SymbolsAndPictographsExtendedABlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionBBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionCBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionDBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionEBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionFBlock -- ^ @since 0.1.0.0
+  | CJKCompatibilityIdeographsSupplementBlock -- ^ @since 0.1.0.0
+  | TagsBlock -- ^ @since 0.1.0.0
+  | VariationSelectorsSupplementBlock -- ^ @since 0.1.0.0
+  | SupplementaryPrivateUseAreaABlock -- ^ @since 0.1.0.0
+  | SupplementaryPrivateUseAreaBBlock -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Block where
@@ -1244,160 +1313,165 @@ instance EnumeratedProperty Block where
       YijingHexagramSymbolsBlock -> "Yijing"
       ZanabazarSquareBlock -> "Zanabazar_Square"
 
+-- | A catalogue of scripts encoded in Unicode
+--
+-- See 'Data.UCD.script' for more details
+--
+-- @since 0.1.0.0
 data Script
-  = AdlamScript
-  | AhomScript
-  | AnatolianHieroglyphsScript
-  | ArabicScript
-  | ArmenianScript
-  | AvestanScript
-  | BalineseScript
-  | BamumScript
-  | BassaVahScript
-  | BatakScript
-  | BengaliScript
-  | BhaiksukiScript
-  | BopomofoScript
-  | BrahmiScript
-  | BrailleScript
-  | BugineseScript
-  | BuhidScript
-  | CanadianAboriginalScript
-  | CarianScript
-  | CaucasianAlbanianScript
-  | ChakmaScript
-  | ChamScript
-  | CherokeeScript
-  | CommonScript
-  | CopticScript
-  | CuneiformScript
-  | CypriotScript
-  | CyrillicScript
-  | DeseretScript
-  | DevanagariScript
-  | DograScript
-  | DuployanScript
-  | EgyptianHieroglyphsScript
-  | ElbasanScript
-  | ElymaicScript
-  | EthiopicScript
-  | GeorgianScript
-  | GlagoliticScript
-  | GothicScript
-  | GranthaScript
-  | GreekScript
-  | GujaratiScript
-  | GunjalaGondiScript
-  | GurmukhiScript
-  | HanScript
-  | HangulScript
-  | HanifiRohingyaScript
-  | HanunooScript
-  | HatranScript
-  | HebrewScript
-  | HiraganaScript
-  | ImperialAramaicScript
-  | InheritedScript
-  | InscriptionalPahlaviScript
-  | InscriptionalParthianScript
-  | JavaneseScript
-  | KaithiScript
-  | KannadaScript
-  | KatakanaScript
-  | KayahLiScript
-  | KharoshthiScript
-  | KhmerScript
-  | KhojkiScript
-  | KhudawadiScript
-  | LaoScript
-  | LatinScript
-  | LepchaScript
-  | LimbuScript
-  | LinearAScript
-  | LinearBScript
-  | LisuScript
-  | LycianScript
-  | LydianScript
-  | MahajaniScript
-  | MakasarScript
-  | MalayalamScript
-  | MandaicScript
-  | ManichaeanScript
-  | MarchenScript
-  | MasaramGondiScript
-  | MedefaidrinScript
-  | MeeteiMayekScript
-  | MendeKikakuiScript
-  | MeroiticCursiveScript
-  | MeroiticHieroglyphsScript
-  | MiaoScript
-  | ModiScript
-  | MongolianScript
-  | MroScript
-  | MultaniScript
-  | MyanmarScript
-  | NabataeanScript
-  | NandinagariScript
-  | NewaScript
-  | NewTaiLueScript
-  | NkoScript
-  | NushuScript
-  | NyiakengPuachueHmongScript
-  | OghamScript
-  | OlChikiScript
-  | OldHungarianScript
-  | OldItalicScript
-  | OldNorthArabianScript
-  | OldPermicScript
-  | OldPersianScript
-  | OldSogdianScript
-  | OldSouthArabianScript
-  | OldTurkicScript
-  | OriyaScript
-  | OsageScript
-  | OsmanyaScript
-  | PahawhHmongScript
-  | PalmyreneScript
-  | PauCinHauScript
-  | PhagsPaScript
-  | PhoenicianScript
-  | PsalterPahlaviScript
-  | RejangScript
-  | RunicScript
-  | SamaritanScript
-  | SaurashtraScript
-  | SharadaScript
-  | ShavianScript
-  | SiddhamScript
-  | SignWritingScript
-  | SinhalaScript
-  | SogdianScript
-  | SoraSompengScript
-  | SoyomboScript
-  | SundaneseScript
-  | SylotiNagriScript
-  | SyriacScript
-  | TagalogScript
-  | TagbanwaScript
-  | TaiLeScript
-  | TaiThamScript
-  | TaiVietScript
-  | TakriScript
-  | TamilScript
-  | TangutScript
-  | TeluguScript
-  | ThaanaScript
-  | ThaiScript
-  | TibetanScript
-  | TifinaghScript
-  | TirhutaScript
-  | UgariticScript
-  | UnknownScript
-  | VaiScript
-  | WanchoScript
-  | WarangCitiScript
-  | YiScript
-  | ZanabazarSquareScript
+  = AdlamScript -- ^ @since 0.1.0.0
+  | AhomScript -- ^ @since 0.1.0.0
+  | AnatolianHieroglyphsScript -- ^ @since 0.1.0.0
+  | ArabicScript -- ^ @since 0.1.0.0
+  | ArmenianScript -- ^ @since 0.1.0.0
+  | AvestanScript -- ^ @since 0.1.0.0
+  | BalineseScript -- ^ @since 0.1.0.0
+  | BamumScript -- ^ @since 0.1.0.0
+  | BassaVahScript -- ^ @since 0.1.0.0
+  | BatakScript -- ^ @since 0.1.0.0
+  | BengaliScript -- ^ @since 0.1.0.0
+  | BhaiksukiScript -- ^ @since 0.1.0.0
+  | BopomofoScript -- ^ @since 0.1.0.0
+  | BrahmiScript -- ^ @since 0.1.0.0
+  | BrailleScript -- ^ @since 0.1.0.0
+  | BugineseScript -- ^ @since 0.1.0.0
+  | BuhidScript -- ^ @since 0.1.0.0
+  | CanadianAboriginalScript -- ^ @since 0.1.0.0
+  | CarianScript -- ^ @since 0.1.0.0
+  | CaucasianAlbanianScript -- ^ @since 0.1.0.0
+  | ChakmaScript -- ^ @since 0.1.0.0
+  | ChamScript -- ^ @since 0.1.0.0
+  | CherokeeScript -- ^ @since 0.1.0.0
+  | CommonScript -- ^ @since 0.1.0.0
+  | CopticScript -- ^ @since 0.1.0.0
+  | CuneiformScript -- ^ @since 0.1.0.0
+  | CypriotScript -- ^ @since 0.1.0.0
+  | CyrillicScript -- ^ @since 0.1.0.0
+  | DeseretScript -- ^ @since 0.1.0.0
+  | DevanagariScript -- ^ @since 0.1.0.0
+  | DograScript -- ^ @since 0.1.0.0
+  | DuployanScript -- ^ @since 0.1.0.0
+  | EgyptianHieroglyphsScript -- ^ @since 0.1.0.0
+  | ElbasanScript -- ^ @since 0.1.0.0
+  | ElymaicScript -- ^ @since 0.1.0.0
+  | EthiopicScript -- ^ @since 0.1.0.0
+  | GeorgianScript -- ^ @since 0.1.0.0
+  | GlagoliticScript -- ^ @since 0.1.0.0
+  | GothicScript -- ^ @since 0.1.0.0
+  | GranthaScript -- ^ @since 0.1.0.0
+  | GreekScript -- ^ @since 0.1.0.0
+  | GujaratiScript -- ^ @since 0.1.0.0
+  | GunjalaGondiScript -- ^ @since 0.1.0.0
+  | GurmukhiScript -- ^ @since 0.1.0.0
+  | HanScript -- ^ @since 0.1.0.0
+  | HangulScript -- ^ @since 0.1.0.0
+  | HanifiRohingyaScript -- ^ @since 0.1.0.0
+  | HanunooScript -- ^ @since 0.1.0.0
+  | HatranScript -- ^ @since 0.1.0.0
+  | HebrewScript -- ^ @since 0.1.0.0
+  | HiraganaScript -- ^ @since 0.1.0.0
+  | ImperialAramaicScript -- ^ @since 0.1.0.0
+  | InheritedScript -- ^ @since 0.1.0.0
+  | InscriptionalPahlaviScript -- ^ @since 0.1.0.0
+  | InscriptionalParthianScript -- ^ @since 0.1.0.0
+  | JavaneseScript -- ^ @since 0.1.0.0
+  | KaithiScript -- ^ @since 0.1.0.0
+  | KannadaScript -- ^ @since 0.1.0.0
+  | KatakanaScript -- ^ @since 0.1.0.0
+  | KayahLiScript -- ^ @since 0.1.0.0
+  | KharoshthiScript -- ^ @since 0.1.0.0
+  | KhmerScript -- ^ @since 0.1.0.0
+  | KhojkiScript -- ^ @since 0.1.0.0
+  | KhudawadiScript -- ^ @since 0.1.0.0
+  | LaoScript -- ^ @since 0.1.0.0
+  | LatinScript -- ^ @since 0.1.0.0
+  | LepchaScript -- ^ @since 0.1.0.0
+  | LimbuScript -- ^ @since 0.1.0.0
+  | LinearAScript -- ^ @since 0.1.0.0
+  | LinearBScript -- ^ @since 0.1.0.0
+  | LisuScript -- ^ @since 0.1.0.0
+  | LycianScript -- ^ @since 0.1.0.0
+  | LydianScript -- ^ @since 0.1.0.0
+  | MahajaniScript -- ^ @since 0.1.0.0
+  | MakasarScript -- ^ @since 0.1.0.0
+  | MalayalamScript -- ^ @since 0.1.0.0
+  | MandaicScript -- ^ @since 0.1.0.0
+  | ManichaeanScript -- ^ @since 0.1.0.0
+  | MarchenScript -- ^ @since 0.1.0.0
+  | MasaramGondiScript -- ^ @since 0.1.0.0
+  | MedefaidrinScript -- ^ @since 0.1.0.0
+  | MeeteiMayekScript -- ^ @since 0.1.0.0
+  | MendeKikakuiScript -- ^ @since 0.1.0.0
+  | MeroiticCursiveScript -- ^ @since 0.1.0.0
+  | MeroiticHieroglyphsScript -- ^ @since 0.1.0.0
+  | MiaoScript -- ^ @since 0.1.0.0
+  | ModiScript -- ^ @since 0.1.0.0
+  | MongolianScript -- ^ @since 0.1.0.0
+  | MroScript -- ^ @since 0.1.0.0
+  | MultaniScript -- ^ @since 0.1.0.0
+  | MyanmarScript -- ^ @since 0.1.0.0
+  | NabataeanScript -- ^ @since 0.1.0.0
+  | NandinagariScript -- ^ @since 0.1.0.0
+  | NewaScript -- ^ @since 0.1.0.0
+  | NewTaiLueScript -- ^ @since 0.1.0.0
+  | NkoScript -- ^ @since 0.1.0.0
+  | NushuScript -- ^ @since 0.1.0.0
+  | NyiakengPuachueHmongScript -- ^ @since 0.1.0.0
+  | OghamScript -- ^ @since 0.1.0.0
+  | OlChikiScript -- ^ @since 0.1.0.0
+  | OldHungarianScript -- ^ @since 0.1.0.0
+  | OldItalicScript -- ^ @since 0.1.0.0
+  | OldNorthArabianScript -- ^ @since 0.1.0.0
+  | OldPermicScript -- ^ @since 0.1.0.0
+  | OldPersianScript -- ^ @since 0.1.0.0
+  | OldSogdianScript -- ^ @since 0.1.0.0
+  | OldSouthArabianScript -- ^ @since 0.1.0.0
+  | OldTurkicScript -- ^ @since 0.1.0.0
+  | OriyaScript -- ^ @since 0.1.0.0
+  | OsageScript -- ^ @since 0.1.0.0
+  | OsmanyaScript -- ^ @since 0.1.0.0
+  | PahawhHmongScript -- ^ @since 0.1.0.0
+  | PalmyreneScript -- ^ @since 0.1.0.0
+  | PauCinHauScript -- ^ @since 0.1.0.0
+  | PhagsPaScript -- ^ @since 0.1.0.0
+  | PhoenicianScript -- ^ @since 0.1.0.0
+  | PsalterPahlaviScript -- ^ @since 0.1.0.0
+  | RejangScript -- ^ @since 0.1.0.0
+  | RunicScript -- ^ @since 0.1.0.0
+  | SamaritanScript -- ^ @since 0.1.0.0
+  | SaurashtraScript -- ^ @since 0.1.0.0
+  | SharadaScript -- ^ @since 0.1.0.0
+  | ShavianScript -- ^ @since 0.1.0.0
+  | SiddhamScript -- ^ @since 0.1.0.0
+  | SignWritingScript -- ^ @since 0.1.0.0
+  | SinhalaScript -- ^ @since 0.1.0.0
+  | SogdianScript -- ^ @since 0.1.0.0
+  | SoraSompengScript -- ^ @since 0.1.0.0
+  | SoyomboScript -- ^ @since 0.1.0.0
+  | SundaneseScript -- ^ @since 0.1.0.0
+  | SylotiNagriScript -- ^ @since 0.1.0.0
+  | SyriacScript -- ^ @since 0.1.0.0
+  | TagalogScript -- ^ @since 0.1.0.0
+  | TagbanwaScript -- ^ @since 0.1.0.0
+  | TaiLeScript -- ^ @since 0.1.0.0
+  | TaiThamScript -- ^ @since 0.1.0.0
+  | TaiVietScript -- ^ @since 0.1.0.0
+  | TakriScript -- ^ @since 0.1.0.0
+  | TamilScript -- ^ @since 0.1.0.0
+  | TangutScript -- ^ @since 0.1.0.0
+  | TeluguScript -- ^ @since 0.1.0.0
+  | ThaanaScript -- ^ @since 0.1.0.0
+  | ThaiScript -- ^ @since 0.1.0.0
+  | TibetanScript -- ^ @since 0.1.0.0
+  | TifinaghScript -- ^ @since 0.1.0.0
+  | TirhutaScript -- ^ @since 0.1.0.0
+  | UgariticScript -- ^ @since 0.1.0.0
+  | UnknownScript -- ^ @since 0.1.0.0
+  | VaiScript -- ^ @since 0.1.0.0
+  | WanchoScript -- ^ @since 0.1.0.0
+  | WarangCitiScript -- ^ @since 0.1.0.0
+  | YiScript -- ^ @since 0.1.0.0
+  | ZanabazarSquareScript -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Script where
@@ -1712,24 +1786,27 @@ instance EnumeratedProperty Script where
       YiScript -> "Yiii"
       ZanabazarSquareScript -> "Zanb"
 
+-- | Type of compatibility decomposition mapping, if it exists.
+--
+-- See 'Data.UCD.decompositionType' for details.
 data DecompositionType
-  = Canonical
-  | Compat
-  | Circle
-  | Final
-  | Font
-  | Fraction
-  | Initial
-  | Isolated
-  | Medial
-  | Narrow
-  | NoBreak
-  | Small
-  | Square
-  | Sub
-  | Super
-  | Vertical
-  | Wide
+  = Canonical -- ^ @since 0.1.0.0
+  | Compat -- ^ @since 0.1.0.0
+  | Circle -- ^ @since 0.1.0.0
+  | Final -- ^ @since 0.1.0.0
+  | Font -- ^ @since 0.1.0.0
+  | Fraction -- ^ @since 0.1.0.0
+  | Initial -- ^ @since 0.1.0.0
+  | Isolated -- ^ @since 0.1.0.0
+  | Medial -- ^ @since 0.1.0.0
+  | Narrow -- ^ @since 0.1.0.0
+  | NoBreak -- ^ @since 0.1.0.0
+  | Small -- ^ @since 0.1.0.0
+  | Square -- ^ @since 0.1.0.0
+  | Sub -- ^ @since 0.1.0.0
+  | Super -- ^ @since 0.1.0.0
+  | Vertical -- ^ @since 0.1.0.0
+  | Wide -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty DecompositionType where
@@ -1772,108 +1849,109 @@ instance EnumeratedProperty DecompositionType where
       Vertical -> "Vertical"
       Wide -> "Wide"
 
+-- | See 'Data.UCD.joiningGroup'
 data JoiningGroup
-  = AfricanFeh
-  | AfricanNoon
-  | AfricanQaf
-  | Ain
-  | Alaph
-  | Alef
-  | Beh
-  | Beth
-  | BurushaskiYehBarree
-  | Dal
-  | DalathRish
-  | E
-  | FarsiYeh
-  | Fe
-  | Feh
-  | FinalSemkath
-  | Gaf
-  | Gamal
-  | Hah
-  | HanifiRohingyaKinnaYa
-  | HanifiRohingyaPa
-  | He
-  | Heh
-  | HehGoal
-  | Heth
-  | Kaf
-  | Kaph
-  | Khaph
-  | KnottedHeh
-  | Lam
-  | Lamadh
-  | MalayalamBha
-  | MalayalamJa
-  | MalayalamLla
-  | MalayalamLlla
-  | MalayalamNga
-  | MalayalamNna
-  | MalayalamNnna
-  | MalayalamNya
-  | MalayalamRa
-  | MalayalamSsa
-  | MalayalamTta
-  | ManichaeanAleph
-  | ManichaeanAyin
-  | ManichaeanBeth
-  | ManichaeanDaleth
-  | ManichaeanDhamedh
-  | ManichaeanFive
-  | ManichaeanGimel
-  | ManichaeanHeth
-  | ManichaeanHundred
-  | ManichaeanKaph
-  | ManichaeanLamedh
-  | ManichaeanMem
-  | ManichaeanNun
-  | ManichaeanOne
-  | ManichaeanPe
-  | ManichaeanQoph
-  | ManichaeanResh
-  | ManichaeanSadhe
-  | ManichaeanSamekh
-  | ManichaeanTaw
-  | ManichaeanTen
-  | ManichaeanTeth
-  | ManichaeanThamedh
-  | ManichaeanTwenty
-  | ManichaeanWaw
-  | ManichaeanYodh
-  | ManichaeanZayin
-  | Meem
-  | Mim
-  | Noon
-  | Nun
-  | Nya
-  | Pe
-  | Qaf
-  | Qaph
-  | Reh
-  | ReversedPe
-  | RohingyaYeh
-  | Sad
-  | Sadhe
-  | Seen
-  | Semkath
-  | Shin
-  | StraightWaw
-  | SwashKaf
-  | SyriacWaw
-  | Tah
-  | Taw
-  | TehMarbuta
-  | TehMarbutaGoal
-  | Teth
-  | Waw
-  | Yeh
-  | YehBarree
-  | YehWithTail
-  | Yudh
-  | YudhHe
-  | Zain
-  | Zhain
+  = AfricanFeh -- ^ @since 0.1.0.0
+  | AfricanNoon -- ^ @since 0.1.0.0
+  | AfricanQaf -- ^ @since 0.1.0.0
+  | Ain -- ^ @since 0.1.0.0
+  | Alaph -- ^ @since 0.1.0.0
+  | Alef -- ^ @since 0.1.0.0
+  | Beh -- ^ @since 0.1.0.0
+  | Beth -- ^ @since 0.1.0.0
+  | BurushaskiYehBarree -- ^ @since 0.1.0.0
+  | Dal -- ^ @since 0.1.0.0
+  | DalathRish -- ^ @since 0.1.0.0
+  | E -- ^ @since 0.1.0.0
+  | FarsiYeh -- ^ @since 0.1.0.0
+  | Fe -- ^ @since 0.1.0.0
+  | Feh -- ^ @since 0.1.0.0
+  | FinalSemkath -- ^ @since 0.1.0.0
+  | Gaf -- ^ @since 0.1.0.0
+  | Gamal -- ^ @since 0.1.0.0
+  | Hah -- ^ @since 0.1.0.0
+  | HanifiRohingyaKinnaYa -- ^ @since 0.1.0.0
+  | HanifiRohingyaPa -- ^ @since 0.1.0.0
+  | He -- ^ @since 0.1.0.0
+  | Heh -- ^ @since 0.1.0.0
+  | HehGoal -- ^ @since 0.1.0.0
+  | Heth -- ^ @since 0.1.0.0
+  | Kaf -- ^ @since 0.1.0.0
+  | Kaph -- ^ @since 0.1.0.0
+  | Khaph -- ^ @since 0.1.0.0
+  | KnottedHeh -- ^ @since 0.1.0.0
+  | Lam -- ^ @since 0.1.0.0
+  | Lamadh -- ^ @since 0.1.0.0
+  | MalayalamBha -- ^ @since 0.1.0.0
+  | MalayalamJa -- ^ @since 0.1.0.0
+  | MalayalamLla -- ^ @since 0.1.0.0
+  | MalayalamLlla -- ^ @since 0.1.0.0
+  | MalayalamNga -- ^ @since 0.1.0.0
+  | MalayalamNna -- ^ @since 0.1.0.0
+  | MalayalamNnna -- ^ @since 0.1.0.0
+  | MalayalamNya -- ^ @since 0.1.0.0
+  | MalayalamRa -- ^ @since 0.1.0.0
+  | MalayalamSsa -- ^ @since 0.1.0.0
+  | MalayalamTta -- ^ @since 0.1.0.0
+  | ManichaeanAleph -- ^ @since 0.1.0.0
+  | ManichaeanAyin -- ^ @since 0.1.0.0
+  | ManichaeanBeth -- ^ @since 0.1.0.0
+  | ManichaeanDaleth -- ^ @since 0.1.0.0
+  | ManichaeanDhamedh -- ^ @since 0.1.0.0
+  | ManichaeanFive -- ^ @since 0.1.0.0
+  | ManichaeanGimel -- ^ @since 0.1.0.0
+  | ManichaeanHeth -- ^ @since 0.1.0.0
+  | ManichaeanHundred -- ^ @since 0.1.0.0
+  | ManichaeanKaph -- ^ @since 0.1.0.0
+  | ManichaeanLamedh -- ^ @since 0.1.0.0
+  | ManichaeanMem -- ^ @since 0.1.0.0
+  | ManichaeanNun -- ^ @since 0.1.0.0
+  | ManichaeanOne -- ^ @since 0.1.0.0
+  | ManichaeanPe -- ^ @since 0.1.0.0
+  | ManichaeanQoph -- ^ @since 0.1.0.0
+  | ManichaeanResh -- ^ @since 0.1.0.0
+  | ManichaeanSadhe -- ^ @since 0.1.0.0
+  | ManichaeanSamekh -- ^ @since 0.1.0.0
+  | ManichaeanTaw -- ^ @since 0.1.0.0
+  | ManichaeanTen -- ^ @since 0.1.0.0
+  | ManichaeanTeth -- ^ @since 0.1.0.0
+  | ManichaeanThamedh -- ^ @since 0.1.0.0
+  | ManichaeanTwenty -- ^ @since 0.1.0.0
+  | ManichaeanWaw -- ^ @since 0.1.0.0
+  | ManichaeanYodh -- ^ @since 0.1.0.0
+  | ManichaeanZayin -- ^ @since 0.1.0.0
+  | Meem -- ^ @since 0.1.0.0
+  | Mim -- ^ @since 0.1.0.0
+  | Noon -- ^ @since 0.1.0.0
+  | Nun -- ^ @since 0.1.0.0
+  | Nya -- ^ @since 0.1.0.0
+  | Pe -- ^ @since 0.1.0.0
+  | Qaf -- ^ @since 0.1.0.0
+  | Qaph -- ^ @since 0.1.0.0
+  | Reh -- ^ @since 0.1.0.0
+  | ReversedPe -- ^ @since 0.1.0.0
+  | RohingyaYeh -- ^ @since 0.1.0.0
+  | Sad -- ^ @since 0.1.0.0
+  | Sadhe -- ^ @since 0.1.0.0
+  | Seen -- ^ @since 0.1.0.0
+  | Semkath -- ^ @since 0.1.0.0
+  | Shin -- ^ @since 0.1.0.0
+  | StraightWaw -- ^ @since 0.1.0.0
+  | SwashKaf -- ^ @since 0.1.0.0
+  | SyriacWaw -- ^ @since 0.1.0.0
+  | Tah -- ^ @since 0.1.0.0
+  | Taw -- ^ @since 0.1.0.0
+  | TehMarbuta -- ^ @since 0.1.0.0
+  | TehMarbutaGoal -- ^ @since 0.1.0.0
+  | Teth -- ^ @since 0.1.0.0
+  | Waw -- ^ @since 0.1.0.0
+  | Yeh -- ^ @since 0.1.0.0
+  | YehBarree -- ^ @since 0.1.0.0
+  | YehWithTail -- ^ @since 0.1.0.0
+  | Yudh -- ^ @since 0.1.0.0
+  | YudhHe -- ^ @since 0.1.0.0
+  | Zain -- ^ @since 0.1.0.0
+  | Zhain -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty JoiningGroup where
@@ -1983,13 +2061,14 @@ instance EnumeratedProperty JoiningGroup where
   fullPropertyValueName TehMarbutaGoal = "Hamza_On_Heh_Goal"
   fullPropertyValueName jg = abbreviatedPropertyValueName jg
 
+-- | See 'Data.UCD.joiningType'
 data JoiningType
-  = JoinCausing
-  | DualJoining
-  | LeftJoining
-  | RightJoining
-  | Transparent
-  | NonJoining
+  = JoinCausing -- ^ @since 0.1.0.0
+  | DualJoining -- ^ @since 0.1.0.0
+  | LeftJoining -- ^ @since 0.1.0.0
+  | RightJoining -- ^ @since 0.1.0.0
+  | Transparent -- ^ @since 0.1.0.0
+  | NonJoining -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty JoiningType where
@@ -2010,11 +2089,14 @@ instance EnumeratedProperty JoiningType where
       Transparent -> "T"
       NonJoining -> "U"
 
+-- | Default orientation in a vertical context.
+--
+-- See 'Data.UCD.verticalOrientation'
 data VerticalOrientation
-  = Upright
-  | Rotated
-  | TransformedUpright
-  | TransformedRotated
+  = Upright -- ^ @since 0.1.0.0
+  | Rotated -- ^ @since 0.1.0.0
+  | TransformedUpright -- ^ @since 0.1.0.0
+  | TransformedRotated -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty VerticalOrientation where
@@ -2031,50 +2113,53 @@ instance EnumeratedProperty VerticalOrientation where
       TransformedUpright -> "Tu"
       TransformedRotated -> "Tr"
 
+-- | See 'Data.UCD.lineBreak'
+--
+-- @since 0.1.0.0
 data LineBreak
-  = AmbiguousLB
-  | AlphabeticLB
-  | BreakBothLB
-  | BreakAfterLB
-  | BreakBeforeLB
-  | MandatoryBreakLB
-  | ContingentBreakLB
-  | ConditionalJapaneseStarterLB
-  | ClosePunctuationLB
-  | CombiningMarkLB
-  | CloseParenthesisLB
-  | CarriageReturnLB
-  | EBaseLB
-  | EModifierLB
-  | ExclamationLB
-  | GlueLB
-  | H2LB
-  | H3LB
-  | HebrewLetterLB
-  | HyphenLB
-  | IdeographicLB
-  | InseparableLB
-  | InfixNumericLB
-  | JLLB
-  | JTLB
-  | JVLB
-  | LineFeedLB
-  | NextLineLB
-  | NonstarterLB
-  | NumericLB
-  | OpenPunctuationLB
-  | PostfixNumericLB
-  | PrefixNumericLB
-  | QuotationLB
-  | RegionalIndicatorLB
-  | ComplexContextLB
-  | SurrogateLB
-  | SpaceLB
-  | BreakSymbolsLB
-  | WordJoinerLB
-  | UnknownLB
-  | ZWSpaceLB
-  | ZWJLB
+  = AmbiguousLB -- ^ @since 0.1.0.0
+  | AlphabeticLB -- ^ @since 0.1.0.0
+  | BreakBothLB -- ^ @since 0.1.0.0
+  | BreakAfterLB -- ^ @since 0.1.0.0
+  | BreakBeforeLB -- ^ @since 0.1.0.0
+  | MandatoryBreakLB -- ^ @since 0.1.0.0
+  | ContingentBreakLB -- ^ @since 0.1.0.0
+  | ConditionalJapaneseStarterLB -- ^ @since 0.1.0.0
+  | ClosePunctuationLB -- ^ @since 0.1.0.0
+  | CombiningMarkLB -- ^ @since 0.1.0.0
+  | CloseParenthesisLB -- ^ @since 0.1.0.0
+  | CarriageReturnLB -- ^ @since 0.1.0.0
+  | EBaseLB -- ^ @since 0.1.0.0
+  | EModifierLB -- ^ @since 0.1.0.0
+  | ExclamationLB -- ^ @since 0.1.0.0
+  | GlueLB -- ^ @since 0.1.0.0
+  | H2LB -- ^ @since 0.1.0.0
+  | H3LB -- ^ @since 0.1.0.0
+  | HebrewLetterLB -- ^ @since 0.1.0.0
+  | HyphenLB -- ^ @since 0.1.0.0
+  | IdeographicLB -- ^ @since 0.1.0.0
+  | InseparableLB -- ^ @since 0.1.0.0
+  | InfixNumericLB -- ^ @since 0.1.0.0
+  | JLLB -- ^ @since 0.1.0.0
+  | JTLB -- ^ @since 0.1.0.0
+  | JVLB -- ^ @since 0.1.0.0
+  | LineFeedLB -- ^ @since 0.1.0.0
+  | NextLineLB -- ^ @since 0.1.0.0
+  | NonstarterLB -- ^ @since 0.1.0.0
+  | NumericLB -- ^ @since 0.1.0.0
+  | OpenPunctuationLB -- ^ @since 0.1.0.0
+  | PostfixNumericLB -- ^ @since 0.1.0.0
+  | PrefixNumericLB -- ^ @since 0.1.0.0
+  | QuotationLB -- ^ @since 0.1.0.0
+  | RegionalIndicatorLB -- ^ @since 0.1.0.0
+  | ComplexContextLB -- ^ @since 0.1.0.0
+  | SurrogateLB -- ^ @since 0.1.0.0
+  | SpaceLB -- ^ @since 0.1.0.0
+  | BreakSymbolsLB -- ^ @since 0.1.0.0
+  | WordJoinerLB -- ^ @since 0.1.0.0
+  | UnknownLB -- ^ @since 0.1.0.0
+  | ZWSpaceLB -- ^ @since 0.1.0.0
+  | ZWJLB -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty LineBreak where
@@ -2169,21 +2254,24 @@ instance EnumeratedProperty LineBreak where
       ZWSpaceLB -> "ZW"
       ZWJLB -> "ZWJ"
 
+-- | See 'Data.UCD.graphemeClusterBreak'
+--
+-- @since 0.1.0.0
 data GraphemeClusterBreak
-  = ControlGCB
-  | CRGCB
-  | ExtendGCB
-  | LGCB
-  | LFGCB
-  | LVGCB
-  | LVTGCB
-  | PrependGCB
-  | RegionalIndicatorGCB
-  | SpacingMarkGCB
-  | TGCB
-  | VGCB
-  | OtherGCB
-  | ZWJGCB
+  = ControlGCB -- ^ @since 0.1.0.0
+  | CRGCB -- ^ @since 0.1.0.0
+  | ExtendGCB -- ^ @since 0.1.0.0
+  | LGCB -- ^ @since 0.1.0.0
+  | LFGCB -- ^ @since 0.1.0.0
+  | LVGCB -- ^ @since 0.1.0.0
+  | LVTGCB -- ^ @since 0.1.0.0
+  | PrependGCB -- ^ @since 0.1.0.0
+  | RegionalIndicatorGCB -- ^ @since 0.1.0.0
+  | SpacingMarkGCB -- ^ @since 0.1.0.0
+  | TGCB -- ^ @since 0.1.0.0
+  | VGCB -- ^ @since 0.1.0.0
+  | OtherGCB -- ^ @since 0.1.0.0
+  | ZWJGCB -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty GraphemeClusterBreak where
@@ -2220,22 +2308,25 @@ instance EnumeratedProperty GraphemeClusterBreak where
       OtherGCB -> "Other"
       ZWJGCB -> "ZWJ"
 
+-- | See 'Data.UCD.sentenceBreak'
+--
+-- @since 0.1.0.0
 data SentenceBreak
-  = ATermSB
-  | CloseSB
-  | CRSB
-  | ExtendSB
-  | FormatSB
-  | OLetterSB
-  | LFSB
-  | LowerSB
-  | NumericSB
-  | SContinueSB
-  | SepSB
-  | SpSB
-  | STermSB
-  | UpperSB
-  | OtherSB
+  = ATermSB -- ^ @since 0.1.0.0
+  | CloseSB -- ^ @since 0.1.0.0
+  | CRSB -- ^ @since 0.1.0.0
+  | ExtendSB -- ^ @since 0.1.0.0
+  | FormatSB -- ^ @since 0.1.0.0
+  | OLetterSB -- ^ @since 0.1.0.0
+  | LFSB -- ^ @since 0.1.0.0
+  | LowerSB -- ^ @since 0.1.0.0
+  | NumericSB -- ^ @since 0.1.0.0
+  | SContinueSB -- ^ @since 0.1.0.0
+  | SepSB -- ^ @since 0.1.0.0
+  | SpSB -- ^ @since 0.1.0.0
+  | STermSB -- ^ @since 0.1.0.0
+  | UpperSB -- ^ @since 0.1.0.0
+  | OtherSB -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty SentenceBreak where
@@ -2274,26 +2365,29 @@ instance EnumeratedProperty SentenceBreak where
       UpperSB -> "Upper"
       OtherSB -> "Other"
 
+-- | See 'Data.UCD.wordBreak'
+--
+-- @since 0.1.0.0
 data WordBreak
-  = CRWB
-  | DoubleQuoteWB
-  | ExtendNumLetWB
-  | ExtendWB
-  | FormatWB
-  | HebrewLetterWB
-  | KatakanaWB
-  | ALetterWB
-  | LFWB
-  | MidNumLetWB
-  | MidLetterWB
-  | MidNumWB
-  | NewlineWB
-  | NumericWB
-  | RegionalIndicatorWB
-  | SingleQuoteWB
-  | WSegSpaceWB
-  | OtherWB
-  | ZWJWB
+  = CRWB -- ^ @since 0.1.0.0
+  | DoubleQuoteWB -- ^ @since 0.1.0.0
+  | ExtendNumLetWB -- ^ @since 0.1.0.0
+  | ExtendWB -- ^ @since 0.1.0.0
+  | FormatWB -- ^ @since 0.1.0.0
+  | HebrewLetterWB -- ^ @since 0.1.0.0
+  | KatakanaWB -- ^ @since 0.1.0.0
+  | ALetterWB -- ^ @since 0.1.0.0
+  | LFWB -- ^ @since 0.1.0.0
+  | MidNumLetWB -- ^ @since 0.1.0.0
+  | MidLetterWB -- ^ @since 0.1.0.0
+  | MidNumWB -- ^ @since 0.1.0.0
+  | NewlineWB -- ^ @since 0.1.0.0
+  | NumericWB -- ^ @since 0.1.0.0
+  | RegionalIndicatorWB -- ^ @since 0.1.0.0
+  | SingleQuoteWB -- ^ @since 0.1.0.0
+  | WSegSpaceWB -- ^ @since 0.1.0.0
+  | OtherWB -- ^ @since 0.1.0.0
+  | ZWJWB -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty WordBreak where
@@ -2340,13 +2434,16 @@ instance EnumeratedProperty WordBreak where
       OtherWB -> "Other"
       ZWJWB -> "ZWJ"
 
+-- | See 'Data.UCD.eastAsianWidth'
+--
+-- @since 0.1.0.0
 data EastAsianWidth
-  = AmbiguousEAW
-  | FullwidthEAW
-  | HalfwidthEAW
-  | NeutralEAW
-  | NarrowEAW
-  | WideEAW
+  = AmbiguousEAW -- ^ @since 0.1.0.0
+  | FullwidthEAW -- ^ @since 0.1.0.0
+  | HalfwidthEAW -- ^ @since 0.1.0.0
+  | NeutralEAW -- ^ @since 0.1.0.0
+  | NarrowEAW -- ^ @since 0.1.0.0
+  | WideEAW -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty EastAsianWidth where
@@ -2367,9 +2464,20 @@ instance EnumeratedProperty EastAsianWidth where
       NarrowEAW -> "Narrow"
       WideEAW -> "Wide"
 
+-- | Type of the parenthesis.
+--
+-- See also 'Data.UCD.bidiPairedBracketType'
+--
+-- @since 0.1.0.0
 data BidiPairedBracketType
   = Close
+  -- ^ Closing parentheses, such as @)@, @]@, or @⸩@
+  --
+  -- @since 0.1.0.0
   | Open
+  -- ^ Opening parentheses, such as @(@, @[@, or @⸨@
+  --
+  -- @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty BidiPairedBracketType where
@@ -2382,21 +2490,24 @@ instance EnumeratedProperty BidiPairedBracketType where
       Open -> "Open"
       Close -> "Close"
 
+-- | See 'Data.UCD.indicPositionalCategory'
+--
+-- @since 0.1.0.0
 data IndicPositionalCategory
-  = BottomIPC
-  | BottomAndLeftIPC
-  | BottomAndRightIPC
-  | LeftIPC
-  | LeftAndRightIPC
-  | OverstruckIPC
-  | RightIPC
-  | TopIPC
-  | TopAndBottomIPC
-  | TopAndBottomAndRightIPC
-  | TopAndLeftIPC
-  | TopAndLeftAndRightIPC
-  | TopAndRightIPC
-  | VisualOrderLeftIPC
+  = BottomIPC -- ^ @since 0.1.0.0
+  | BottomAndLeftIPC -- ^ @since 0.1.0.0
+  | BottomAndRightIPC -- ^ @since 0.1.0.0
+  | LeftIPC -- ^ @since 0.1.0.0
+  | LeftAndRightIPC -- ^ @since 0.1.0.0
+  | OverstruckIPC -- ^ @since 0.1.0.0
+  | RightIPC -- ^ @since 0.1.0.0
+  | TopIPC -- ^ @since 0.1.0.0
+  | TopAndBottomIPC -- ^ @since 0.1.0.0
+  | TopAndBottomAndRightIPC -- ^ @since 0.1.0.0
+  | TopAndLeftIPC -- ^ @since 0.1.0.0
+  | TopAndLeftAndRightIPC -- ^ @since 0.1.0.0
+  | TopAndRightIPC -- ^ @since 0.1.0.0
+  | VisualOrderLeftIPC -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty IndicPositionalCategory where
@@ -2418,43 +2529,46 @@ instance EnumeratedProperty IndicPositionalCategory where
       VisualOrderLeftIPC -> "Visual_Order_Left"
   abbreviatedPropertyValueName = fullPropertyValueName
 
+-- | See 'Data.UCD.indicSyllabicCategory'
+--
+-- @since 0.1.0.0
 data IndicSyllabicCategory
-  = Avagraha
-  | Bindu
-  | BrahmiJoiningNumber
-  | CantillationMark
-  | Consonant
-  | ConsonantDead
-  | ConsonantFinal
-  | ConsonantHeadLetter
-  | ConsonantInitialPostfixed
-  | ConsonantKiller
-  | ConsonantMedial
-  | ConsonantPlaceholder
-  | ConsonantPrecedingRepha
-  | ConsonantPrefixed
-  | ConsonantSubjoined
-  | ConsonantSucceedingRepha
-  | ConsonantWithStacker
-  | GeminationMark
-  | InvisibleStacker
-  | Joiner
-  | ModifyingLetter
-  | NonJoiner
-  | Nukta
-  | Number
-  | NumberJoiner
-  | Other
-  | PureKiller
-  | RegisterShifter
-  | SyllableModifier
-  | ToneLetter
-  | ToneMark
-  | Virama
-  | Visarga
-  | Vowel
-  | VowelDependent
-  | VowelIndependent
+  = Avagraha -- ^ @since 0.1.0.0
+  | Bindu -- ^ @since 0.1.0.0
+  | BrahmiJoiningNumber -- ^ @since 0.1.0.0
+  | CantillationMark -- ^ @since 0.1.0.0
+  | Consonant -- ^ @since 0.1.0.0
+  | ConsonantDead -- ^ @since 0.1.0.0
+  | ConsonantFinal -- ^ @since 0.1.0.0
+  | ConsonantHeadLetter -- ^ @since 0.1.0.0
+  | ConsonantInitialPostfixed -- ^ @since 0.1.0.0
+  | ConsonantKiller -- ^ @since 0.1.0.0
+  | ConsonantMedial -- ^ @since 0.1.0.0
+  | ConsonantPlaceholder -- ^ @since 0.1.0.0
+  | ConsonantPrecedingRepha -- ^ @since 0.1.0.0
+  | ConsonantPrefixed -- ^ @since 0.1.0.0
+  | ConsonantSubjoined -- ^ @since 0.1.0.0
+  | ConsonantSucceedingRepha -- ^ @since 0.1.0.0
+  | ConsonantWithStacker -- ^ @since 0.1.0.0
+  | GeminationMark -- ^ @since 0.1.0.0
+  | InvisibleStacker -- ^ @since 0.1.0.0
+  | Joiner -- ^ @since 0.1.0.0
+  | ModifyingLetter -- ^ @since 0.1.0.0
+  | NonJoiner -- ^ @since 0.1.0.0
+  | Nukta -- ^ @since 0.1.0.0
+  | Number -- ^ @since 0.1.0.0
+  | NumberJoiner -- ^ @since 0.1.0.0
+  | Other -- ^ @since 0.1.0.0
+  | PureKiller -- ^ @since 0.1.0.0
+  | RegisterShifter -- ^ @since 0.1.0.0
+  | SyllableModifier -- ^ @since 0.1.0.0
+  | ToneLetter -- ^ @since 0.1.0.0
+  | ToneMark -- ^ @since 0.1.0.0
+  | Virama -- ^ @since 0.1.0.0
+  | Visarga -- ^ @since 0.1.0.0
+  | Vowel -- ^ @since 0.1.0.0
+  | VowelDependent -- ^ @since 0.1.0.0
+  | VowelIndependent -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty IndicSyllabicCategory where
