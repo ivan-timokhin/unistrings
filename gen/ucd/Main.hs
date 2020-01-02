@@ -34,7 +34,7 @@ import qualified Data.Vector.Unboxed as VU
 import Data.Word (Word8)
 import System.Directory (createDirectoryIfMissing)
 
-import Data.UCD.Internal.Types
+import Data.Unistring.UCD.Internal.Types
   ( BidiClass(LeftToRightBC)
   , EastAsianWidth(NeutralEAW)
   , GraphemeClusterBreak(OtherGCB)
@@ -103,9 +103,11 @@ import qualified Runner as R
 main :: IO ()
 main = do
   records <- UCD.UnicodeData.fetch
-  createDirectoryIfMissing True "ucd/generated/cbits"
-  createDirectoryIfMissing True "ucd/generated/hs/Data/UCD/Internal"
-  createDirectoryIfMissing True "ucd/generated/test_data"
+  createDirectoryIfMissing True "unistring-ucd/generated/cbits"
+  createDirectoryIfMissing
+    True
+    "unistring-ucd/generated/hs/Data/Unistring/UCD/Internal"
+  createDirectoryIfMissing True "unistring-ucd/generated/test_data"
   let fullPartitionings = (4, 16)
   R.traverse_
     id

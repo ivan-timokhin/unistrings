@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.DerivedBidiClass where
 
-import Data.UCD.Internal.Types (BidiClass)
+import Data.Unistring.UCD.Internal.Types (BidiClass)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () BidiClass)

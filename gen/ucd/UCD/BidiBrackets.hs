@@ -18,7 +18,7 @@ module UCD.BidiBrackets where
 import qualified Text.Megaparsec.Byte as MB
 import qualified Text.Megaparsec.Byte.Lexer as MBL
 
-import Data.UCD.Internal.Types (BidiPairedBracketType)
+import Data.Unistring.UCD.Internal.Types (BidiPairedBracketType)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple, semicolon)
 
 fetch :: IO (Table () () (Int, BidiPairedBracketType))

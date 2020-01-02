@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.VerticalOrientation where
 
-import Data.UCD.Internal.Types (VerticalOrientation)
+import Data.Unistring.UCD.Internal.Types (VerticalOrientation)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () VerticalOrientation)

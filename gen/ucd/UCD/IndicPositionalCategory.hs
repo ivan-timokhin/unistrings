@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.IndicPositionalCategory where
 
-import Data.UCD.Internal.Types (IndicPositionalCategory)
+import Data.Unistring.UCD.Internal.Types (IndicPositionalCategory)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () IndicPositionalCategory)

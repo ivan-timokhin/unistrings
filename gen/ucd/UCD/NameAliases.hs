@@ -26,7 +26,7 @@ import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Byte as MB
 import qualified Text.Megaparsec.Byte.Lexer as MBL
 
-import Data.UCD.Internal.Types
+import Data.Unistring.UCD.Internal.Types
   ( NameAliasType(AbbreviationAlias, AlternateAlias, ControlAlias,
               CorrectionAlias, FigmentAlias)
   )

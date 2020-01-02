@@ -48,7 +48,10 @@ import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Byte as MB
 import qualified Text.Megaparsec.Byte.Lexer as MBL
 
-import Data.UCD.Internal.Types (BidiClass, DecompositionType(Canonical))
+import Data.Unistring.UCD.Internal.Types
+  ( BidiClass
+  , DecompositionType(Canonical)
+  )
 import Trie (deduplicate)
 import UCD.Common
   ( Parser_

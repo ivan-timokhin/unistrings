@@ -41,7 +41,7 @@ import qualified Text.Megaparsec.Byte as MB
 import qualified Text.Megaparsec.Byte.Lexer as MBL
 import qualified Text.Megaparsec.Error as ME
 
-import Data.UCD.Internal.Types
+import Data.Unistring.UCD.Internal.Types
   ( EnumeratedProperty(abbreviatedPropertyValueName,
                    fullPropertyValueName)
   )

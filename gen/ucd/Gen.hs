@@ -73,7 +73,7 @@ enumSpec2IntGSpec espec =
     , igsHsType = esHsType espec
     , igsHsImports =
         [ B.concat ["import ", esHsTypeModule espec, " (", esHsType espec, ")"]
-        , "import Data.UCD.Internal.Int (toInt#)"
+        , "import Data.Unistring.UCD.Internal.Int (toInt#)"
         , "import GHC.Exts(tagToEnum#)"
         ]
     , igsHsConvert =
@@ -274,7 +274,7 @@ generateGenericHs spec trie =
         (itHaskell ty) :
       foreignImports (lv + 1) rest
     header =
-      "import Data.UCD.Internal.Ptr (Ptr, unsafeReadPtr)" :
+      "import Data.Unistring.UCD.Internal.Ptr (Ptr, unsafeReadPtr)" :
       "import Data.Bits ((.&.), shiftR, shiftL)" :
       "import Data.Int (Int8, Int16, Int32, Int64)" :
       "import Data.Word (Word8, Word16, Word32)" : gsHsImports spec

@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.DerivedJoiningType where
 
-import Data.UCD.Internal.Types (JoiningType)
+import Data.Unistring.UCD.Internal.Types (JoiningType)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () JoiningType)

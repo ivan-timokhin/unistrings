@@ -30,7 +30,7 @@ import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Byte as MB
 import qualified Text.Megaparsec.Byte.Lexer as MBL
 
-import Data.UCD.Internal.Types (Block, fullPropertyValueName)
+import Data.Unistring.UCD.Internal.Types (Block, fullPropertyValueName)
 import UCD.Common (Parser_, comments, fetchGeneral, semicolon, unicodeTableSize)
 
 fetch :: IO (V.Vector (Maybe Block))

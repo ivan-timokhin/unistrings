@@ -20,7 +20,7 @@ module UCD.Scripts
   ( fetch
   ) where
 
-import Data.UCD.Internal.Types (Script(..))
+import Data.Unistring.UCD.Internal.Types (Script(..))
 import UCD.Common (Table, enumeratedFullP, fetchSimple)
 
 fetch :: IO (Table () () Script)

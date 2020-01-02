@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.WordBreakProperty where
 
-import Data.UCD.Internal.Types (WordBreak)
+import Data.Unistring.UCD.Internal.Types (WordBreak)
 import UCD.Common (Table, enumeratedFullP, fetchSimple)
 
 fetch :: IO (Table () () WordBreak)

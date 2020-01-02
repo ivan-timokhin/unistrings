@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.DerivedJoiningGroup where
 
-import Data.UCD.Internal.Types (JoiningGroup)
+import Data.Unistring.UCD.Internal.Types (JoiningGroup)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () JoiningGroup)

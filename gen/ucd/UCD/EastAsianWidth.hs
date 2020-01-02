@@ -15,7 +15,7 @@ limitations under the License.
 -}
 module UCD.EastAsianWidth where
 
-import Data.UCD.Internal.Types (EastAsianWidth)
+import Data.Unistring.UCD.Internal.Types (EastAsianWidth)
 import UCD.Common (Table, enumeratedAbbrP, fetchSimple)
 
 fetch :: IO (Table () () EastAsianWidth)

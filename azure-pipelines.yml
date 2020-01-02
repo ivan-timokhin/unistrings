@@ -23,8 +23,8 @@ jobs:
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
     CABAL_FLAGS: "-fWerror"
     CABAL_TEST_TARGETS: |
-      ucd:ucd-test-xml
-      ucd:ucd-test-inspection
+      unistring-ucd:ucd-test-xml
+      unistring-ucd:ucd-test-inspection
   steps:
   - script: |
       set -ex
@@ -64,27 +64,27 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
-        STACK_FLAGS: --flag ucd:-inspection --flag ucd:zippath
+        STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
+          unistring-ucd:ucd-test-xml
       lts-11.22:
         RESOLVER: lts-11.22
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
-          ucd:ucd-test-inspection
+          unistring-ucd:ucd-test-xml
+          unistring-ucd:ucd-test-inspection
       lts-12.26:
         RESOLVER: lts-12.26
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
-          ucd:ucd-test-inspection
+          unistring-ucd:ucd-test-xml
+          unistring-ucd:ucd-test-inspection
       lts-14.16:
         RESOLVER: lts-14.16
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
-          ucd:ucd-test-inspection
+          unistring-ucd:ucd-test-xml
+          unistring-ucd:ucd-test-inspection
   variables:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
@@ -137,7 +137,7 @@ jobs:
     CABAL_FLAGS: "-fWerror"
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
     CABAL_TEST_TARGETS: |
-      ucd:ucd-test-xml
+      unistring-ucd:ucd-test-xml
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -188,8 +188,8 @@ jobs:
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
     CABAL_FLAGS: "-fWerror"
     CABAL_TEST_TARGETS: |
-      ucd:ucd-test-xml
-      ucd:ucd-test-inspection
+      unistring-ucd:ucd-test-xml
+      unistring-ucd:ucd-test-inspection
   steps:
   - bash: |
       set -ex
@@ -232,27 +232,27 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
-        STACK_FLAGS: --flag ucd:-inspection --flag ucd:zippath
+        STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
+          unistring-ucd:ucd-test-xml
       lts-11.22:
         RESOLVER: lts-11.22
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
-          ucd:ucd-test-inspection
+          unistring-ucd:ucd-test-xml
+          unistring-ucd:ucd-test-inspection
       lts-12.26:
         RESOLVER: lts-12.26
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
-          ucd:ucd-test-inspection
+          unistring-ucd:ucd-test-xml
+          unistring-ucd:ucd-test-inspection
       lts-14.16:
         RESOLVER: lts-14.16
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
-          ucd:ucd-test-xml
-          ucd:ucd-test-inspection
+          unistring-ucd:ucd-test-xml
+          unistring-ucd:ucd-test-inspection
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
@@ -293,7 +293,7 @@ jobs:
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)/.cabal/store
     CABAL_FLAGS: "-fWerror -f-threaded"
     CABAL_TEST_TARGETS: |
-      ucd:ucd-test
+      unistring-ucd:ucd-test
   steps:
   - script: |
       set -ex
@@ -323,12 +323,12 @@ jobs:
       set -ex
       export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
 
-      mkdir -p reference/ucd
-      mv -v {,reference/}ucd/generated
+      mkdir -p reference/unistring-ucd
+      mv -v {,reference/}unistring-ucd/generated
 
       cabal v2-run ${CABAL_FLAGS} gen:ucd
 
-      diff -sr {reference/,}ucd/generated/cbits
-      diff -sr {reference/,}ucd/generated/hs
+      diff -sr {reference/,}unistring-ucd/generated/cbits
+      diff -sr {reference/,}unistring-ucd/generated/hs
 
       cabal v2-test ${CABAL_FLAGS} ${CABAL_TEST_TARGETS}
