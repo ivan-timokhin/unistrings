@@ -68,6 +68,7 @@ executable ucd
                      , UCD.DerivedNumericType
                      , UCD.DerivedNumericValues
                      , UCD.Common
+                     , Parser
                      , Trie
                      , TrieOpt
                      , Gen
