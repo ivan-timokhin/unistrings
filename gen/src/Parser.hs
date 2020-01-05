@@ -156,7 +156,8 @@ fetchBinaryMulti = flip fetchGeneral (fmap Table <$> parser)
     record :: StateT (Map ByteString [Range () () Bool]) Parser_ ()
     record = do
       rng <- lift range
-      prop <- M.takeWhile1P (Just "Property name") (/= 0x20) -- ' '
+      prop <-
+        M.takeWhile1P (Just "Property name") (\c -> c /= 0x20 && c /= 0x23) -- ' ', '#'
       lift $ MB.space *> comments
       modify $ Map.alter (Just . ((True <$ rng) :) . fromMaybe []) prop
 

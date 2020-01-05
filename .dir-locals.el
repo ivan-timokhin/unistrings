@@ -32,4 +32,12 @@
  ("gen/ucd"
   . ((nil
       . ((dante-target
-          . "gen:ucd"))))))
+          . "gen:ucd")))))
+ ("gen/src"
+  . ((nil
+      . ((dante-target
+          . "gen:gen")))))
+ ("gen/emoji"
+  . ((nil
+      . ((dante-target
+          . "gen:emoji"))))))
