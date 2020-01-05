@@ -26,6 +26,13 @@ elif [ "${component}" = "udhr" ]; then
     cd data/udhr/
     echo "Downloading full_all.txt"
     curl "https://www.unicode.org/udhr/assemblies/full_all.txt" > full_all.txt
+elif [ "${component}" = "emoji" ]; then
+    version=${2:-"latest"}
+    echo "Emoji: ${version}"
+    mkdir -p data/emoji/
+    cd data/emoji
+    echo "Downloading emoji-data.txt"
+    curl -L "https://www.unicode.org/Public/emoji/latest/emoji-data.txt" > emoji-data.txt
 else
     echo "Unrecognised component: \"${component}\""
 fi
