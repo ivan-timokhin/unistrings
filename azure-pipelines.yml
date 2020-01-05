@@ -294,6 +294,9 @@ jobs:
     CABAL_FLAGS: "-fWerror -f-threaded"
     CABAL_TEST_TARGETS: |
       unistring-ucd:ucd-test
+    CABAL_RUN_TARGETS: |
+      gen:ucd
+      gen:emoji
   steps:
   - script: |
       set -ex
@@ -308,7 +311,7 @@ jobs:
       cabal user-config update --augment="store-dir: ${CABAL_STORE_FOLDER}"
 
       cabal v2-freeze ${CABAL_FLAGS} --enable-tests
-      cabal v2-build ${CABAL_FLAGS} --dry-run gen:ucd ${CABAL_TEST_TARGETS} | tee cabal.dry-run.log
+      cabal v2-build ${CABAL_FLAGS} --dry-run ${CABAL_RUN_TARGETS} ${CABAL_TEST_TARGETS} | tee cabal.dry-run.log
 
   - task: Cache@2
     inputs:
@@ -326,9 +329,18 @@ jobs:
       mkdir -p reference/unistring-ucd
       mv -v {,reference/}unistring-ucd/generated
 
-      cabal v2-run ${CABAL_FLAGS} gen:ucd
+      mkdir -p reference/unistring-emoji-data
+      mv -v {,reference/}unistring-emoji-data/generated
+
+      for target in ${CABAL_RUN_TARGETS}
+      do
+        cabal v2-run ${CABAL_FLAGS} ${target}
+      done
 
       diff -sr {reference/,}unistring-ucd/generated/cbits
       diff -sr {reference/,}unistring-ucd/generated/hs
+
+      diff -sr {reference/,}unistring-emoji-data/generated/cbits
+      diff -sr {reference/,}unistring-emoji-data/generated/hs
 
       cabal v2-test ${CABAL_FLAGS} ${CABAL_TEST_TARGETS}
