@@ -77,6 +77,7 @@ executable ucd
                      , Gen.Cost
                      , Data.Unistring.UCD.Internal.Types
                      , Driver
+                     , Driver.UCD
                      , Runner
   -- other-extensions:
   build-depends:       base

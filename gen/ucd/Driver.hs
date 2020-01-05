@@ -18,7 +18,23 @@ limitations under the License.
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Driver where
+module Driver
+  ( bool
+  , enum
+  , integral
+  , maybeBool
+  , maybeEnum
+  , maybeIntegral
+  , smallEnumVector
+  , ffiVector
+  , TableValue
+  , processTableAtAs
+  , generateASCIITableSourcesAt
+  , generateASCIIVectorTableSourcesAt
+  , generateSourcesAtAs
+  , generateTestsAt
+  , Locate(Locate, path, moduleName, modulePath, cSymbolName)
+  ) where
 
 import Control.Arrow ((&&&))
 import Data.Bifunctor (first, second)
@@ -77,10 +93,10 @@ typeName ::
   => ByteString
 typeName = B.pack $ tyConName $ typeRepTyCon $ typeRep $ Proxy @a
 
-moduleName ::
+typeModuleName ::
      forall a. Typeable a
   => ByteString
-moduleName = B.pack $ tyConModule $ typeRepTyCon $ typeRep $ Proxy @a
+typeModuleName = B.pack $ tyConModule $ typeRepTyCon $ typeRep $ Proxy @a
 
 data TableValue sv dv a bv bt =
   TableValue
@@ -100,7 +116,7 @@ enum =
             EnumSpec
               { esCPrefix = prefix
               , esHsType = typeName @e
-              , esHsTypeModule = moduleName @e
+              , esHsTypeModule = typeModuleName @e
               }
     }
 
@@ -116,7 +132,7 @@ maybeEnum =
             EnumSpec
               { esCPrefix = prefix
               , esHsType = typeName @e
-              , esHsTypeModule = moduleName @e
+              , esHsTypeModule = typeModuleName @e
               }
     }
 
@@ -198,24 +214,39 @@ ffiVector =
   TableValue
     {typeValues = typeContainer, generateModule = generateMonoContainer}
 
-processTableAs ::
+data Locate =
+  Locate
+    { path :: FilePath -> FilePath
+    , moduleName :: ByteString -> ByteString
+    , modulePath :: FilePath -> FilePath
+    , cSymbolName :: ByteString -> ByteString
+    }
+
+processTableAtAs ::
      (Show a, Ord bv, Ord (dv bv), SizedTy bt, VG.Vector sv a, VG.Vector dv bv)
-  => TableValue sv dv a bv bt
+  => Locate
+  -> TableValue sv dv a bv bt
   -> (Int, Int)
   -> ByteString
   -> sv a
   -> IO ()
-{-# INLINE processTableAs #-}
-processTableAs tv partitionings snakeName values = do
-  generateSourcesAs tv partitionings snakeName values
-  generateTests snakeName values
+{-# INLINE processTableAtAs #-}
+processTableAtAs locate tv partitionings snakeName values = do
+  generateSourcesAtAs locate tv partitionings snakeName values
+  generateTestsAt locate snakeName values
 
-generateASCIITableSources ::
-     (Int, Int) -> ByteString -> V.Vector ByteString -> IO ()
-generateASCIITableSources partitionings snakeName values =
+generateASCIITableSourcesAt ::
+     Locate -> (Int, Int) -> ByteString -> V.Vector ByteString -> IO ()
+generateASCIITableSourcesAt locate partitionings snakeName values =
   R.both_
-    (generateSourcesAs byteString partitionings (snakeName <> "_ptr") values)
-    (generateSourcesAs
+    (generateSourcesAtAs
+       locate
+       byteString
+       partitionings
+       (snakeName <> "_ptr")
+       values)
+    (generateSourcesAtAs
+       locate
        integral
        partitionings
        (snakeName <> "_len")
@@ -223,17 +254,23 @@ generateASCIITableSources partitionings snakeName values =
 
 -- This assumes that the total length of all strings in a single
 -- element is <= 255
-generateASCIIVectorTableSources ::
-     (Int, Int) -> ByteString -> V.Vector (V.Vector ByteString) -> IO ()
-generateASCIIVectorTableSources partitionings snakeName values =
+generateASCIIVectorTableSourcesAt ::
+     Locate
+  -> (Int, Int)
+  -> ByteString
+  -> V.Vector (V.Vector ByteString)
+  -> IO ()
+generateASCIIVectorTableSourcesAt locate partitionings snakeName values =
   R.both_
-    (generateSourcesAs
+    (generateSourcesAtAs
+       locate
        integral
        partitionings
        (snakeName <> "_len")
        (VG.convert $ VG.map V.length values)) $
   R.both_
-    (generateSourcesAs
+    (generateSourcesAtAs
+       locate
        ffiVector
        partitionings
        (snakeName <> "_sublens")
@@ -244,41 +281,40 @@ generateASCIIVectorTableSources partitionings snakeName values =
                else V.map (toEnum :: Int -> Word8) $
                     V.scanl' (\n str -> n + B.length str) 0 v)
           values))
-    (generateSourcesAs
+    (generateSourcesAtAs
+       locate
        byteString
        partitionings
        (snakeName <> "_ptr")
        (fmap fold values))
 
-generateSourcesAs ::
+generateSourcesAtAs ::
      (Ord (dv bv), Ord bv, SizedTy bt, VG.Vector dv bv, VG.Vector sv a)
-  => TableValue sv dv a bv bt
+  => Locate
+  -> TableValue sv dv a bv bt
   -> (Int, Int)
   -> ByteString
   -> sv a
   -> IO ()
-{-# INLINEABLE generateSourcesAs #-}
-generateSourcesAs tv (maxLayers, maxBits) snakeName values = do
+{-# INLINEABLE generateSourcesAtAs #-}
+generateSourcesAtAs locate tv (maxLayers, maxBits) snakeName values = do
   putStrLn $ show snakeName ++ " " ++ show p
   putStrLn $ show snakeName ++ " " ++ show cost
-  let hsFile =
-        "unistring-ucd/generated/hs/Data/Unistring/UCD/Internal/" <>
-        hsModuleName <> ".hs"
-  B.writeFile (B.unpack hsFile) $
+  let hsFile = "hs/" <> modulePath locate (B.unpack hsModuleName) <> ".hs"
+  B.writeFile (path locate hsFile) $
     B.unlines $
     "-- This file is automatically generated." :
     "{-# OPTIONS_GHC -Wno-unused-imports -Wno-identities #-}" :
     "{- HLINT ignore -}" :
     "{-# LANGUAGE MagicHash #-}" :
-    ("module Data.Unistring.UCD.Internal." <>
-     hsModuleName <> " (retrieve) where\n") :
+    ("module " <> moduleName locate hsModuleName <> " (retrieve) where\n") :
     moduleHs modul
-  B.writeFile (B.unpack $ "unistring-ucd/generated/cbits/" <> snakeName <> ".c") $
+  B.writeFile (path locate $ B.unpack $ "cbits/" <> snakeName <> ".c") $
     B.unlines $ "// This file is automatically generated" : moduleC modul
   where
     hsModuleName = snake2camel snakeName
     modul = generateModule tv cprefix trie
-    cprefix = "_hs__ucd__" <> snakeName
+    cprefix = "_hs__" <> cSymbolName locate snakeName
     trie = first (const bty) $ typeLayers $ mkTrie bvals p
     (cost, p) =
       findOptimalPartitioning
@@ -289,11 +325,12 @@ generateSourcesAs tv (maxLayers, maxBits) snakeName values = do
         bvals
     (bty, bvals) = typeValues tv values
 
-generateTests :: (VG.Vector v a, Show a) => ByteString -> v a -> IO ()
-{-# INLINEABLE generateTests #-}
-generateTests snakeName values =
+generateTestsAt ::
+     (VG.Vector v a, Show a) => Locate -> ByteString -> v a -> IO ()
+{-# INLINEABLE generateTestsAt #-}
+generateTestsAt locate snakeName values =
   withFile
-    (B.unpack $ "unistring-ucd/generated/test_data/" <> snakeName <> ".txt")
+    (path locate $ B.unpack $ "test_data/" <> snakeName <> ".txt")
     WriteMode $ \h -> VG.forM_ values $ hPrint h
 
 snake2camel :: ByteString -> ByteString

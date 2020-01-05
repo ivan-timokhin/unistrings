@@ -50,16 +50,18 @@ import Driver
   ( bool
   , enum
   , ffiVector
-  , generateASCIITableSources
-  , generateASCIIVectorTableSources
-  , generateSourcesAs
-  , generateTests
   , integral
   , maybeBool
   , maybeEnum
   , maybeIntegral
-  , processTableAs
   , smallEnumVector
+  )
+import Driver.UCD
+  ( generateASCIITableSources
+  , generateASCIIVectorTableSources
+  , generateSourcesAs
+  , generateTests
+  , processTableAs
   )
 import qualified UCD.Age
 import qualified UCD.BidiBrackets
