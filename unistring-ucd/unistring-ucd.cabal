@@ -40,9 +40,9 @@ flag zippath
 library
   exposed-modules:     Data.Unistring.UCD
                      , Data.Unistring.UCD.Unsafe
-  other-modules:       Data.Unistring.UCD.Internal.Ptr
+                     , Data.Unistring.UCD.Internal.Ptr
                      , Data.Unistring.UCD.Internal.Int
-                     , Data.Unistring.UCD.Internal.ByteString
+  other-modules:       Data.Unistring.UCD.Internal.ByteString
                      , Data.Unistring.UCD.Internal.GeneralCategory
                      , Data.Unistring.UCD.Internal.CanonicalCombiningClass
                      , Data.Unistring.UCD.Internal.NamePtr

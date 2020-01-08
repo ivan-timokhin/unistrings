@@ -14,9 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -}
 {-# LANGUAGE MagicHash #-}
+{-# OPTIONS_HADDOCK show-extensions #-}
 
+{-|
+Module      : Data.Unistring.UCD.Internal.Int
+Description : Internal utilities for integer conversions
+Copyright   : (c) Ivan Timokhin 2019
+License     : Apache-2.0
+Maintainer  : timokhin.iv@gmail.com
+Stability   : internal
+
+This module has nothing to do with the main purpose of the library,
+and everything to do with implementation details of encoding
+enumerations in lookup tables.  There are no stability guarantees
+whatsoever, and you are heavily encouraged to pretend this module
+doesn't exist.
+-}
 module Data.Unistring.UCD.Internal.Int
-  ( ToInt#(toInt#)
+  ( toInt#
   ) where
 
 import GHC.Exts (Int#, word2Int#)
@@ -24,6 +39,7 @@ import GHC.Int (Int16(I16#), Int32(I32#), Int8(I8#))
 import GHC.Word (Word16(W16#), Word8(W8#))
 
 class ToInt# a where
+  -- | Convert a lifted integer into unlifted primitive one.
   toInt# :: a -> Int#
 
 instance ToInt# Int16 where
