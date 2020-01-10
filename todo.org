@@ -111,13 +111,13 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
   - [X] Regional_Indicator
   - [X] Indic_Positional_Category
   - [X] Indic_Syllabic_Category
-* Emoji properties [0/6]
-- [ ] Emoji
-- [ ] Emoji_Presentation
-- [ ] Emoji_Modifier
-- [ ] Emoji_Modifier_Base
-- [ ] Emoji_Component
-- [ ] Extended_Pictographic
+* Emoji properties [6/6]
+- [X] Emoji
+- [X] Emoji_Presentation
+- [X] Emoji_Modifier
+- [X] Emoji_Modifier_Base
+- [X] Emoji_Component
+- [X] Extended_Pictographic
 * Miscellaneous code tasks [7/8]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
