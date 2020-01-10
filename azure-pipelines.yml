@@ -141,9 +141,6 @@ jobs:
   variables:
     CABAL_FLAGS: "-fWerror"
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
-    CABAL_TEST_TARGETS: |
-      unistring-ucd:ucd-test-xml
-      unistring-emoji-data:emoji-inclusions
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -162,7 +159,7 @@ jobs:
 
       cabal v2-freeze ${env:CABAL_FLAGS} --enable-tests
 
-      cabal v2-test ${env:CABAL_FLAGS} --dry-run ${env:CABAL_TEST_TARGETS} | tee cabal.dry-run.log
+      cabal v2-test ${env:CABAL_FLAGS} --dry-run unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions | tee cabal.dry-run.log
 
   - task: Cache@2
     inputs:
@@ -177,7 +174,7 @@ jobs:
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
-      cabal v2-test --test-show-details=streaming ${env:CABAL_TEST_TARGETS}
+      cabal v2-test --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions
 
 - job: macOSCabal
   pool:
