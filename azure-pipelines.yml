@@ -294,6 +294,7 @@ jobs:
     CABAL_FLAGS: "-fWerror -f-threaded"
     CABAL_TEST_TARGETS: |
       unistring-ucd:ucd-test
+      unistring-emoji-data:emoji-data-test
     CABAL_RUN_TARGETS: |
       gen:ucd
       gen:emoji
