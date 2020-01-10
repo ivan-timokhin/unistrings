@@ -1,3 +1,4 @@
 packages:
 - unistring-ucd/
+- unistring-emoji-data/
 - gen/

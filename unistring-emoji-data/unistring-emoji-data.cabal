@@ -61,3 +61,16 @@ test-suite emoji-data-test
                      , tasty-hunit
   hs-source-dirs:      test
   default-language:    Haskell2010
+
+test-suite emoji-inclusions
+  type:                exitcode-stdio-1.0
+  main-is:             Main.hs
+  ghc-options:         -Wall
+                       -Wcompat
+  build-depends:       base
+                     , unistring-emoji-data
+                     , unistring-ucd
+                     , tasty
+                     , tasty-hunit
+  hs-source-dirs:      inclusions
+  default-language:    Haskell2010

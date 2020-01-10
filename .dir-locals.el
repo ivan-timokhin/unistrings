@@ -37,6 +37,10 @@
   . ((nil
       . ((dante-target
           . "unistring-emoji-data:emoji-data-test")))))
+ ("unistring-emoji-data/inclusions"
+  . ((nil
+      . ((dante-target
+          . "unistring-emoji-data:emoji-inclusions")))))
  ("gen/ucd"
   . ((nil
       . ((dante-target

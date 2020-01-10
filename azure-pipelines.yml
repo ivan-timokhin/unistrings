@@ -25,6 +25,7 @@ jobs:
     CABAL_TEST_TARGETS: |
       unistring-ucd:ucd-test-xml
       unistring-ucd:ucd-test-inspection
+      unistring-emoji-data:emoji-inclusions
   steps:
   - script: |
       set -ex
@@ -67,24 +68,28 @@ jobs:
         STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
+          unistring-emoji-data:emoji-inclusions
       lts-11.22:
         RESOLVER: lts-11.22
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
+          unistring-emoji-data:emoji-inclusions
       lts-12.26:
         RESOLVER: lts-12.26
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
+          unistring-emoji-data:emoji-inclusions
       lts-14.16:
         RESOLVER: lts-14.16
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
+          unistring-emoji-data:emoji-inclusions
   variables:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
@@ -138,6 +143,7 @@ jobs:
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
     CABAL_TEST_TARGETS: |
       unistring-ucd:ucd-test-xml
+      unistring-emoji-data:emoji-inclusions
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -190,6 +196,7 @@ jobs:
     CABAL_TEST_TARGETS: |
       unistring-ucd:ucd-test-xml
       unistring-ucd:ucd-test-inspection
+      unistring-emoji-data:emoji-inclusions
   steps:
   - bash: |
       set -ex
@@ -235,24 +242,28 @@ jobs:
         STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
+          unistring-emoji-data:emoji-inclusions
       lts-11.22:
         RESOLVER: lts-11.22
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
+          unistring-emoji-data:emoji-inclusions
       lts-12.26:
         RESOLVER: lts-12.26
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
+          unistring-emoji-data:emoji-inclusions
       lts-14.16:
         RESOLVER: lts-14.16
         STACK_FLAGS:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
+          unistring-emoji-data:emoji-inclusions
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
