@@ -29,6 +29,7 @@ import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
 
 import qualified Data.Unistring.Memory.Unsafe as U
+import Data.Unistring.Singletons (Known)
 
 main :: IO ()
 main =
@@ -39,57 +40,46 @@ main =
         "Memory"
         [ testGroup
             "Unsafe"
-            [ testGroup
-                "IsList"
-                [ testGroup
-                    "Native"
-                    [ testGroup "Word8" (testNative @Word8 @U.Default)
-                    , testGroup "Word16" (testNative @Word16 @U.Default)
-                    , testGroup "Word32" (testNative @Word32 @U.Default)
+            [ testGroup "IsList" $
+              let test ::
+                       forall a storage alloc.
+                       ( U.Primitive a
+                       , Eq a
+                       , Show a
+                       , Arbitrary a
+                       , Known storage
+                       , U.Allocator storage alloc
+                       )
+                    => [TestTree]
+                  test =
+                    [ testProperty "toList . fromList == id" $ \(xs :: [a]) ->
+                        let array :: U.Array alloc storage a
+                            array = fromList xs
+                         in toList array === xs
+                    , testProperty "length . fromList == length" $ \(xs :: [a]) ->
+                        let array :: U.Array alloc storage a
+                            array = fromList xs
+                         in U.getCountOf (U.arrayLength array) === length xs
                     ]
-                , testGroup
-                    "Native pinned"
-                    [ testGroup "Word8" (testNative @Word8 @U.Pinned)
-                    , testGroup "Word16" (testNative @Word16 @U.Pinned)
-                    , testGroup "Word32" (testNative @Word32 @U.Pinned)
-                    ]
-                , testGroup
-                    "Foreign"
-                    [ testGroup "Word8" (testForeign @Word8 @U.Pinned)
-                    , testGroup "Word16" (testForeign @Word16 @U.Pinned)
-                    , testGroup "Word32" (testForeign @Word32 @U.Pinned)
-                    ]
-                ]
+               in [ testGroup
+                      "Native"
+                      [ testGroup "Word8" (test @Word8 @'U.Native @U.Default)
+                      , testGroup "Word16" (test @Word16 @'U.Native @U.Default)
+                      , testGroup "Word32" (test @Word32 @'U.Native @U.Default)
+                      ]
+                  , testGroup
+                      "Native pinned"
+                      [ testGroup "Word8" (test @Word8 @'U.Native @U.Pinned)
+                      , testGroup "Word16" (test @Word16 @'U.Native @U.Pinned)
+                      , testGroup "Word32" (test @Word32 @'U.Native @U.Pinned)
+                      ]
+                  , testGroup
+                      "Foreign"
+                      [ testGroup "Word8" (test @Word8 @'U.Foreign @U.Pinned)
+                      , testGroup "Word16" (test @Word16 @'U.Foreign @U.Pinned)
+                      , testGroup "Word32" (test @Word32 @'U.Foreign @U.Pinned)
+                      ]
+                  ]
             ]
         ]
     ]
-
-testNative ::
-     forall a alloc.
-     (U.Primitive a, Eq a, Show a, Arbitrary a, U.Allocator 'U.Native alloc)
-  => [TestTree]
-testNative =
-  [ testProperty "toList . fromList == id" $ \(xs :: [a]) ->
-      let array :: U.Array alloc 'U.Native a
-          array = fromList xs
-       in toList array === xs
-  , testProperty "length . fromList == length" $ \(xs :: [a]) ->
-      let array :: U.Array alloc 'U.Native a
-          array = fromList xs
-       in U.getCountOf (U.nativeArrayLength (U.getNArray array)) === length xs
-  ]
-
-testForeign ::
-     forall a alloc.
-     (U.Primitive a, Eq a, Show a, Arbitrary a, U.Allocator 'U.Foreign alloc)
-  => [TestTree]
-testForeign =
-  [ testProperty "toList . fromList == id" $ \(xs :: [a]) ->
-      let array :: U.Array alloc 'U.Foreign a
-          array = fromList xs
-       in toList array === xs
-  , testProperty "length . fromList == length" $ \(xs :: [a]) ->
-      let array :: U.Array alloc 'U.Foreign a
-          array = fromList xs
-       in U.getCountOf (U.foreignArrayLength (U.getFArray array)) === length xs
-  ]

@@ -25,6 +25,7 @@ limitations under the License.
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -54,10 +55,13 @@ module Data.Unistring.Memory.Unsafe
   , MutableArray(uncheckedRead, uncheckedWrite)
   , Storage(Native, Foreign)
   , Array (NArray, FArray, getNArray, getFArray)
+  , arrayLength
   , Default
   , Pinned
   , AllocatorM (new)
   , Allocator (withAllocator)
+  , Sing(SNative, SForeign)
+  , storageSing
   ) where
 
 import GHC.Exts
@@ -102,6 +106,8 @@ import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Foldable (for_)
 import Data.Traversable (for)
 import Foreign.ForeignPtr (withForeignPtr)
+
+import Data.Unistring.Singletons (Sing, Known(sing))
 
 newtype CountOf a =
   CountOf
@@ -268,6 +274,16 @@ data Storage
   = Native
   | Foreign
 
+data instance Sing :: Storage -> Type where
+  SNative :: Sing 'Native
+  SForeign :: Sing 'Foreign
+
+instance Known 'Native where
+  sing = SNative
+
+instance Known 'Foreign where
+  sing = SForeign
+
 data family Array allocator (storage :: Storage) :: Type -> Type
 
 newtype instance Array allocator 'Native a =
@@ -368,29 +384,35 @@ unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = by
          in (# s'
              , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
 
-instance (Allocator 'Native alloc, Primitive a) =>
-         IsList (Array alloc 'Native a) where
-  type Item (Array alloc 'Native a) = a
-  fromList xs = fromListN (length xs) xs
-  fromListN n xs =
-    withAllocator $ do
-      arr <- new (CountOf n)
-      for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
-      pure arr
-  toList (NArray arr) =
-    flip map [0 .. (nativeArrayLength arr - 1)] $ \i ->
-      uncheckedIndexNative arr i
+storageSing :: Known storage => Array alloc storage a -> Sing storage
+{-# INLINE storageSing #-}
+storageSing = const sing
 
-instance (Allocator 'Foreign alloc, Primitive a) =>
-         IsList (Array alloc 'Foreign a) where
-  type Item (Array alloc 'Foreign a) = a
+instance (Allocator storage alloc, Primitive a, Known storage) =>
+         IsList (Array alloc storage a) where
+  type Item (Array alloc storage a) = a
   fromList xs = fromListN (length xs) xs
   fromListN n xs =
     withAllocator $ do
       arr <- new (CountOf n)
       for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
       pure arr
-  toList (FArray arr) =
-    unsafeDupablePerformIO $
-    withForeignPtr (foreignArrayPtr arr) $ \ptr ->
-      for [0 .. foreignArrayLength arr - 1] $ \i -> uncheckedReadPtr ptr i
+  toList arr =
+    case storageSing arr of
+      SNative ->
+        flip map [0 .. (nativeArrayLength (getNArray arr) - 1)] $ \i ->
+          uncheckedIndexNative (getNArray arr) i
+      SForeign ->
+        unsafeDupablePerformIO $
+        withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
+          for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
+            uncheckedReadPtr ptr i
+  {-# INLINE toList #-}
+
+arrayLength ::
+     (Known storage, Primitive a) => Array alloc storage a -> CountOf a
+{-# INLINE arrayLength #-}
+arrayLength arr =
+  case storageSing arr of
+    SNative -> nativeArrayLength (getNArray arr)
+    SForeign -> foreignArrayLength (getFArray arr)
