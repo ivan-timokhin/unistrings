@@ -274,7 +274,7 @@ data Storage
   = Native
   | Foreign
 
-data instance Sing :: Storage -> Type where
+data instance Sing (storage :: Storage) where
   SNative :: Sing 'Native
   SForeign :: Sing 'Foreign
 

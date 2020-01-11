@@ -33,9 +33,7 @@ module Data.Unistring.Singletons
   , Known(sing)
   ) where
 
-import Data.Kind (Type)
-
-data family Sing :: k -> Type
+data family Sing (a :: k)
 
 class Known a where
   sing :: Sing a
