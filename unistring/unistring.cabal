@@ -24,7 +24,6 @@ library
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates
                        -Wmissing-import-lists
-                       -Wmissing-export-lists
                        -Widentities
                        -Wcompat
   build-depends:       base >=4.9 && <4.14
