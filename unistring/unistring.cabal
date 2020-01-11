@@ -17,7 +17,8 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     Data.Unistring.Memory.Unsafe
+  exposed-modules:     Data.Unistring.Singletons
+                     , Data.Unistring.Memory.Unsafe
   -- other-modules:
   -- other-extensions:
   ghc-options:         -Wall
