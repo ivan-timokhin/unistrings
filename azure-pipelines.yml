@@ -27,6 +27,7 @@ jobs:
       unistring-ucd:ucd-test-inspection
       unistring-emoji-data:emoji-inclusions
       unistring:unistring-test
+    TASTY_QUICKCHECK_TESTS: 10000
   steps:
   - script: |
       set -ex
@@ -98,6 +99,7 @@ jobs:
   variables:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
+    TASTY_QUICKCHECK_TESTS: 10000
   steps:
   - script: |
       set -ex
@@ -146,6 +148,7 @@ jobs:
   variables:
     CABAL_FLAGS: "-fWerror"
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
+    TASTY_QUICKCHECK_TESTS: 10000
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -200,6 +203,7 @@ jobs:
       unistring-ucd:ucd-test-inspection
       unistring-emoji-data:emoji-inclusions
       unistring:unistring-test
+    TASTY_QUICKCHECK_TESTS: 10000
   steps:
   - bash: |
       set -ex
@@ -274,6 +278,7 @@ jobs:
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
+    TASTY_QUICKCHECK_TESTS: 10000
   steps:
   - script: |
       set -ex
