@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -}
 {-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
+
 {-|
 Module      : Data.Unistring.Singletons
 Description : Singletons support for runtime reflection
