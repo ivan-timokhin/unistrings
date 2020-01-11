@@ -20,12 +20,9 @@ limitations under the License.
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
@@ -250,20 +247,20 @@ getSizeOfMutableByteArray mba = ST $ \s ->
     (# s', n #) -> (# s', ByteCount (I# n) #)
 
 class Monad m =>
-      MutableArray m arr
+      MutableArray arr m
   where
   uncheckedRead :: Primitive a => arr a -> CountOf a -> m a
   uncheckedWrite :: Primitive a => arr a -> CountOf a -> a -> m ()
 
-instance MutableArray IO Ptr where
+instance MutableArray Ptr IO where
   uncheckedRead = uncheckedReadPtr
   uncheckedWrite = uncheckedWritePtr
 
-instance MutableArray (ST s) (NativeMutableArray s) where
+instance MutableArray (NativeMutableArray s) (ST s) where
   uncheckedRead = uncheckedReadNative
   uncheckedWrite = uncheckedWriteNative
 
-instance MutableArray IO (NativeMutableArray RealWorld) where
+instance MutableArray (NativeMutableArray RealWorld) IO where
   uncheckedRead arr = stToIO . uncheckedReadNative arr
   uncheckedWrite arr ix = stToIO . uncheckedWriteNative arr ix
 
@@ -279,58 +276,78 @@ newtype instance Array allocator 'Native a =
 newtype instance Array allocator 'Foreign a =
   FArray {getFArray :: ForeignArray a}
 
-class MutableArray m arr => AllocatorM alloc m arr where
+class MutableArray arr m => AllocatorM alloc arr m | m -> arr alloc where
   new :: Primitive a => CountOf a -> m (arr a)
+
+newtype AllocatorT alloc (arr :: Type -> Type) m a =
+  AllocatorT
+    { runAllocatorT :: m a
+    }
+  deriving (Functor, Applicative, Monad, MutableArray arr)
 
 data Default
 data Pinned
 
-instance AllocatorM Default (ST s) (NativeMutableArray s) where
+instance AllocatorM Default (NativeMutableArray s) (AllocatorT Default (NativeMutableArray s) (ST s)) where
   new n =
+    AllocatorT $
     ST $ \s ->
       case newByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
       !(I# byteCount) = getByteCount $ inBytes n
 
-instance AllocatorM Pinned (ST s) (NativeMutableArray s) where
+instance AllocatorM Pinned (NativeMutableArray s) (AllocatorT Pinned (NativeMutableArray s) (ST s)) where
   new n =
+    AllocatorT $
     ST $ \s ->
-    case newPinnedByteArray# byteCount s of
-      (# s', mba #) -> (# s', NativeMutableArray mba #)
+      case newPinnedByteArray# byteCount s of
+        (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
       !(I# byteCount) = getByteCount $ inBytes n
 
-instance AllocatorM Pinned IO (NativeMutableArray RealWorld) where
-  new = stToIO . new @Pinned
+instance AllocatorM Pinned (NativeMutableArray RealWorld) (AllocatorT Pinned (NativeMutableArray RealWorld) IO) where
+  new = cast . new
+    where
+      cast :: AllocatorT s a (ST RealWorld) b -> AllocatorT s a IO b
+      cast = AllocatorT . stToIO . runAllocatorT
 
 class Allocator (storage :: Storage) alloc where
   withAllocator ::
        Primitive a
-    => (forall m arr. AllocatorM alloc m arr =>
+    => (forall m arr. AllocatorM alloc arr m =>
                         m (arr a))
     -> Array alloc storage a
 
 instance Allocator 'Native Default where
   withAllocator f =
     runST $ do
-      mutArr <- f
+      mutArr <- run f
       arr <- unsafeFreezeNative mutArr
       pure $ NArray arr
+    where
+      run :: AllocatorT Default arr m (arr a) -> m (arr a)
+      run = runAllocatorT
 
 instance Allocator 'Native Pinned where
   withAllocator f =
     runST $ do
-      mutArr <- f
+      mutArr <- run f
       arr <- unsafeFreezeNative mutArr
       pure $ NArray arr
+    where
+      run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
+      run = runAllocatorT
 
 instance Allocator 'Foreign Pinned where
   withAllocator f =
     unsafeDupablePerformIO $ do
-      mutArr <- f
+      mutArr <- run f
       arr <- unsafeFreezeNativeToForeign mutArr
       pure $ FArray arr
+    where
+      run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
+      run = runAllocatorT
 
 unsafeFreezeNative :: NativeMutableArray s a -> ST s (NativeArray a)
 {-# INLINE unsafeFreezeNative #-}
@@ -351,22 +368,28 @@ unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = by
          in (# s'
              , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
 
-instance (Allocator 'Native alloc, Primitive a) => IsList (Array alloc 'Native a) where
+instance (Allocator 'Native alloc, Primitive a) =>
+         IsList (Array alloc 'Native a) where
   type Item (Array alloc 'Native a) = a
   fromList xs = fromListN (length xs) xs
-  fromListN n xs = withAllocator $ do
-    arr <- new @alloc (CountOf n)
-    for_ (zip [0..] xs) $ uncurry (uncheckedWrite arr)
-    pure arr
-  toList (NArray arr) = flip map [0 .. (nativeArrayLength arr - 1)] $ \i -> uncheckedIndexNative arr i
+  fromListN n xs =
+    withAllocator $ do
+      arr <- new (CountOf n)
+      for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
+      pure arr
+  toList (NArray arr) =
+    flip map [0 .. (nativeArrayLength arr - 1)] $ \i ->
+      uncheckedIndexNative arr i
 
-instance (Allocator 'Foreign alloc, Primitive a) => IsList (Array alloc 'Foreign a) where
+instance (Allocator 'Foreign alloc, Primitive a) =>
+         IsList (Array alloc 'Foreign a) where
   type Item (Array alloc 'Foreign a) = a
   fromList xs = fromListN (length xs) xs
-  fromListN n xs = withAllocator $ do
-    arr <- new @alloc (CountOf n)
-    for_ (zip [0..] xs) $ uncurry (uncheckedWrite arr)
-    pure arr
+  fromListN n xs =
+    withAllocator $ do
+      arr <- new (CountOf n)
+      for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
+      pure arr
   toList (FArray arr) =
     unsafeDupablePerformIO $
     withForeignPtr (foreignArrayPtr arr) $ \ptr ->
