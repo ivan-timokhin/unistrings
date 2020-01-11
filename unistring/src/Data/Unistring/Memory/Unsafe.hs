@@ -292,7 +292,7 @@ newtype instance Array allocator 'Native a =
 newtype instance Array allocator 'Foreign a =
   FArray {getFArray :: ForeignArray a}
 
-class MutableArray arr m => AllocatorM alloc arr m | m -> arr alloc where
+class MutableArray arr m => AllocatorM arr m | m -> arr where
   new :: Primitive a => CountOf a -> m (arr a)
 
 newtype AllocatorT alloc (arr :: Type -> Type) m a =
@@ -304,7 +304,7 @@ newtype AllocatorT alloc (arr :: Type -> Type) m a =
 data Default
 data Pinned
 
-instance AllocatorM Default (NativeMutableArray s) (AllocatorT Default (NativeMutableArray s) (ST s)) where
+instance AllocatorM (NativeMutableArray s) (AllocatorT Default (NativeMutableArray s) (ST s)) where
   new n =
     AllocatorT $
     ST $ \s ->
@@ -313,7 +313,7 @@ instance AllocatorM Default (NativeMutableArray s) (AllocatorT Default (NativeMu
     where
       !(I# byteCount) = getByteCount $ inBytes n
 
-instance AllocatorM Pinned (NativeMutableArray s) (AllocatorT Pinned (NativeMutableArray s) (ST s)) where
+instance AllocatorM (NativeMutableArray s) (AllocatorT Pinned (NativeMutableArray s) (ST s)) where
   new n =
     AllocatorT $
     ST $ \s ->
@@ -322,7 +322,7 @@ instance AllocatorM Pinned (NativeMutableArray s) (AllocatorT Pinned (NativeMuta
     where
       !(I# byteCount) = getByteCount $ inBytes n
 
-instance AllocatorM Pinned (NativeMutableArray RealWorld) (AllocatorT Pinned (NativeMutableArray RealWorld) IO) where
+instance AllocatorM (NativeMutableArray RealWorld) (AllocatorT Pinned (NativeMutableArray RealWorld) IO) where
   new = cast . new
     where
       cast :: AllocatorT s a (ST RealWorld) b -> AllocatorT s a IO b
@@ -331,7 +331,7 @@ instance AllocatorM Pinned (NativeMutableArray RealWorld) (AllocatorT Pinned (Na
 class Allocator (storage :: Storage) alloc where
   withAllocator ::
        Primitive a
-    => (forall m arr. AllocatorM alloc arr m =>
+    => (forall m arr. AllocatorM arr m =>
                         m (arr a))
     -> Array alloc storage a
 
@@ -348,7 +348,7 @@ instance Allocator 'Native Pinned where
       run = runAllocatorT
 
 withNativeAllocator ::
-     AllocatorM alloc (NativeMutableArray s) n
+     AllocatorM (NativeMutableArray s) n
   => (n (NativeMutableArray s a) -> ST s (NativeMutableArray s a))
   -> n (NativeMutableArray s a)
   -> ST s (Array alloc 'Native a)
