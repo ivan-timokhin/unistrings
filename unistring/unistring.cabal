@@ -17,13 +17,14 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:
+  exposed-modules:     Data.Unistring.Memory.Unsafe
   -- other-modules:
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
                        -Wincomplete-record-updates
                        -Wmissing-import-lists
+                       -Wmissing-export-lists
                        -Widentities
                        -Wcompat
   build-depends:       base >=4.9 && <4.14
@@ -44,3 +45,4 @@ test-suite unistring-test
   build-depends:       base >=4.9 && <4.14
                      , unistring
                      , tasty
+                     , tasty-quickcheck
