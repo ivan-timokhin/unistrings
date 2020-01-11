@@ -336,24 +336,27 @@ class Allocator (storage :: Storage) alloc where
     -> Array alloc storage a
 
 instance Allocator 'Native Default where
-  withAllocator f =
-    runST $ do
-      mutArr <- run f
-      arr <- unsafeFreezeNative mutArr
-      pure $ NArray arr
+  withAllocator f = runST $ withNativeAllocator run f
     where
       run :: AllocatorT Default arr m (arr a) -> m (arr a)
       run = runAllocatorT
 
 instance Allocator 'Native Pinned where
-  withAllocator f =
-    runST $ do
-      mutArr <- run f
-      arr <- unsafeFreezeNative mutArr
-      pure $ NArray arr
+  withAllocator f = runST $ withNativeAllocator run f
     where
       run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
       run = runAllocatorT
+
+withNativeAllocator ::
+     AllocatorM alloc (NativeMutableArray s) n
+  => (n (NativeMutableArray s a) -> ST s (NativeMutableArray s a))
+  -> n (NativeMutableArray s a)
+  -> ST s (Array alloc 'Native a)
+{-# INLINE withNativeAllocator #-}
+withNativeAllocator run f = do
+  mutArr <- run f
+  arr <- unsafeFreezeNative mutArr
+  pure $ NArray arr
 
 instance Allocator 'Foreign Pinned where
   withAllocator f =
