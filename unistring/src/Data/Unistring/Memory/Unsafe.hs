@@ -54,12 +54,12 @@ module Data.Unistring.Memory.Unsafe
   , getNativeMutableArrayLength
   , MutableArray(uncheckedRead, uncheckedWrite)
   , Storage(Native, Foreign)
-  , Array (NArray, FArray, getNArray, getFArray)
+  , Array(NArray, FArray, getNArray, getFArray)
   , arrayLength
   , Default
   , Pinned
-  , AllocatorM (new)
-  , Allocator (withAllocator)
+  , AllocatorM(new)
+  , Allocator(withAllocator)
   , Sing(SNative, SForeign)
   , storageSing
   ) where
