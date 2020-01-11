@@ -118,6 +118,34 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [X] Emoji_Modifier_Base
 - [X] Emoji_Component
 - [X] Extended_Pictographic
+* Unistring [0/2]
+** TODO Core types [0/3]
+- [ ] Byte arrays
+- [ ] Unicode scalar arrays
+- [ ] Strings
+** TODO Operations [0/8]
+- [ ] Normalisation
+- [ ] Full conversions suite
+- [ ] Binary comparisons
+- [ ] Collation
+  - [ ] Framework
+  - [ ] DUCET
+- [ ] Segmentation
+  - [ ] Framework
+  - [ ] Grapheme clusters
+  - [ ] Words
+  - [ ] Sentences
+  - [ ] Line breaks
+  - [ ] Simplified word/line variants for compatibility
+- [ ] Encoding schemes
+  - [ ] Encoding
+  - [ ] Decoding
+- [ ] I/O
+  - [ ] Strict
+  - [ ] Lazy
+- [ ] Template Haskell support
+  - [ ] Embedded strings
+  - [ ] Lift instances
 * Miscellaneous code tasks [7/8]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
