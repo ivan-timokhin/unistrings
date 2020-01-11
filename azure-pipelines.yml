@@ -26,6 +26,7 @@ jobs:
       unistring-ucd:ucd-test-xml
       unistring-ucd:ucd-test-inspection
       unistring-emoji-data:emoji-inclusions
+      unistring:unistring-test
   steps:
   - script: |
       set -ex
@@ -69,6 +70,7 @@ jobs:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
       lts-11.22:
         RESOLVER: lts-11.22
         STACK_FLAGS:
@@ -76,6 +78,7 @@ jobs:
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
       lts-12.26:
         RESOLVER: lts-12.26
         STACK_FLAGS:
@@ -83,6 +86,7 @@ jobs:
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
       lts-14.16:
         RESOLVER: lts-14.16
         STACK_FLAGS:
@@ -90,6 +94,7 @@ jobs:
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
   variables:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
@@ -159,7 +164,7 @@ jobs:
 
       cabal v2-freeze ${env:CABAL_FLAGS} --enable-tests
 
-      cabal v2-test ${env:CABAL_FLAGS} --dry-run unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions | tee cabal.dry-run.log
+      cabal v2-test ${env:CABAL_FLAGS} --dry-run unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test | tee cabal.dry-run.log
 
   - task: Cache@2
     inputs:
@@ -174,7 +179,7 @@ jobs:
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
-      cabal v2-test --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions
+      cabal v2-test --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test
 
 - job: macOSCabal
   pool:
@@ -194,6 +199,7 @@ jobs:
       unistring-ucd:ucd-test-xml
       unistring-ucd:ucd-test-inspection
       unistring-emoji-data:emoji-inclusions
+      unistring:unistring-test
   steps:
   - bash: |
       set -ex
@@ -240,6 +246,7 @@ jobs:
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
       lts-11.22:
         RESOLVER: lts-11.22
         STACK_FLAGS:
@@ -247,6 +254,7 @@ jobs:
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
       lts-12.26:
         RESOLVER: lts-12.26
         STACK_FLAGS:
@@ -254,6 +262,7 @@ jobs:
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
       lts-14.16:
         RESOLVER: lts-14.16
         STACK_FLAGS:
@@ -261,6 +270,7 @@ jobs:
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
           unistring-emoji-data:emoji-inclusions
+          unistring:unistring-test
   variables:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
