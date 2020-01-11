@@ -41,7 +41,7 @@ Stability   : experimental
 module Data.Unistring.Memory.Unsafe
   ( CountOf(CountOf, getCountOf)
   , ByteCount(ByteCount, getByteCount)
-  , Primitive(inBytes, uncheckedIndexPtr, uncheckedReadPtr,
+  , Primitive(inBytes, inElements, uncheckedIndexPtr, uncheckedReadPtr,
           uncheckedWritePtr, uncheckedIndexBytes, uncheckedReadBytes,
           uncheckedWriteBytes)
   , ForeignArray(ForeignArray, foreignArrayPtr, foreignArrayLength)
