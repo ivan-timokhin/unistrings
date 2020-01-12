@@ -21,6 +21,11 @@ flag Werror
                        (for use in development and CI only)
   default:             False
   manual:              True
+flag inspection
+  description:         Enable inspection-testing test suite
+  default:             True
+  manual:              True
+
 library
   exposed-modules:     Data.Unistring.Singletons
                      , Data.Unistring.Memory.Unsafe
@@ -56,3 +61,9 @@ test-suite unistring-test
                      , tasty
                      , tasty-quickcheck
                      , tasty-hspec
+  if flag(inspection)
+    CPP-Options:       -DINSPECTION
+    build-depends:     inspection-testing
+                     , template-haskell
+    other-modules:     Inspection
+                     , Inspection.TH

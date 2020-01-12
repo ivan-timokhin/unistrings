@@ -18,6 +18,7 @@ limitations under the License.
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE CPP #-}
 
 module Main
   ( main
@@ -30,6 +31,10 @@ import System.IO.Unsafe (unsafePerformIO)
 import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.Hspec (anyErrorCall, example, it, shouldThrow, testSpec)
 import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
+
+#if defined(INSPECTION)
+import qualified Inspection
+#endif
 
 import qualified Data.Unistring.Memory.Unsafe as U
 import Data.Unistring.Singletons (Known)
@@ -115,4 +120,7 @@ main =
                   ]
             ]
         ]
+#if defined(INSPECTION)
+    , Inspection.tests
+#endif
     ]

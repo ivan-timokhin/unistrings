@@ -67,7 +67,7 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
-        STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath
+        STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath --flag unistring:-inspection
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-emoji-data:emoji-inclusions
@@ -246,7 +246,7 @@ jobs:
     matrix:
       lts-9.21:
         RESOLVER: lts-9.21
-        STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath
+        STACK_FLAGS: --flag unistring-ucd:-inspection --flag unistring-ucd:zippath --flag unistring:-inspection
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-emoji-data:emoji-inclusions
