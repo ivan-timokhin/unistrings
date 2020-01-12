@@ -46,3 +46,4 @@ test-suite unistring-test
                      , unistring
                      , tasty
                      , tasty-quickcheck
+                     , tasty-hspec

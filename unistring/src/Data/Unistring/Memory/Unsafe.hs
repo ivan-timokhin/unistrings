@@ -25,6 +25,7 @@ limitations under the License.
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -107,13 +108,15 @@ import Data.Foldable (for_)
 import Data.Traversable (for)
 import Foreign.ForeignPtr (withForeignPtr)
 
+import Data.Bits (Bits(shiftR, shiftL, (.&.), complement), FiniteBits)
+
 import Data.Unistring.Singletons (Sing, Known(sing))
 
 newtype CountOf a =
   CountOf
     { getCountOf :: Int
     }
-  deriving (Eq, Ord, Show, Enum, Bounded, Num, Real, Integral)
+  deriving (Eq, Ord, Show, Enum, Bounded, Num, Real, Integral, Bits, FiniteBits)
 
 type role CountOf representational
 
@@ -122,6 +125,35 @@ newtype ByteCount =
     { getByteCount :: Int
     }
   deriving (Eq, Ord, Show, Enum, Bounded, Num, Real, Integral)
+
+checkOverflow ::
+     Int
+  -> CountOf a
+  -> CountOf a
+{-# INLINE checkOverflow #-}
+-- The mask is basically a complement maxBound `div` sizeof @a, which
+-- consists of all 1s up to some senior bit.
+--
+-- If the number is negative, it will have a sign bit set (which is
+-- included in the mask, since maxBound is positive), and the test
+-- will fail.
+--
+-- If it is positive, the condition we're interested in is n <=
+-- maxBound `div` sizeof @a, which, for the particular case of all-1s
+-- upper bound, is equivalent to testing it has no even more senior
+-- bits set.
+checkOverflow nbits c@(CountOf n)
+  | n .&. mask == 0 = c
+  | otherwise = errorWithoutStackTrace $ "Invalid element count: " ++ show c
+  where
+    mask :: Int
+    mask = complement $ maxBound `shiftR` nbits
+
+checkNegative :: CountOf Word8 -> CountOf Word8
+{-# INLINE checkNegative #-}
+checkNegative c
+  | c < 0 = errorWithoutStackTrace $ "Invalid element count: " ++ show c
+  | otherwise = c
 
 class Primitive a where
   inBytes :: CountOf a -> ByteCount
@@ -134,7 +166,7 @@ class Primitive a where
   uncheckedWriteBytes :: MutableByteArray# s -> CountOf a -> a -> ST s ()
 
 instance Primitive Word8 where
-  inBytes = ByteCount . getCountOf
+  inBytes = ByteCount . getCountOf . checkNegative
   inElements = CountOf . getByteCount
   uncheckedIndexPtr (Ptr ptr) (CountOf (I# ix)) =
     W8# (indexWord8OffAddr# ptr ix)
@@ -153,8 +185,8 @@ instance Primitive Word8 where
     ST $ \s -> (# writeWord8Array# bytes ix w s, () #)
 
 instance Primitive Word16 where
-  inBytes = ByteCount . (* 2) . getCountOf
-  inElements = CountOf . (`div` 2) . getByteCount
+  inBytes = ByteCount . (`shiftL` 1) . getCountOf . checkOverflow 1
+  inElements = CountOf . (`shiftR` 1) . getByteCount
   uncheckedIndexPtr (Ptr ptr) (CountOf (I# ix)) =
     W16# (indexWord16OffAddr# ptr ix)
   uncheckedReadPtr (Ptr ptr) (CountOf (I# ix)) =
@@ -173,8 +205,8 @@ instance Primitive Word16 where
     ST $ \s -> (# writeWord16Array# bytes ix w s, () #)
 
 instance Primitive Word32 where
-  inBytes = ByteCount . (* 4) . getCountOf
-  inElements = CountOf . (`div` 4) . getByteCount
+  inBytes = ByteCount . (`shiftL` 2) . getCountOf . checkOverflow 2
+  inElements = CountOf . (`shiftR` 2) . getByteCount
   uncheckedIndexPtr (Ptr ptr) (CountOf (I# ix)) =
     W32# (indexWord32OffAddr# ptr ix)
   uncheckedReadPtr (Ptr ptr) (CountOf (I# ix)) =
