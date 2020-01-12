@@ -146,7 +146,7 @@ jobs:
         GHCVER: 8.8.1
         CABALVER: 3.0.0.0
   variables:
-    CABAL_FLAGS: "-fWerror"
+    CABAL_FLAGS: "-fWerror -f-inspection"
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
     TASTY_QUICKCHECK_TESTS: 10000
   steps:
