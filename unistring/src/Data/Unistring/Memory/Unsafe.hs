@@ -130,8 +130,8 @@ checkOverflow ::
   -> CountOf a
   -> CountOf a
 {-# INLINE checkOverflow #-}
--- The mask is basically a complement maxBound `div` sizeof @a, which
--- consists of all 1s up to some senior bit.
+-- The mask is basically a complement of maxBound `div` sizeof @a,
+-- which consists of all 1s up to some senior bit.
 --
 -- If the number is negative, it will have a sign bit set (which is
 -- included in the mask, since maxBound is positive), and the test
@@ -139,8 +139,8 @@ checkOverflow ::
 --
 -- If it is positive, the condition we're interested in is n <=
 -- maxBound `div` sizeof @a, which, for the particular case of all-1s
--- upper bound, is equivalent to testing it has no even more senior
--- bits set.
+-- upper bound, is equivalent to testing that it has no even more
+-- senior bits set.
 checkOverflow nbits c@(CountOf n)
   | n .&. mask == 0 = c
   | otherwise = errorWithoutStackTrace $ "Invalid element count: " ++ show c
