@@ -15,14 +15,16 @@ limitations under the License.
 -}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -O -fplugin Test.Inspection.Plugin #-}
 
 module Inspection.Unistring.Memory.Unsafe
   ( tests
   ) where
 
-import Test.Inspection ((===))
+import Test.Inspection ((===), hasNoType)
 import Test.Tasty (TestTree)
+import GHC.Exts (toList)
 
 import qualified Data.Unistring.Memory.Unsafe as U
 
@@ -32,10 +34,32 @@ tests :: [TestTree]
 tests =
   [ $(inspectTest "Native array length" $
       'nativeArrayLengthL === 'nativeArrayLengthR)
+  , $(inspectTest "Foreign array length" $
+      'foreignArrayLengthL === 'foreignArrayLengthR)
+  , $(inspectTest "Native array toList no singletons" $
+      'toListArrayNative `hasNoType` ''U.Sing)
+  , $(inspectTest "Foreign array toList no singletons" $
+      'toListArrayForeign `hasNoType` ''U.Sing)
   ]
 
 nativeArrayLengthL, nativeArrayLengthR ::
      U.Primitive a => U.Array alloc 'U.Native a -> U.CountOf a
 nativeArrayLengthL = U.arrayLength
-
 nativeArrayLengthR = U.nativeArrayLength . U.getNArray
+
+foreignArrayLengthL, foreignArrayLengthR ::
+    U.Primitive a => U.Array alloc 'U.Foreign a -> U.CountOf a
+foreignArrayLengthL = U.arrayLength
+foreignArrayLengthR = U.foreignArrayLength . U.getFArray
+
+toListArrayNative ::
+     (U.Allocator 'U.Native alloc, U.Primitive a)
+  => U.Array alloc 'U.Native a
+  -> [a]
+toListArrayNative = toList
+
+toListArrayForeign ::
+     (U.Allocator 'U.Foreign alloc, U.Primitive a)
+  => U.Array alloc 'U.Foreign a
+  -> [a]
+toListArrayForeign = toList

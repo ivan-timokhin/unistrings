@@ -27,6 +27,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
+{- HLINT ignore "Redundant lambda" -}
 
 {-|
 Module      : Data.Unistring.Memory.Unsafe
@@ -431,7 +432,7 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
       arr <- new (CountOf n)
       for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
       pure arr
-  toList arr =
+  toList = \arr ->
     case storageSing arr of
       SNative ->
         flip map [0 .. (nativeArrayLength (getNArray arr) - 1)] $ \i ->
@@ -446,7 +447,6 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
 arrayLength ::
      (Known storage, Primitive a) => Array alloc storage a -> CountOf a
 {-# INLINE arrayLength #-}
-{- HLINT ignore arrayLength -}
 -- This lambda is here so that the function is inlined (and case is
 -- resolved) even if only dictionaries are supplied, without actual array.
 arrayLength =
