@@ -56,6 +56,8 @@ test-suite unistring-test
     ghc-options:       -Werror
   hs-source-dirs:      test
   main-is:             Main.hs
+  other-modules:       Behaviour
+                     , Behaviour.Unistring.Memory.Unsafe
   build-depends:       base >=4.9 && <4.14
                      , unistring
                      , tasty
@@ -67,3 +69,4 @@ test-suite unistring-test
                      , template-haskell
     other-modules:     Inspection
                      , Inspection.TH
+                     , Inspection.Unistring.Memory.Unsafe

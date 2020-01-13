@@ -13,27 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-{-# LANGUAGE CPP #-}
-
-module Main
-  ( main
+module Behaviour
+  ( tests
   ) where
 
-import Test.Tasty (defaultMain, testGroup)
+import Test.Tasty (TestTree, testGroup)
 
-#if defined(INSPECTION)
-import qualified Inspection
-#endif
+import qualified Behaviour.Unistring.Memory.Unsafe
 
-import qualified Behaviour
-
-main :: IO ()
-main =
-  defaultMain $
-  testGroup
-    "Tests"
-    [ testGroup "Behaviour" Behaviour.tests
-#if defined(INSPECTION)
-    , testGroup "Inspection" Inspection.tests
-#endif
-    ]
+tests :: [TestTree]
+tests =
+  [ testGroup
+      "Unistring"
+      [ testGroup
+          "Memory"
+          [testGroup "Unsafe" Behaviour.Unistring.Memory.Unsafe.tests]
+      ]
+  ]

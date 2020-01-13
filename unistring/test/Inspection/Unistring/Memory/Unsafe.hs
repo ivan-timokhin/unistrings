@@ -13,20 +13,29 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-module Inspection
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DataKinds #-}
+{-# OPTIONS_GHC -O -fplugin Test.Inspection.Plugin #-}
+
+module Inspection.Unistring.Memory.Unsafe
   ( tests
   ) where
 
-import Test.Tasty (TestTree, testGroup)
+import Test.Inspection ((===))
+import Test.Tasty (TestTree)
 
-import qualified Inspection.Unistring.Memory.Unsafe
+import qualified Data.Unistring.Memory.Unsafe as U
+
+import Inspection.TH (inspectTest)
 
 tests :: [TestTree]
 tests =
-  [ testGroup
-      "Unistring"
-      [ testGroup
-          "Memory"
-          [testGroup "Unsafe" Inspection.Unistring.Memory.Unsafe.tests]
-      ]
+  [ $(inspectTest "Native array length" $
+      'nativeArrayLengthL === 'nativeArrayLengthR)
   ]
+
+nativeArrayLengthL, nativeArrayLengthR ::
+     U.Primitive a => U.Array alloc 'U.Native a -> U.CountOf a
+nativeArrayLengthL = U.arrayLength
+
+nativeArrayLengthR = U.nativeArrayLength . U.getNArray
