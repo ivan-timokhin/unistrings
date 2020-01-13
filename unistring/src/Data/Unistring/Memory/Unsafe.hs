@@ -432,16 +432,17 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
       arr <- new (CountOf n)
       for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
       pure arr
-  toList = \arr ->
-    case storageSing arr of
-      SNative ->
-        flip map [0 .. (nativeArrayLength (getNArray arr) - 1)] $ \i ->
-          uncheckedIndexNative (getNArray arr) i
-      SForeign ->
-        unsafeDupablePerformIO $
-        withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
-          for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
-            uncheckedReadPtr ptr i
+  toList =
+    \arr ->
+      case storageSing arr of
+        SNative ->
+          flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
+            uncheckedIndexNative (getNArray arr) (CountOf i)
+        SForeign ->
+          unsafeDupablePerformIO $
+          withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
+            for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
+              uncheckedReadPtr ptr i
   {-# INLINE toList #-}
 
 arrayLength ::

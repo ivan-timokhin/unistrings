@@ -40,6 +40,8 @@ tests =
       'toListArrayNative `hasNoType` ''U.Sing)
   , $(inspectTest "Foreign array toList no singletons" $
       'toListArrayForeign `hasNoType` ''U.Sing)
+  , $(inspectTest "Native array toList fuses" $
+      'toListArrayNativeFoldr `hasNoType` ''[])
   ]
 
 nativeArrayLengthL, nativeArrayLengthR ::
@@ -63,3 +65,7 @@ toListArrayForeign ::
   => U.Array alloc 'U.Foreign a
   -> [a]
 toListArrayForeign = toList
+
+toListArrayNativeFoldr :: (U.Allocator 'U.Native alloc, U.Primitive a) =>
+  (a -> r -> r) -> r -> U.Array alloc 'U.Native a -> r
+toListArrayNativeFoldr f z = foldr f z . toList
