@@ -22,9 +22,9 @@ module Inspection.Unistring.Memory.Unsafe
   ( tests
   ) where
 
-import Test.Inspection ((===), hasNoType)
-import Test.Tasty (TestTree)
 import GHC.Exts (toList)
+import Test.Inspection (hasNoType)
+import Test.Tasty (TestTree)
 
 import qualified Data.Unistring.Memory.Unsafe as U
 
@@ -62,6 +62,10 @@ toListArrayForeign ::
   -> [a]
 toListArrayForeign = toList
 
-toListArrayNativeFoldr :: (U.Allocator 'U.Native alloc, U.Primitive a) =>
-  (a -> r -> r) -> r -> U.Array alloc 'U.Native a -> r
+toListArrayNativeFoldr ::
+     (U.Allocator 'U.Native alloc, U.Primitive a)
+  => (a -> r -> r)
+  -> r
+  -> U.Array alloc 'U.Native a
+  -> r
 toListArrayNativeFoldr f z = foldr f z . toList
