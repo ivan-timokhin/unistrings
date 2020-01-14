@@ -165,9 +165,9 @@ jobs:
 
       cabal user-config update --augment="store-dir: ${env:CABAL_STORE_FOLDER}"
 
-      cabal v2-freeze ${env:CABAL_FLAGS} --enable-tests
+      cabal v2-freeze -fWerror -f-inspection --enable-tests
 
-      cabal v2-test ${env:CABAL_FLAGS} --dry-run unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test | tee cabal.dry-run.log
+      cabal v2-test -fWerror -f-inspection --dry-run unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test | tee cabal.dry-run.log
 
   - task: Cache@2
     inputs:
@@ -182,7 +182,7 @@ jobs:
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
-      cabal v2-test ${env:CABAL_FLAGS} --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test
+      cabal v2-test -fWerror -f-inspection --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test
 
 - job: macOSCabal
   pool:
