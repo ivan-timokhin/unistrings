@@ -62,7 +62,7 @@ module Data.Unistring.Memory.Unsafe
   , AllocatorM(new)
   , Allocator(withAllocator)
   , Sing(SNative, SForeign)
-  , storageSing
+  , storage
   ) where
 
 import GHC.Exts
@@ -419,9 +419,9 @@ unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = by
          in (# s'
              , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
 
-storageSing :: Known storage => Array alloc storage a -> Sing storage
-{-# INLINE storageSing #-}
-storageSing = const sing
+storage :: Known storage => Array alloc storage a -> Sing storage
+{-# INLINE storage #-}
+storage = const sing
 
 instance (Allocator storage alloc, Primitive a, Known storage) =>
          IsList (Array alloc storage a) where
@@ -438,7 +438,7 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
 arrayToList :: (Known storage, Primitive a) => Array alloc storage a -> [a]
 {-# INLINE arrayToList #-}
 arrayToList arr =
-  case storageSing arr of
+  case storage arr of
     SNative ->
       flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
         uncheckedIndexNative (getNArray arr) (CountOf i)
@@ -452,6 +452,6 @@ arrayLength ::
      (Known storage, Primitive a) => Array alloc storage a -> CountOf a
 {-# INLINEABLE arrayLength #-}
 arrayLength arr =
-    case storageSing arr of
-      SNative -> nativeArrayLength (getNArray arr)
-      SForeign -> foreignArrayLength (getFArray arr)
+  case storage arr of
+    SNative -> nativeArrayLength (getNArray arr)
+    SForeign -> foreignArrayLength (getFArray arr)
