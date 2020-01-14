@@ -52,15 +52,11 @@ foreignArrayLength :: U.Array alloc 'U.Foreign Word8 -> U.CountOf Word8
 foreignArrayLength = U.arrayLength
 
 toListArrayNative ::
-     (U.Allocator 'U.Native alloc)
-  => U.Array alloc 'U.Native Word16
-  -> [Word16]
+     U.Allocator 'U.Native alloc => U.Array alloc 'U.Native Word16 -> [Word16]
 toListArrayNative = toList
 
 toListArrayForeign ::
-     (U.Allocator 'U.Foreign alloc, U.Primitive a)
-  => U.Array alloc 'U.Foreign a
-  -> [a]
+     U.Allocator 'U.Foreign alloc => U.Array alloc 'U.Foreign Word16 -> [Word16]
 toListArrayForeign = toList
 
 toListArrayNativeFoldr ::

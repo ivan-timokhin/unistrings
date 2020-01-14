@@ -27,7 +27,6 @@ limitations under the License.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
-{- HLINT ignore "Redundant lambda" -}
 
 {-|
 Module      : Data.Unistring.Memory.Unsafe
@@ -57,6 +56,7 @@ module Data.Unistring.Memory.Unsafe
   , Storage(Native, Foreign)
   , Array(NArray, FArray, getNArray, getFArray)
   , arrayLength
+  , arrayToList
   , Default
   , Pinned
   , AllocatorM(new)
@@ -432,18 +432,21 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
       arr <- new (CountOf n)
       for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
       pure arr
-  toList =
-    \arr ->
-      case storageSing arr of
-        SNative ->
-          flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
-            uncheckedIndexNative (getNArray arr) (CountOf i)
-        SForeign ->
-          unsafeDupablePerformIO $
-          withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
-            for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
-              uncheckedReadPtr ptr i
+  toList = arrayToList
   {-# INLINE toList #-}
+
+arrayToList :: (Known storage, Primitive a) => Array alloc storage a -> [a]
+{-# INLINE arrayToList #-}
+arrayToList arr =
+  case storageSing arr of
+    SNative ->
+      flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
+        uncheckedIndexNative (getNArray arr) (CountOf i)
+    SForeign ->
+      unsafeDupablePerformIO $
+      withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
+        for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
+          uncheckedReadPtr ptr i
 
 arrayLength ::
      (Known storage, Primitive a) => Array alloc storage a -> CountOf a
