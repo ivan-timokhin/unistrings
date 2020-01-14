@@ -22,10 +22,11 @@ module Inspection.Unistring.Memory.Unsafe
   ( tests
   ) where
 
-import GHC.Exts (toList)
+import Data.Word (Word16, Word8)
+import GHC.Exts (fromListN, toList)
 import Test.Inspection (hasNoType)
 import Test.Tasty (TestTree)
-import Data.Word (Word8, Word16)
+import Test.Tasty.ExpectedFailure (expectFail)
 
 import qualified Data.Unistring.Memory.Unsafe as U
 
@@ -43,6 +44,8 @@ tests =
       'toListArrayForeign `hasNoType` ''U.Sing)
   , $(inspectTest "Native array toList fuses" $
       'toListArrayNativeFoldr `hasNoType` ''[])
+  , expectFail
+      $(inspectTest "fromListN fuses" $ 'fromListNEnum `hasNoType` ''[])
   ]
 
 nativeArrayLength :: U.Array alloc 'U.Native Word8 -> U.CountOf Word8
@@ -66,3 +69,6 @@ toListArrayNativeFoldr ::
   -> U.Array alloc 'U.Native a
   -> r
 toListArrayNativeFoldr f z = foldr f z . toList
+
+fromListNEnum :: U.Array U.Default 'U.Native Word8
+fromListNEnum = fromListN 10 [1 .. 10]

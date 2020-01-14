@@ -63,6 +63,7 @@ test-suite unistring-test
                      , tasty
                      , tasty-quickcheck
                      , tasty-hspec
+                     , tasty-expected-failure
   if flag(inspection)
     CPP-Options:       -DINSPECTION
     build-depends:     inspection-testing
