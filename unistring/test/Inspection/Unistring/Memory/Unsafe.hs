@@ -25,6 +25,7 @@ module Inspection.Unistring.Memory.Unsafe
 import GHC.Exts (toList)
 import Test.Inspection (hasNoType)
 import Test.Tasty (TestTree)
+import Data.Word (Word8, Word16)
 
 import qualified Data.Unistring.Memory.Unsafe as U
 
@@ -44,16 +45,16 @@ tests =
       'toListArrayNativeFoldr `hasNoType` ''[])
   ]
 
-nativeArrayLength :: U.Primitive a => U.Array alloc 'U.Native a -> U.CountOf a
+nativeArrayLength :: U.Array alloc 'U.Native Word8 -> U.CountOf Word8
 nativeArrayLength = U.arrayLength
 
-foreignArrayLength :: U.Primitive a => U.Array alloc 'U.Foreign a -> U.CountOf a
+foreignArrayLength :: U.Array alloc 'U.Foreign Word8 -> U.CountOf Word8
 foreignArrayLength = U.arrayLength
 
 toListArrayNative ::
-     (U.Allocator 'U.Native alloc, U.Primitive a)
-  => U.Array alloc 'U.Native a
-  -> [a]
+     (U.Allocator 'U.Native alloc)
+  => U.Array alloc 'U.Native Word16
+  -> [Word16]
 toListArrayNative = toList
 
 toListArrayForeign ::
