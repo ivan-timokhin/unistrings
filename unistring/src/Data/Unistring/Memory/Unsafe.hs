@@ -451,8 +451,6 @@ arrayToList arr =
 arrayLength ::
      (Known storage, Primitive a) => Array alloc storage a -> CountOf a
 {-# INLINEABLE arrayLength #-}
--- This lambda is here so that the function is inlined (and case is
--- resolved) even if only dictionaries are supplied, without actual array.
 arrayLength arr =
     case storageSing arr of
       SNative -> nativeArrayLength (getNArray arr)
