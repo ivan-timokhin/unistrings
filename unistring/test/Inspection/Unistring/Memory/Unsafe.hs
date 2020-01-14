@@ -33,9 +33,9 @@ import Inspection.TH (inspectTest)
 tests :: [TestTree]
 tests =
   [ $(inspectTest "Native array length" $
-      'nativeArrayLengthL === 'nativeArrayLengthR)
+      'nativeArrayLength `hasNoType` ''U.Sing)
   , $(inspectTest "Foreign array length" $
-      'foreignArrayLengthL === 'foreignArrayLengthR)
+      'foreignArrayLength `hasNoType` ''U.Sing)
   , $(inspectTest "Native array toList no singletons" $
       'toListArrayNative `hasNoType` ''U.Sing)
   , $(inspectTest "Foreign array toList no singletons" $
@@ -44,15 +44,11 @@ tests =
       'toListArrayNativeFoldr `hasNoType` ''[])
   ]
 
-nativeArrayLengthL, nativeArrayLengthR ::
-     U.Primitive a => U.Array alloc 'U.Native a -> U.CountOf a
-nativeArrayLengthL = U.arrayLength
-nativeArrayLengthR = U.nativeArrayLength . U.getNArray
+nativeArrayLength :: U.Primitive a => U.Array alloc 'U.Native a -> U.CountOf a
+nativeArrayLength = U.arrayLength
 
-foreignArrayLengthL, foreignArrayLengthR ::
-    U.Primitive a => U.Array alloc 'U.Foreign a -> U.CountOf a
-foreignArrayLengthL = U.arrayLength
-foreignArrayLengthR = U.foreignArrayLength . U.getFArray
+foreignArrayLength :: U.Primitive a => U.Array alloc 'U.Foreign a -> U.CountOf a
+foreignArrayLength = U.arrayLength
 
 toListArrayNative ::
      (U.Allocator 'U.Native alloc, U.Primitive a)
