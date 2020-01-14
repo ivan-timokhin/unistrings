@@ -447,11 +447,10 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
 
 arrayLength ::
      (Known storage, Primitive a) => Array alloc storage a -> CountOf a
-{-# INLINE arrayLength #-}
+{-# INLINEABLE arrayLength #-}
 -- This lambda is here so that the function is inlined (and case is
 -- resolved) even if only dictionaries are supplied, without actual array.
-arrayLength =
-  \arr ->
+arrayLength arr =
     case storageSing arr of
       SNative -> nativeArrayLength (getNArray arr)
       SForeign -> foreignArrayLength (getFArray arr)
