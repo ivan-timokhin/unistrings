@@ -182,7 +182,7 @@ jobs:
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
-      cabal v2-test --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test
+      cabal v2-test ${env:CABAL_FLAGS} --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test
 
 - job: macOSCabal
   pool:
