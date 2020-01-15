@@ -65,6 +65,7 @@ jobs:
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/TEST-*.xml'
+      testRunTitle: $(System.JobDisplayName)
     condition: succeededOrFailed()
 
 - job: linuxStack
@@ -137,6 +138,7 @@ jobs:
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/TEST-*.xml'
+      testRunTitle: $(System.JobDisplayName)
     condition: succeededOrFailed()
 
 - job: windowsCabal
@@ -215,6 +217,7 @@ jobs:
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/TEST-*.xml'
+      testRunTitle: $(System.JobDisplayName)
     condition: succeededOrFailed()
 
 - job: macOSCabal
@@ -277,6 +280,7 @@ jobs:
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/TEST-*.xml'
+      testRunTitle: $(System.JobDisplayName)
     condition: succeededOrFailed()
 
 - job: macOSStack
@@ -352,6 +356,7 @@ jobs:
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/TEST-*.xml'
+      testRunTitle: $(System.JobDisplayName)
     condition: succeededOrFailed()
 
 - job: genLinux
