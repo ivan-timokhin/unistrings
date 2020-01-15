@@ -33,7 +33,7 @@ import qualified Behaviour
 main :: IO ()
 main = do
   xmlFile <- lookupEnv "TASTY_XML"
-  when (xmlFile == Just "CI") $ setEnv "TASTY_XML" "TEST_unistring.xml"
+  when (xmlFile == Just "CI") $ setEnv "TASTY_XML" "TEST-unistring.xml"
   defaultMainWithIngredients (antXMLRunner : defaultIngredients) $
     testGroup
       "Tests"
