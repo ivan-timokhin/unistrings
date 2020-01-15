@@ -146,8 +146,14 @@ jobs:
         GHCVER: 8.8.1
         CABALVER: 3.0.0.0
   variables:
-    CABAL_FLAGS: "-fWerror -f-inspection"
+    CABAL_FLAGS: |
+      -fWerror
+      -f-inspection
     CABAL_STORE_FOLDER: $(Pipeline.Workspace)\_cabal\store
+    CABAL_TEST_TARGETS: |
+      unistring-ucd:ucd-test-xml
+      unistring-emoji-data:emoji-inclusions
+      unistring:unistring-test
     TASTY_QUICKCHECK_TESTS: 10000
   steps:
   - pwsh: |
@@ -165,9 +171,12 @@ jobs:
 
       cabal user-config update --augment="store-dir: ${env:CABAL_STORE_FOLDER}"
 
-      cabal v2-freeze -fWerror -f-inspection --enable-tests
+      [string[]]$CABAL_FLAGS = ${env:CABAL_FLAGS}.Split()
+      [string[]]$CABAL_TEST_TARGETS = ${env:CABAL_TEST_TARGETS}.Split()
 
-      cabal v2-test -fWerror -f-inspection --dry-run unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test | tee cabal.dry-run.log
+      cabal v2-freeze @CABAL_FLAGS --enable-tests
+
+      cabal v2-test @CABAL_FLAGS --dry-run @CABAL_TEST_TARGETS | tee cabal.dry-run.log
 
   - task: Cache@2
     inputs:
@@ -182,7 +191,10 @@ jobs:
       Set-PSDebug -Trace 2
       $env:PATH += ";C:\ProgramData\chocolatey\lib\ghc\tools\ghc-${env:GHCVER}\bin"
 
-      cabal v2-test -fWerror -f-inspection --test-show-details=streaming unistring-ucd:ucd-test-xml unistring-emoji-data:emoji-inclusions unistring:unistring-test
+      [string[]]$CABAL_FLAGS = ${env:CABAL_FLAGS}.Split()
+      [string[]]$CABAL_TEST_TARGETS = ${env:CABAL_TEST_TARGETS}.Split()
+
+      cabal v2-test @CABAL_FLAGS --test-show-details=streaming @CABAL_TEST_TARGETS
 
 - job: macOSCabal
   pool:
