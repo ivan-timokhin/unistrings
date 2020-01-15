@@ -19,7 +19,10 @@ module Main
   ( main
   ) where
 
-import Test.Tasty (defaultMain, testGroup)
+import Control.Monad (when)
+import System.Environment (lookupEnv, setEnv)
+import Test.Tasty (defaultIngredients, defaultMainWithIngredients, testGroup)
+import Test.Tasty.Runners.AntXML (antXMLRunner)
 
 #if defined(INSPECTION)
 import qualified Inspection
@@ -28,12 +31,14 @@ import qualified Inspection
 import qualified Behaviour
 
 main :: IO ()
-main =
-  defaultMain $
-  testGroup
-    "Tests"
-    [ testGroup "Behaviour" Behaviour.tests
+main = do
+  xmlFile <- lookupEnv "TASTY_XML"
+  when (xmlFile == Just "CI") $ setEnv "TASTY_XML" "TEST_unistring.xml"
+  defaultMainWithIngredients (antXMLRunner : defaultIngredients) $
+    testGroup
+      "Tests"
+      [ testGroup "Behaviour" Behaviour.tests
 #if defined(INSPECTION)
-    , testGroup "Inspection" Inspection.tests
+      , testGroup "Inspection" Inspection.tests
 #endif
-    ]
+      ]

@@ -28,6 +28,7 @@ jobs:
       unistring-emoji-data:emoji-inclusions
       unistring:unistring-test
     TASTY_QUICKCHECK_TESTS: 10000
+    TASTY_XML: CI
   steps:
   - script: |
       set -ex
@@ -59,6 +60,12 @@ jobs:
       export PATH=/opt/ghc/bin:/opt/cabal/bin:$PATH
 
       cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ${CABAL_TEST_TARGETS}
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/TEST-*.xml'
+    condition: succeededOrFailed()
 
 - job: linuxStack
   pool:
@@ -100,6 +107,7 @@ jobs:
     STACK_YAML: azure.stack.yaml
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     TASTY_QUICKCHECK_TESTS: 10000
+    TASTY_XML: CI
   steps:
   - script: |
       set -ex
@@ -124,6 +132,12 @@ jobs:
   - script: |
       set -ex
       stack test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS}
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/TEST-*.xml'
+    condition: succeededOrFailed()
 
 - job: windowsCabal
   pool:
@@ -155,6 +169,7 @@ jobs:
       unistring-emoji-data:emoji-inclusions
       unistring:unistring-test
     TASTY_QUICKCHECK_TESTS: 10000
+    TASTY_XML: CI
   steps:
   - pwsh: |
       Set-PSDebug -Trace 2
@@ -196,6 +211,12 @@ jobs:
 
       cabal v2-test @CABAL_FLAGS --test-show-details=streaming @CABAL_TEST_TARGETS
 
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/TEST-*.xml'
+    condition: succeededOrFailed()
+
 - job: macOSCabal
   pool:
     vmImage: 'macOS-latest'
@@ -216,6 +237,7 @@ jobs:
       unistring-emoji-data:emoji-inclusions
       unistring:unistring-test
     TASTY_QUICKCHECK_TESTS: 10000
+    TASTY_XML: CI
   steps:
   - bash: |
       set -ex
@@ -250,6 +272,12 @@ jobs:
       export PATH="/usr/local/opt/ghc@${GHCVER}/bin:$PATH"
 
       cabal v2-test ${CABAL_FLAGS} --test-show-details=streaming ${CABAL_TEST_TARGETS}
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/TEST-*.xml'
+    condition: succeededOrFailed()
 
 - job: macOSStack
   pool:
@@ -291,6 +319,7 @@ jobs:
     STACK_ROOT: $(Pipeline.Workspace)/.stack
     STACK_YAML: azure.stack.yaml
     TASTY_QUICKCHECK_TESTS: 10000
+    TASTY_XML: CI
   steps:
   - script: |
       set -ex
@@ -318,6 +347,12 @@ jobs:
   - script: |
       set -ex
       stack --extra-include-dirs "/usr/local/opt/icu4c/include" --extra-lib-dirs "/usr/local/opt/icu4c/lib" test --pedantic ${STACK_FLAGS} ${STACK_TEST_TARGETS}
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/TEST-*.xml'
+    condition: succeededOrFailed()
 
 - job: genLinux
   pool:
