@@ -432,6 +432,7 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
       arr <- new (CountOf n)
       for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
       pure arr
+  {-# INLINEABLE fromListN #-}
   toList = arrayToList
   {-# INLINE toList #-}
 

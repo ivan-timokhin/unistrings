@@ -25,7 +25,7 @@ module Inspection.Unistring.Memory.Unsafe
 import Data.Word (Word16, Word8)
 import GHC.Exts (fromListN, toList)
 import Test.Inspection (hasNoType)
-import Test.Tasty (TestTree)
+import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.ExpectedFailure (expectFail)
 
 import qualified Data.Unistring.Memory.Unsafe as U
@@ -46,6 +46,21 @@ tests =
       'toListArrayNativeFoldr `hasNoType` ''[])
   , expectFail
       $(inspectTest "fromListN fuses" $ 'fromListNEnum `hasNoType` ''[])
+  , testGroup
+      "Default allocator optimised out"
+      [ $(inspectTest "AllocatorM" $ 'fromListNEnum `hasNoType` ''U.AllocatorM)
+      , $(inspectTest "Allocator" $ 'fromListNEnum `hasNoType` ''U.Allocator)
+      ]
+  , testGroup
+      "Pinned allocator optimised out"
+      [ $(inspectTest "AllocatorM" $ 'fromListNEnumP `hasNoType` ''U.AllocatorM)
+      , $(inspectTest "Allocator" $ 'fromListNEnumP `hasNoType` ''U.Allocator)
+      ]
+  , testGroup
+      "Pinned foreign allocator optimised out"
+      [ $(inspectTest "AllocatorM" $ 'fromListNEnumF `hasNoType` ''U.AllocatorM)
+      , $(inspectTest "Allocator" $ 'fromListNEnumF `hasNoType` ''U.Allocator)
+      ]
   ]
 
 nativeArrayLength :: U.Array alloc 'U.Native Word8 -> U.CountOf Word8
@@ -72,3 +87,9 @@ toListArrayNativeFoldr f z = foldr f z . toList
 
 fromListNEnum :: U.Array U.Default 'U.Native Word8
 fromListNEnum = fromListN 10 [1 .. 10]
+
+fromListNEnumP :: U.Array U.Pinned 'U.Native Word8
+fromListNEnumP = fromListN 10 [1 .. 10]
+
+fromListNEnumF :: U.Array U.Pinned 'U.Foreign Word8
+fromListNEnumF = fromListN 10 [1 .. 10]
