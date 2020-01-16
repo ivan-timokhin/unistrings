@@ -28,6 +28,8 @@ limitations under the License.
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -112,6 +114,7 @@ import GHC.Exts
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents(PlainPtr))
 import GHC.IO (IO(IO))
 import GHC.ST (ST(ST))
+import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
 import GHC.Word (Word16(W16#), Word32(W32#), Word8(W8#))
 import System.IO.Unsafe (unsafeDupablePerformIO)
 
@@ -405,6 +408,26 @@ instance Allocator 'Foreign Pinned where
     where
       run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
       run = runAllocatorT
+
+instance TypeError ('ShowType Default
+                    ':<>: 'Text " cannot be used to allocate "
+                    ':<>: 'ShowType 'Foreign
+                    ':<>: 'Text " arrays;"
+                    ':$$: 'Text "Use "
+                    ':<>: 'ShowType Pinned
+                    ':<>: 'Text " instead") =>
+         Allocator 'Foreign Default where
+  withAllocator _ = error "unreachable"
+
+instance TypeError ('ShowType Unknown
+                    ':<>: 'Text " is not an allocator, but a tag meaning that the actual allocator is not known;"
+                    ':$$: 'Text "Use "
+                    ':<>: 'ShowType Default
+                    ':<>: 'Text " or "
+                    ':<>: 'ShowType Pinned
+                    ':<>: 'Text " instead") =>
+         Allocator storage Unknown where
+  withAllocator _ = error "unreachable"
 
 unsafeFreezeNative :: NativeMutableArray s a -> ST s (NativeArray a)
 {-# INLINE unsafeFreezeNative #-}
