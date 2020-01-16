@@ -24,6 +24,7 @@ module Inspection.Unistring.Memory.Unsafe
   ) where
 
 import Control.Monad.ST (ST)
+import Data.Type.Coercion (Coercion)
 import Data.Word (Word16, Word8)
 import GHC.Exts (Addr#, Int(I#), Int#, fromListN, toList)
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents)
@@ -80,6 +81,11 @@ tests =
           , $(inspectTest "Int" $ 'mkForeignArray `hasNoType` ''Int)
           ]
       ]
+  , testGroup
+      "Free forgetfulness"
+      [ $(inspectTest "Coercion" $ 'forgetNativeAllocator `hasNoType` ''Coercion)
+      , $(inspectTest "Sing" $ 'forgetNativeAllocator `hasNoType` ''U.Sing)
+      ]
   ]
 
 nativeArrayLength :: U.Array alloc 'U.Native Word8 -> U.CountOf Word8
@@ -117,3 +123,10 @@ mkForeignArray ::
      Addr# -> ForeignPtrContents -> Int# -> U.Array allocator 'U.Foreign a
 mkForeignArray ptr cts i =
   U.FArray (U.ForeignArray (ForeignPtr ptr cts) (U.CountOf (I# i)))
+
+forgetNativeAllocator ::
+     U.Array allocator 'U.Native a -> U.Array U.Unknown 'U.Native a
+forgetNativeAllocator = U.forgetArrayAllocator
+
+_id :: a -> a
+_id = id

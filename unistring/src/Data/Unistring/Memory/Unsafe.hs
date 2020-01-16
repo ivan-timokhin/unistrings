@@ -25,6 +25,8 @@ limitations under the License.
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -57,58 +59,61 @@ module Data.Unistring.Memory.Unsafe
   , Array(NArray, FArray, getNArray, getFArray)
   , arrayLength
   , arrayToList
+  , forgetArrayAllocator
+  , allocatorCoercion
   , Default
   , Pinned
+  , Unknown
   , AllocatorM(new)
   , Allocator(withAllocator)
   , Sing(SNative, SForeign)
   , storage
   ) where
 
+import Control.Monad.ST (runST, stToIO)
+import Data.Bits (Bits((.&.), complement, shiftL, shiftR), FiniteBits)
+import Data.Foldable (for_)
+import Data.Kind (Type)
+import Data.Traversable (for)
+import Data.Type.Coercion (Coercion(Coercion), coerceWith)
+import Foreign.ForeignPtr (withForeignPtr)
 import GHC.Exts
   ( ByteArray#
   , Int(I#)
+  , IsList(Item, fromList, fromListN, toList)
   , MutableByteArray#
   , Ptr(Ptr)
+  , RealWorld
+  , byteArrayContents#
+  , getSizeofMutableByteArray#
   , indexWord16Array#
   , indexWord16OffAddr#
   , indexWord32Array#
   , indexWord32OffAddr#
   , indexWord8Array#
   , indexWord8OffAddr#
+  , newByteArray#
+  , newPinnedByteArray#
   , readWord16Array#
   , readWord16OffAddr#
   , readWord32Array#
   , readWord32OffAddr#
   , readWord8Array#
   , readWord8OffAddr#
+  , sizeofByteArray#
+  , unsafeFreezeByteArray#
   , writeWord16Array#
   , writeWord16OffAddr#
   , writeWord32Array#
   , writeWord32OffAddr#
   , writeWord8Array#
   , writeWord8OffAddr#
-  , newByteArray#
-  , unsafeFreezeByteArray#
-  , sizeofByteArray#
-  , getSizeofMutableByteArray#
-  , byteArrayContents#
-  , newPinnedByteArray#
-  , RealWorld
-  , IsList(Item, fromList, toList, fromListN)
   )
+import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents(PlainPtr))
 import GHC.IO (IO(IO))
 import GHC.ST (ST(ST))
-import Control.Monad.ST (runST, stToIO)
 import GHC.Word (Word16(W16#), Word32(W32#), Word8(W8#))
-import Data.Kind (Type)
-import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents (PlainPtr))
 import System.IO.Unsafe (unsafeDupablePerformIO)
-import Data.Foldable (for_)
-import Data.Traversable (for)
-import Foreign.ForeignPtr (withForeignPtr)
-
-import Data.Bits (Bits(shiftR, shiftL, (.&.), complement), FiniteBits)
 
 import Data.Unistring.Singletons (Sing, Known(sing))
 
@@ -335,6 +340,7 @@ newtype AllocatorT alloc (arr :: Type -> Type) m a =
 
 data Default
 data Pinned
+data Unknown
 
 instance AllocatorM (NativeMutableArray s) (AllocatorT Default (NativeMutableArray s) (ST s)) where
   new n =
@@ -456,3 +462,20 @@ arrayLength arr =
   case storage arr of
     SNative -> nativeArrayLength (getNArray arr)
     SForeign -> foreignArrayLength (getFArray arr)
+
+allocatorCoercion ::
+     forall alloc1 alloc2 storage a. Known storage
+  => Coercion (Array alloc1 storage a) (Array alloc2 storage a)
+{-# INLINE allocatorCoercion #-}
+allocatorCoercion =
+  case sing @storage of
+    SNative -> Coercion
+    SForeign -> Coercion
+
+forgetArrayAllocator ::
+     forall alloc storage a. Known storage
+  => Array alloc storage a
+  -> Array Unknown storage a
+{-# INLINE forgetArrayAllocator #-}
+forgetArrayAllocator =
+  coerceWith (allocatorCoercion @alloc @Unknown @storage @a)
