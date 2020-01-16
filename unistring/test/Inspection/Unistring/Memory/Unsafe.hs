@@ -22,6 +22,7 @@ module Inspection.Unistring.Memory.Unsafe
   ( tests
   ) where
 
+import Control.Monad.ST (ST)
 import Data.Word (Word16, Word8)
 import GHC.Exts (fromListN, toList)
 import Test.Inspection (hasNoType)
@@ -50,16 +51,22 @@ tests =
       "Default allocator optimised out"
       [ $(inspectTest "AllocatorM" $ 'fromListNEnum `hasNoType` ''U.AllocatorM)
       , $(inspectTest "Allocator" $ 'fromListNEnum `hasNoType` ''U.Allocator)
+      , $(inspectTest "IO" $ 'fromListNEnum `hasNoType` ''IO)
+      , $(inspectTest "ST" $ 'fromListNEnum `hasNoType` ''ST)
       ]
   , testGroup
       "Pinned allocator optimised out"
       [ $(inspectTest "AllocatorM" $ 'fromListNEnumP `hasNoType` ''U.AllocatorM)
       , $(inspectTest "Allocator" $ 'fromListNEnumP `hasNoType` ''U.Allocator)
+      , $(inspectTest "IO" $ 'fromListNEnumP `hasNoType` ''IO)
+      , $(inspectTest "ST" $ 'fromListNEnumP `hasNoType` ''ST)
       ]
   , testGroup
       "Pinned foreign allocator optimised out"
       [ $(inspectTest "AllocatorM" $ 'fromListNEnumF `hasNoType` ''U.AllocatorM)
       , $(inspectTest "Allocator" $ 'fromListNEnumF `hasNoType` ''U.Allocator)
+      , $(inspectTest "IO" $ 'fromListNEnumF `hasNoType` ''IO)
+      , $(inspectTest "ST" $ 'fromListNEnumF `hasNoType` ''ST)
       ]
   ]
 
