@@ -16,6 +16,7 @@ limitations under the License.
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MagicHash #-}
 {-# OPTIONS_GHC -O -fplugin Test.Inspection.Plugin #-}
 
 module Inspection.Unistring.Memory.Unsafe
@@ -24,7 +25,8 @@ module Inspection.Unistring.Memory.Unsafe
 
 import Control.Monad.ST (ST)
 import Data.Word (Word16, Word8)
-import GHC.Exts (fromListN, toList)
+import GHC.Exts (Addr#, Int(I#), Int#, fromListN, toList)
+import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents)
 import Test.Inspection (hasNoType)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.ExpectedFailure (expectFail)
@@ -68,6 +70,16 @@ tests =
       , $(inspectTest "IO" $ 'fromListNEnumF `hasNoType` ''IO)
       , $(inspectTest "ST" $ 'fromListNEnumF `hasNoType` ''ST)
       ]
+  , testGroup
+      "Unpack"
+      [ testGroup
+          "Foreign"
+          [ $(inspectTest "ForeignPtr" $
+              'mkForeignArray `hasNoType` ''ForeignPtr)
+          , $(inspectTest "CountOf" $ 'mkForeignArray `hasNoType` ''U.CountOf)
+          , $(inspectTest "Int" $ 'mkForeignArray `hasNoType` ''Int)
+          ]
+      ]
   ]
 
 nativeArrayLength :: U.Array alloc 'U.Native Word8 -> U.CountOf Word8
@@ -100,3 +112,8 @@ fromListNEnumP = fromListN 10 [1 .. 10]
 
 fromListNEnumF :: U.Array U.Pinned 'U.Foreign Word8
 fromListNEnumF = fromListN 10 [1 .. 10]
+
+mkForeignArray ::
+     Addr# -> ForeignPtrContents -> Int# -> U.Array allocator 'U.Foreign a
+mkForeignArray ptr cts i =
+  U.FArray (U.ForeignArray (ForeignPtr ptr cts) (U.CountOf (I# i)))
