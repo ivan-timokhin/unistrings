@@ -29,7 +29,7 @@ flag inspection
 library
   exposed-modules:     Data.Unistring.Singletons
                      , Data.Unistring.Memory.Unsafe
-  -- other-modules:
+  other-modules:       Data.Unistring.Compat.Typeable
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
