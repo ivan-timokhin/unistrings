@@ -127,6 +127,3 @@ mkForeignArray ptr cts i =
 forgetNativeAllocator ::
      U.Array allocator 'U.Native a -> U.Array U.Unknown 'U.Native a
 forgetNativeAllocator = U.forgetArrayAllocator
-
-_id :: a -> a
-_id = id
