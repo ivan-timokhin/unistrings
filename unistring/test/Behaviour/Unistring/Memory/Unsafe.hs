@@ -31,7 +31,6 @@ import Test.Tasty.Hspec (anyErrorCall, example, it, shouldThrow, testSpec)
 import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
 
 import qualified Data.Unistring.Memory.Unsafe as U
-import Data.Unistring.Singletons (Known)
 
 tests :: [TestTree]
 tests =
@@ -42,7 +41,6 @@ tests =
              , Eq a
              , Show a
              , Arbitrary a
-             , Known storage
              , U.Allocator storage alloc
              )
           => [TestTree]

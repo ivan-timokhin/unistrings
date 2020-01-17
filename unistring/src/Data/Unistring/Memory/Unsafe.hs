@@ -369,7 +369,9 @@ instance AllocatorM (NativeMutableArray RealWorld) (AllocatorT Pinned (NativeMut
       cast :: AllocatorT s a (ST RealWorld) b -> AllocatorT s a IO b
       cast = AllocatorT . stToIO . runAllocatorT
 
-class Allocator (storage :: Storage) alloc where
+class Known storage =>
+      Allocator (storage :: Storage) alloc
+  where
   withAllocator ::
        Primitive a
     => (forall m arr. AllocatorM arr m =>
@@ -419,13 +421,14 @@ instance TypeError ('ShowType Default
          Allocator 'Foreign Default where
   withAllocator _ = error "unreachable"
 
-instance TypeError ('ShowType Unknown
-                    ':<>: 'Text " is not an allocator, but a placeholder meaning that the actual allocator is not known;"
-                    ':$$: 'Text "Use "
-                    ':<>: 'ShowType Default
-                    ':<>: 'Text " or "
-                    ':<>: 'ShowType Pinned
-                    ':<>: 'Text " instead") =>
+instance (TypeError ('ShowType Unknown
+                     ':<>: 'Text " is not an allocator, but a placeholder meaning that the actual allocator is not known;"
+                     ':$$: 'Text "Use "
+                     ':<>: 'ShowType Default
+                     ':<>: 'Text " or "
+                     ':<>: 'ShowType Pinned
+                     ':<>: 'Text " instead")
+         , Known storage) =>
          Allocator storage Unknown where
   withAllocator _ = error "unreachable"
 
@@ -452,7 +455,7 @@ storage :: Known storage => Array storage alloc a -> Sing storage
 {-# INLINE storage #-}
 storage = const sing
 
-instance (Allocator storage alloc, Primitive a, Known storage) =>
+instance (Allocator storage alloc, Primitive a) =>
          IsList (Array storage alloc a) where
   type Item (Array storage alloc a) = a
   fromList xs = fromListN (length xs) xs
