@@ -324,12 +324,12 @@ instance Known 'Native where
 instance Known 'Foreign where
   sing = SForeign
 
-data family Array allocator (storage :: Storage) :: Type -> Type
+data family Array (storage :: Storage) allocator :: Type -> Type
 
-newtype instance Array allocator 'Native a =
+newtype instance Array 'Native allocator a =
   NArray {getNArray :: NativeArray a}
 
-newtype instance Array allocator 'Foreign a =
+newtype instance Array 'Foreign allocator a =
   FArray {getFArray :: ForeignArray a}
 
 class MutableArray arr m => AllocatorM arr m | m -> arr where
@@ -374,7 +374,7 @@ class Allocator (storage :: Storage) alloc where
        Primitive a
     => (forall m arr. AllocatorM arr m =>
                         m (arr a))
-    -> Array alloc storage a
+    -> Array storage alloc a
 
 instance Allocator 'Native Default where
   withAllocator f = runST $ withNativeAllocator run f
@@ -392,7 +392,7 @@ withNativeAllocator ::
      AllocatorM (NativeMutableArray s) n
   => (n (NativeMutableArray s a) -> ST s (NativeMutableArray s a))
   -> n (NativeMutableArray s a)
-  -> ST s (Array alloc 'Native a)
+  -> ST s (Array 'Native alloc a)
 {-# INLINE withNativeAllocator #-}
 withNativeAllocator run f = do
   mutArr <- run f
@@ -448,13 +448,13 @@ unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = by
          in (# s'
              , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
 
-storage :: Known storage => Array alloc storage a -> Sing storage
+storage :: Known storage => Array storage alloc a -> Sing storage
 {-# INLINE storage #-}
 storage = const sing
 
 instance (Allocator storage alloc, Primitive a, Known storage) =>
-         IsList (Array alloc storage a) where
-  type Item (Array alloc storage a) = a
+         IsList (Array storage alloc a) where
+  type Item (Array storage alloc a) = a
   fromList xs = fromListN (length xs) xs
   fromListN n xs =
     withAllocator $ do
@@ -465,7 +465,7 @@ instance (Allocator storage alloc, Primitive a, Known storage) =>
   toList = arrayToList
   {-# INLINE toList #-}
 
-arrayToList :: (Known storage, Primitive a) => Array alloc storage a -> [a]
+arrayToList :: (Known storage, Primitive a) => Array storage alloc a -> [a]
 {-# INLINE arrayToList #-}
 arrayToList arr =
   case storage arr of
@@ -479,7 +479,7 @@ arrayToList arr =
           uncheckedReadPtr ptr i
 
 arrayLength ::
-     (Known storage, Primitive a) => Array alloc storage a -> CountOf a
+     (Known storage, Primitive a) => Array storage alloc a -> CountOf a
 {-# INLINEABLE arrayLength #-}
 arrayLength arr =
   case storage arr of
@@ -488,7 +488,7 @@ arrayLength arr =
 
 allocatorCoercion ::
      forall alloc1 alloc2 storage a. Known storage
-  => Coercion (Array alloc1 storage a) (Array alloc2 storage a)
+  => Coercion (Array storage alloc1 a) (Array storage alloc2 a)
 {-# INLINE allocatorCoercion #-}
 allocatorCoercion =
   case sing @storage of
@@ -497,8 +497,8 @@ allocatorCoercion =
 
 forgetArrayAllocator ::
      forall alloc storage a. Known storage
-  => Array alloc storage a
-  -> Array Unknown storage a
+  => Array storage alloc a
+  -> Array storage Unknown a
 {-# INLINE forgetArrayAllocator #-}
 forgetArrayAllocator =
   coerceWith (allocatorCoercion @alloc @Unknown @storage @a)

@@ -102,42 +102,42 @@ tests =
       ]
   ]
 
-nativeArrayLength :: U.Array alloc 'U.Native Word8 -> U.CountOf Word8
+nativeArrayLength :: U.Array 'U.Native alloc Word8 -> U.CountOf Word8
 nativeArrayLength = U.arrayLength
 
-foreignArrayLength :: U.Array alloc 'U.Foreign Word8 -> U.CountOf Word8
+foreignArrayLength :: U.Array 'U.Foreign alloc Word8 -> U.CountOf Word8
 foreignArrayLength = U.arrayLength
 
 toListArrayNative ::
-     U.Allocator 'U.Native alloc => U.Array alloc 'U.Native Word16 -> [Word16]
+     U.Allocator 'U.Native alloc => U.Array 'U.Native alloc Word16 -> [Word16]
 toListArrayNative = toList
 
 toListArrayForeign ::
-     U.Allocator 'U.Foreign alloc => U.Array alloc 'U.Foreign Word16 -> [Word16]
+     U.Allocator 'U.Foreign alloc => U.Array 'U.Foreign alloc Word16 -> [Word16]
 toListArrayForeign = toList
 
 toListArrayNativeFoldr ::
      (U.Allocator 'U.Native alloc, U.Primitive a)
   => (a -> r -> r)
   -> r
-  -> U.Array alloc 'U.Native a
+  -> U.Array 'U.Native alloc a
   -> r
 toListArrayNativeFoldr f z = foldr f z . toList
 
-fromListNEnum :: U.Array U.Default 'U.Native Word8
+fromListNEnum :: U.Array 'U.Native U.Default Word8
 fromListNEnum = fromListN 10 [1 .. 10]
 
-fromListNEnumP :: U.Array U.Pinned 'U.Native Word8
+fromListNEnumP :: U.Array 'U.Native U.Pinned Word8
 fromListNEnumP = fromListN 10 [1 .. 10]
 
-fromListNEnumF :: U.Array U.Pinned 'U.Foreign Word8
+fromListNEnumF :: U.Array 'U.Foreign U.Pinned Word8
 fromListNEnumF = fromListN 10 [1 .. 10]
 
 mkForeignArray ::
-     Addr# -> ForeignPtrContents -> Int# -> U.Array allocator 'U.Foreign a
+     Addr# -> ForeignPtrContents -> Int# -> U.Array 'U.Foreign allocator a
 mkForeignArray ptr cts i =
   U.FArray (U.ForeignArray (ForeignPtr ptr cts) (U.CountOf (I# i)))
 
 forgetNativeAllocator ::
-     U.Array allocator 'U.Native a -> U.Array U.Unknown 'U.Native a
+     U.Array 'U.Native allocator a -> U.Array 'U.Native U.Unknown a
 forgetNativeAllocator = U.forgetArrayAllocator

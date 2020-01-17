@@ -48,11 +48,11 @@ tests =
           => [TestTree]
         test =
           [ testProperty "toList . fromList == id" $ \(xs :: [a]) ->
-              let array :: U.Array alloc storage a
+              let array :: U.Array storage alloc a
                   array = fromList xs
                in toList array === xs
           , testProperty "length . fromList == length" $ \(xs :: [a]) ->
-              let array :: U.Array alloc storage a
+              let array :: U.Array storage alloc a
                   array = fromList xs
                in U.getCountOf (U.arrayLength array) === length xs
           ]
