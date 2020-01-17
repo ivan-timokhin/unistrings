@@ -33,19 +33,32 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.ExpectedFailure (expectFail)
 
 import qualified Data.Unistring.Memory.Unsafe as U
+import qualified Data.Unistring.Singletons as S
 
 import Inspection.TH (inspectTest)
 
 tests :: [TestTree]
 tests =
-  [ $(inspectTest "Native array length" $
-      'nativeArrayLength `hasNoType` ''U.Sing)
-  , $(inspectTest "Foreign array length" $
-      'foreignArrayLength `hasNoType` ''U.Sing)
-  , $(inspectTest "Native array toList no singletons" $
-      'toListArrayNative `hasNoType` ''U.Sing)
-  , $(inspectTest "Foreign array toList no singletons" $
-      'toListArrayForeign `hasNoType` ''U.Sing)
+  [ testGroup
+      "Native array length"
+      [ $(inspectTest "Sing" $ 'nativeArrayLength `hasNoType` ''U.Sing)
+      , $(inspectTest "Known" $ 'nativeArrayLength `hasNoType` ''S.Known)
+      ]
+  , testGroup
+      "Foreign array length"
+      [ $(inspectTest "Sing" $ 'foreignArrayLength `hasNoType` ''U.Sing)
+      , $(inspectTest "Known" $ 'foreignArrayLength `hasNoType` ''S.Known)
+      ]
+  , testGroup
+      "Native array toList"
+      [ $(inspectTest "Sing" $ 'toListArrayNative `hasNoType` ''U.Sing)
+      , $(inspectTest "Known" $ 'toListArrayNative `hasNoType` ''S.Known)
+      ]
+  , testGroup
+      "Foreign array toList"
+      [ $(inspectTest "Sing" $ 'toListArrayForeign `hasNoType` ''U.Sing)
+      , $(inspectTest "Known" $ 'toListArrayForeign `hasNoType` ''S.Known)
+      ]
   , $(inspectTest "Native array toList fuses" $
       'toListArrayNativeFoldr `hasNoType` ''[])
   , expectFail
@@ -85,6 +98,7 @@ tests =
       "Free forgetfulness"
       [ $(inspectTest "Coercion" $ 'forgetNativeAllocator `hasNoType` ''Coercion)
       , $(inspectTest "Sing" $ 'forgetNativeAllocator `hasNoType` ''U.Sing)
+      , $(inspectTest "Known" $ 'forgetNativeAllocator `hasNoType` ''S.Known)
       ]
   ]
 
