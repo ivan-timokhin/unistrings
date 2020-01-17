@@ -420,7 +420,7 @@ instance TypeError ('ShowType Default
   withAllocator _ = error "unreachable"
 
 instance TypeError ('ShowType Unknown
-                    ':<>: 'Text " is not an allocator, but a tag meaning that the actual allocator is not known;"
+                    ':<>: 'Text " is not an allocator, but a placeholder meaning that the actual allocator is not known;"
                     ':$$: 'Text "Use "
                     ':<>: 'ShowType Default
                     ':<>: 'Text " or "
