@@ -32,13 +32,12 @@ module Data.Unistring.Compat.Typeable
   ( Typeable
   , TypeRep
   , typeRep
-  , eqTypeRep
   ) where
 #if MIN_VERSION_base(4, 10, 0)
-import Type.Reflection (TypeRep, Typeable, eqTypeRep, typeRep)
+import Type.Reflection (TypeRep, Typeable, typeRep)
 #else
 import Data.Typeable (Typeable, eqT)
-import Data.Type.Equality ((:~:))
+import Data.Type.Equality (TestEquality(testEquality))
 
 -- This type wraps a constraint instead of Data.Typeable.TypeRep,
 -- because TypeRep isn't indexed, but the dictionary /is/, which means
@@ -49,6 +48,6 @@ data TypeRep a where
 typeRep :: Typeable a => TypeRep a
 typeRep = TypeRep
 
-eqTypeRep :: TypeRep a -> TypeRep b -> Maybe (a :~: b)
-eqTypeRep TypeRep TypeRep = eqT
+instance TestEquality TypeRep where
+  testEquality TypeRep TypeRep = eqT
 #endif
