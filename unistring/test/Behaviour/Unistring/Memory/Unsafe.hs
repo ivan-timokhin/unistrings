@@ -131,5 +131,12 @@ tests =
               , test @'U.Native @U.Pinned @Word8 "Native Pinned"
               , test @'U.Foreign @U.Pinned @Word8 "Foreign Pinned"
               ]
+        , testSuccess
+            @'U.Native
+            @U.Pinned
+            @'U.Foreign
+            @U.Pinned
+            @Word8
+            "Native/Pinned -> Foreign/Pinned"
         ]
   ]

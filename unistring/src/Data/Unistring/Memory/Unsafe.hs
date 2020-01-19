@@ -115,6 +115,7 @@ import GHC.Exts
   , writeWord32OffAddr#
   , writeWord8Array#
   , writeWord8OffAddr#
+  , unsafeCoerce#
   )
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents(PlainPtr))
 import GHC.IO (IO(IO))
@@ -397,7 +398,7 @@ class (Known storage, Typeable alloc) =>
                         m (arr a))
     -> Array storage alloc a
   adopt ::
-       (Typeable alloc', Known storage')
+       (Typeable alloc', Known storage', Primitive a)
     => Array storage' alloc' a
     -> Maybe (Array storage alloc a)
   adopt arr = do
@@ -443,6 +444,26 @@ instance Allocator 'Foreign Pinned where
     where
       run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
       run = runAllocatorT
+  adopt array =
+    case storage array of
+      SForeign ->
+        case testEquality (allocator array) (typeRep @Pinned) of
+          Just Refl -> Just array
+          Nothing -> Nothing
+      SNative
+        | (NArray narr@(NativeArray ba#)) <- array
+        , isTrue# (isByteArrayPinned# ba#) ->
+          Just $
+          FArray $
+          ForeignArray
+            (ForeignPtr (byteArrayContents# ba#) (PlainPtr (unsafeCoerce# ba#)))
+            (nativeArrayLength narr)
+            -- mallocForeignPtrBytes in GHC.ForeignPtr has exactly the
+            -- same unsafeCoerce#, but in opposite direction, so I
+            -- assume this is safe-ish.  Especially since nobody's
+            -- going to /access/ this byte array, it's just there to
+            -- keep it alive.
+        | otherwise -> Nothing
 
 instance TypeError ('ShowType Default
                     ':<>: 'Text " cannot be used to allocate "
