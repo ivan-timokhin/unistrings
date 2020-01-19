@@ -17,6 +17,7 @@ limitations under the License.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeInType #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
