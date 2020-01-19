@@ -15,6 +15,8 @@ limitations under the License.
 -}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -30,9 +32,27 @@ Stability   : experimental
 module Data.Unistring.Singletons
   ( Sing
   , Known(sing)
+  , SDecide(decideEq)
+  , Decided(Proven, Disproven)
   ) where
+
+import Data.Type.Equality ((:~:), TestEquality(testEquality))
+import Data.Kind (Type)
 
 data family Sing (a :: k)
 
 class Known a where
   sing :: Sing a
+
+data Decided p
+  = Proven p
+  | Disproven (forall v. p -> v)
+
+class SDecide k where
+  decideEq :: Sing (a :: k) -> Sing (b :: k) -> Decided (a :~: b)
+
+instance SDecide k => TestEquality (Sing :: k -> Type) where
+  testEquality s1 s2 =
+    case decideEq s1 s2 of
+      Proven refl -> Just refl
+      Disproven _ -> Nothing

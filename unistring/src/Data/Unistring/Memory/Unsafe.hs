@@ -30,6 +30,8 @@ limitations under the License.
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE EmptyCase #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -117,8 +119,14 @@ import GHC.ST (ST(ST))
 import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
 import GHC.Word (Word16(W16#), Word32(W32#), Word8(W8#))
 import System.IO.Unsafe (unsafeDupablePerformIO)
+import Data.Type.Equality ((:~:)(Refl))
 
-import Data.Unistring.Singletons (Sing, Known(sing))
+import Data.Unistring.Singletons
+  ( Decided(Disproven, Proven)
+  , Known(sing)
+  , SDecide(decideEq)
+  , Sing
+  )
 
 newtype CountOf a =
   CountOf
@@ -323,6 +331,12 @@ instance Known 'Native where
 
 instance Known 'Foreign where
   sing = SForeign
+
+instance SDecide Storage where
+  decideEq SNative SNative = Proven Refl
+  decideEq SForeign SForeign = Proven Refl
+  decideEq SNative SForeign = Disproven $ \case {}
+  decideEq SForeign SNative = Disproven $ \case {}
 
 data family Array (storage :: Storage) allocator :: Type -> Type
 
