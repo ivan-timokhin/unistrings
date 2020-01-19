@@ -69,8 +69,9 @@ module Data.Unistring.Memory.Unsafe
   , Pinned
   , Unknown
   , AllocatorM(new)
-  , Allocator(withAllocator)
+  , Allocator(withAllocator, adopt)
   , Sing(SNative, SForeign)
+  , allocator
   , storage
   ) where
 
@@ -119,7 +120,8 @@ import GHC.ST (ST(ST))
 import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
 import GHC.Word (Word16(W16#), Word32(W32#), Word8(W8#))
 import System.IO.Unsafe (unsafeDupablePerformIO)
-import Data.Type.Equality ((:~:)(Refl))
+import Data.Typeable (Typeable)
+import Data.Type.Equality ((:~:)(Refl), testEquality)
 
 import Data.Unistring.Singletons
   ( Decided(Disproven, Proven)
@@ -127,6 +129,7 @@ import Data.Unistring.Singletons
   , SDecide(decideEq)
   , Sing
   )
+import Data.Unistring.Compat.Typeable (TypeRep, typeRep)
 
 newtype CountOf a =
   CountOf
@@ -383,7 +386,7 @@ instance AllocatorM (NativeMutableArray RealWorld) (AllocatorT Pinned (NativeMut
       cast :: AllocatorT s a (ST RealWorld) b -> AllocatorT s a IO b
       cast = AllocatorT . stToIO . runAllocatorT
 
-class Known storage =>
+class (Known storage, Typeable alloc) =>
       Allocator (storage :: Storage) alloc
   where
   withAllocator ::
@@ -391,6 +394,14 @@ class Known storage =>
     => (forall m arr. AllocatorM arr m =>
                         m (arr a))
     -> Array storage alloc a
+  adopt ::
+       (Typeable alloc', Known storage')
+    => Array storage' alloc' a
+    -> Maybe (Array storage alloc a)
+  adopt arr = do
+    Refl <- testEquality (allocator arr) (typeRep @alloc)
+    Refl <- testEquality (storage arr) (sing @storage)
+    Just arr
 
 instance Allocator 'Native Default where
   withAllocator f = runST $ withNativeAllocator run f
@@ -464,6 +475,10 @@ unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = by
         let fptr = ForeignPtr (byteArrayContents# ba) (PlainPtr bytes)
          in (# s'
              , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
+
+allocator :: Typeable alloc => Array storage alloc a -> TypeRep alloc
+{-# INLINE allocator #-}
+allocator = const typeRep
 
 storage :: Known storage => Array storage alloc a -> Sing storage
 {-# INLINE storage #-}
