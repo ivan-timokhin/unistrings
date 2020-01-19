@@ -23,6 +23,7 @@ module Behaviour.Unistring.Memory.Unsafe
   ) where
 
 import Control.Exception (evaluate)
+import Data.Maybe (isJust)
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import System.IO.Unsafe (unsafePerformIO)
@@ -97,4 +98,38 @@ tests =
                   maxCount = U.inElements maxBound
                in evaluate (U.inBytes (maxCount + 1)) `shouldThrow` anyErrorCall
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "Adoption" $
+    let testSuccess ::
+             forall storage1 alloc1 storage2 alloc2 a.
+             ( U.Allocator storage1 alloc1
+             , U.Allocator storage2 alloc2
+             , U.Primitive a
+             , Arbitrary a
+             , Show a
+             )
+          => String
+          -> TestTree
+        testSuccess name =
+          testProperty name $ \(xs :: [a]) ->
+            let array :: U.Array storage1 alloc1 a
+                array = fromList xs
+                adopted :: Maybe (U.Array storage2 alloc2 a)
+                adopted = U.adopt array
+             in isJust adopted
+     in [ testGroup "Self" $
+          let test ::
+                   forall storage alloc a.
+                   ( U.Allocator storage alloc
+                   , U.Primitive a
+                   , Arbitrary a
+                   , Show a
+                   )
+                => String
+                -> TestTree
+              test = testSuccess @storage @alloc @storage @alloc @a
+           in [ test @'U.Native @U.Default @Word8 "Native Default"
+              , test @'U.Native @U.Pinned @Word8 "Native Pinned"
+              , test @'U.Foreign @U.Pinned @Word8 "Foreign Pinned"
+              ]
+        ]
   ]
