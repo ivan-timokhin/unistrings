@@ -97,6 +97,8 @@ import GHC.Exts
   , indexWord32OffAddr#
   , indexWord8Array#
   , indexWord8OffAddr#
+  , isByteArrayPinned#
+  , isTrue#
   , newByteArray#
   , newPinnedByteArray#
   , readWord16Array#
@@ -414,6 +416,12 @@ instance Allocator 'Native Pinned where
     where
       run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
       run = runAllocatorT
+  adopt array
+    | SNative <- storage array
+    , (NArray (NativeArray ba#)) <- array
+    , isTrue# (isByteArrayPinned# ba#)
+    = Just (NArray (NativeArray ba#))
+    | otherwise = Nothing
 
 withNativeAllocator ::
      AllocatorM (NativeMutableArray s) n
