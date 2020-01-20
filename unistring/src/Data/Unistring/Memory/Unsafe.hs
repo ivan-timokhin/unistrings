@@ -32,6 +32,7 @@ limitations under the License.
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE CPP #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -318,6 +319,26 @@ newtype instance Array 'Native allocator a =
 newtype instance Array 'Foreign allocator a =
   FArray {getFArray :: ForeignArray a}
 
+-- Allowed to have false negatives, but not false positives
+isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
+{-# INLINE isDefinitelyPinned #-}
+#if MIN_VERSION_base(4, 10, 0)
+-- On GHC >= 8.2/base >= 4.10, there's a isByteArrayPinned# primop
+-- through which we can just the RTS if the array is pinned.
+isDefinitelyPinned (NArray (NativeArray ba#)) =
+  E.isTrue# (E.isByteArrayPinned# ba#)
+#else
+-- On GHC 8.0/base 4.9, the primop is absent, so we resort to the next
+-- best thing—seeing if the array was allocated via Pinned allocator.
+isDefinitelyPinned array =
+  -- Not using isJust, because it's used nowhere else in this module,
+  -- so I would have to add a CPP'd import, which is one thing I
+  -- like less than CPP'd code.
+  case testEquality (allocator array) (typeRep @Pinned) of
+    Just Refl -> True
+    Nothing -> False
+#endif
+
 class MutableArray arr m => AllocatorM arr m | m -> arr where
   new :: Primitive a => CountOf a -> m (arr a)
 
@@ -385,8 +406,8 @@ instance Allocator 'Native Pinned where
       run = runAllocatorT
   adopt array
     | SNative <- storage array
+    , isDefinitelyPinned array
     , (NArray (NativeArray ba#)) <- array
-    , E.isTrue# (E.isByteArrayPinned# ba#)
     = Just (NArray (NativeArray ba#))
     | otherwise = Nothing
 
@@ -418,7 +439,7 @@ instance Allocator 'Foreign Pinned where
           Nothing -> Nothing
       SNative
         | (NArray narr@(NativeArray ba#)) <- array
-        , E.isTrue# (E.isByteArrayPinned# ba#) ->
+        , isDefinitelyPinned array ->
           Just $
           FArray $
           ForeignArray
