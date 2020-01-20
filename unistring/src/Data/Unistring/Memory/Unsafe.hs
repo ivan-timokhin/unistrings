@@ -323,8 +323,8 @@ newtype instance Array 'Foreign allocator a =
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
 {-# INLINE isDefinitelyPinned #-}
 #if MIN_VERSION_base(4, 10, 0)
--- On GHC >= 8.2/base >= 4.10, there's a isByteArrayPinned# primop
--- through which we can just the RTS if the array is pinned.
+-- On GHC >= 8.2/base >= 4.10, there's a isByteArrayPinned# primop,
+-- through which we can just ask the RTS if the array is pinned.
 isDefinitelyPinned (NArray (NativeArray ba#)) =
   E.isTrue# (E.isByteArrayPinned# ba#)
 #else
