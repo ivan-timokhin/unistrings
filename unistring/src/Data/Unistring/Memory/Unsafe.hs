@@ -82,41 +82,7 @@ import Data.Kind (Type)
 import Data.Traversable (for)
 import Data.Type.Coercion (Coercion(Coercion), coerceWith)
 import Foreign.ForeignPtr (withForeignPtr)
-import GHC.Exts
-  ( ByteArray#
-  , Int(I#)
-  , IsList(Item, fromList, fromListN, toList)
-  , MutableByteArray#
-  , Ptr(Ptr)
-  , RealWorld
-  , byteArrayContents#
-  , getSizeofMutableByteArray#
-  , indexWord16Array#
-  , indexWord16OffAddr#
-  , indexWord32Array#
-  , indexWord32OffAddr#
-  , indexWord8Array#
-  , indexWord8OffAddr#
-  , isByteArrayPinned#
-  , isTrue#
-  , newByteArray#
-  , newPinnedByteArray#
-  , readWord16Array#
-  , readWord16OffAddr#
-  , readWord32Array#
-  , readWord32OffAddr#
-  , readWord8Array#
-  , readWord8OffAddr#
-  , sizeofByteArray#
-  , unsafeFreezeByteArray#
-  , writeWord16Array#
-  , writeWord16OffAddr#
-  , writeWord32Array#
-  , writeWord32OffAddr#
-  , writeWord8Array#
-  , writeWord8OffAddr#
-  , unsafeCoerce#
-  )
+import qualified GHC.Exts as E
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents(PlainPtr))
 import GHC.IO (IO(IO))
 import GHC.ST (ST(ST))
@@ -180,71 +146,71 @@ checkNegative c
 class Primitive a where
   inBytes :: CountOf a -> ByteCount
   inElements :: ByteCount -> CountOf a
-  uncheckedIndexPtr :: Ptr a -> CountOf a -> a
-  uncheckedReadPtr :: Ptr a -> CountOf a -> IO a
-  uncheckedWritePtr :: Ptr a -> CountOf a -> a -> IO ()
-  uncheckedIndexBytes :: ByteArray# -> CountOf a -> a
-  uncheckedReadBytes :: MutableByteArray# s -> CountOf a -> ST s a
-  uncheckedWriteBytes :: MutableByteArray# s -> CountOf a -> a -> ST s ()
+  uncheckedIndexPtr :: E.Ptr a -> CountOf a -> a
+  uncheckedReadPtr :: E.Ptr a -> CountOf a -> IO a
+  uncheckedWritePtr :: E.Ptr a -> CountOf a -> a -> IO ()
+  uncheckedIndexBytes :: E.ByteArray# -> CountOf a -> a
+  uncheckedReadBytes :: E.MutableByteArray# s -> CountOf a -> ST s a
+  uncheckedWriteBytes :: E.MutableByteArray# s -> CountOf a -> a -> ST s ()
 
 instance Primitive Word8 where
   inBytes = ByteCount . getCountOf . checkNegative
   inElements = CountOf . getByteCount
-  uncheckedIndexPtr (Ptr ptr) (CountOf (I# ix)) =
-    W8# (indexWord8OffAddr# ptr ix)
-  uncheckedReadPtr (Ptr ptr) (CountOf (I# ix)) =
+  uncheckedIndexPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
+    W8# (E.indexWord8OffAddr# ptr ix)
+  uncheckedReadPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
     IO $ \s ->
-      case readWord8OffAddr# ptr ix s of
+      case E.readWord8OffAddr# ptr ix s of
         (# s', w #) -> (# s', W8# w #)
-  uncheckedWritePtr (Ptr ptr) (CountOf (I# ix)) (W8# w) =
-    IO $ \s -> (# writeWord8OffAddr# ptr ix w s, () #)
-  uncheckedIndexBytes bytes (CountOf (I# ix)) = W8# (indexWord8Array# bytes ix)
-  uncheckedReadBytes bytes (CountOf (I# ix)) =
+  uncheckedWritePtr (E.Ptr ptr) (CountOf (E.I# ix)) (W8# w) =
+    IO $ \s -> (# E.writeWord8OffAddr# ptr ix w s, () #)
+  uncheckedIndexBytes bytes (CountOf (E.I# ix)) = W8# (E.indexWord8Array# bytes ix)
+  uncheckedReadBytes bytes (CountOf (E.I# ix)) =
     ST $ \s ->
-      case readWord8Array# bytes ix s of
+      case E.readWord8Array# bytes ix s of
         (# s', w #) -> (# s', W8# w #)
-  uncheckedWriteBytes bytes (CountOf (I# ix)) (W8# w) =
-    ST $ \s -> (# writeWord8Array# bytes ix w s, () #)
+  uncheckedWriteBytes bytes (CountOf (E.I# ix)) (W8# w) =
+    ST $ \s -> (# E.writeWord8Array# bytes ix w s, () #)
 
 instance Primitive Word16 where
   inBytes = ByteCount . (`shiftL` 1) . getCountOf . checkOverflow 1
   inElements = CountOf . (`shiftR` 1) . getByteCount
-  uncheckedIndexPtr (Ptr ptr) (CountOf (I# ix)) =
-    W16# (indexWord16OffAddr# ptr ix)
-  uncheckedReadPtr (Ptr ptr) (CountOf (I# ix)) =
+  uncheckedIndexPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
+    W16# (E.indexWord16OffAddr# ptr ix)
+  uncheckedReadPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
     IO $ \s ->
-      case readWord16OffAddr# ptr ix s of
+      case E.readWord16OffAddr# ptr ix s of
         (# s', w #) -> (# s', W16# w #)
-  uncheckedWritePtr (Ptr ptr) (CountOf (I# ix)) (W16# w) =
-    IO $ \s -> (# writeWord16OffAddr# ptr ix w s, () #)
-  uncheckedIndexBytes bytes (CountOf (I# ix)) =
-    W16# (indexWord16Array# bytes ix)
-  uncheckedReadBytes bytes (CountOf (I# ix)) =
+  uncheckedWritePtr (E.Ptr ptr) (CountOf (E.I# ix)) (W16# w) =
+    IO $ \s -> (# E.writeWord16OffAddr# ptr ix w s, () #)
+  uncheckedIndexBytes bytes (CountOf (E.I# ix)) =
+    W16# (E.indexWord16Array# bytes ix)
+  uncheckedReadBytes bytes (CountOf (E.I# ix)) =
     ST $ \s ->
-      case readWord16Array# bytes ix s of
+      case E.readWord16Array# bytes ix s of
         (# s', w #) -> (# s', W16# w #)
-  uncheckedWriteBytes bytes (CountOf (I# ix)) (W16# w) =
-    ST $ \s -> (# writeWord16Array# bytes ix w s, () #)
+  uncheckedWriteBytes bytes (CountOf (E.I# ix)) (W16# w) =
+    ST $ \s -> (# E.writeWord16Array# bytes ix w s, () #)
 
 instance Primitive Word32 where
   inBytes = ByteCount . (`shiftL` 2) . getCountOf . checkOverflow 2
   inElements = CountOf . (`shiftR` 2) . getByteCount
-  uncheckedIndexPtr (Ptr ptr) (CountOf (I# ix)) =
-    W32# (indexWord32OffAddr# ptr ix)
-  uncheckedReadPtr (Ptr ptr) (CountOf (I# ix)) =
+  uncheckedIndexPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
+    W32# (E.indexWord32OffAddr# ptr ix)
+  uncheckedReadPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
     IO $ \s ->
-      case readWord32OffAddr# ptr ix s of
+      case E.readWord32OffAddr# ptr ix s of
         (# s', w #) -> (# s', W32# w #)
-  uncheckedWritePtr (Ptr ptr) (CountOf (I# ix)) (W32# w) =
-    IO $ \s -> (# writeWord32OffAddr# ptr ix w s, () #)
-  uncheckedIndexBytes bytes (CountOf (I# ix)) =
-    W32# (indexWord32Array# bytes ix)
-  uncheckedReadBytes bytes (CountOf (I# ix)) =
+  uncheckedWritePtr (E.Ptr ptr) (CountOf (E.I# ix)) (W32# w) =
+    IO $ \s -> (# E.writeWord32OffAddr# ptr ix w s, () #)
+  uncheckedIndexBytes bytes (CountOf (E.I# ix)) =
+    W32# (E.indexWord32Array# bytes ix)
+  uncheckedReadBytes bytes (CountOf (E.I# ix)) =
     ST $ \s ->
-      case readWord32Array# bytes ix s of
+      case E.readWord32Array# bytes ix s of
         (# s', w #) -> (# s', W32# w #)
-  uncheckedWriteBytes bytes (CountOf (I# ix)) (W32# w) =
-    ST $ \s -> (# writeWord32Array# bytes ix w s, () #)
+  uncheckedWriteBytes bytes (CountOf (E.I# ix)) (W32# w) =
+    ST $ \s -> (# E.writeWord32Array# bytes ix w s, () #)
 
 data ForeignArray a =
   ForeignArray
@@ -256,14 +222,14 @@ type role ForeignArray representational
 
 data NativeArray a =
   NativeArray
-    { nativeArrayBytes :: ByteArray#
+    { nativeArrayBytes :: E.ByteArray#
     }
 
 type role NativeArray representational
 
 data NativeMutableArray s a =
   NativeMutableArray
-    { nativeMutableArrayBytes :: MutableByteArray# s
+    { nativeMutableArrayBytes :: E.MutableByteArray# s
     }
 
 type role NativeMutableArray nominal representational
@@ -296,15 +262,15 @@ getNativeMutableArrayLength ::
 getNativeMutableArrayLength NativeMutableArray {nativeMutableArrayBytes = bytes} =
   inElements <$> getSizeOfMutableByteArray bytes
 
-sizeOfByteArray :: ByteArray# -> ByteCount
+sizeOfByteArray :: E.ByteArray# -> ByteCount
 {-# INLINE sizeOfByteArray #-}
-sizeOfByteArray ba = ByteCount (I# (sizeofByteArray# ba))
+sizeOfByteArray ba = ByteCount (E.I# (E.sizeofByteArray# ba))
 
-getSizeOfMutableByteArray :: MutableByteArray# s -> ST s ByteCount
+getSizeOfMutableByteArray :: E.MutableByteArray# s -> ST s ByteCount
 {-# INLINE getSizeOfMutableByteArray #-}
 getSizeOfMutableByteArray mba = ST $ \s ->
-  case getSizeofMutableByteArray# mba s of
-    (# s', n #) -> (# s', ByteCount (I# n) #)
+  case E.getSizeofMutableByteArray# mba s of
+    (# s', n #) -> (# s', ByteCount (E.I# n) #)
 
 class Monad m =>
       MutableArray arr m
@@ -312,7 +278,7 @@ class Monad m =>
   uncheckedRead :: Primitive a => arr a -> CountOf a -> m a
   uncheckedWrite :: Primitive a => arr a -> CountOf a -> a -> m ()
 
-instance MutableArray Ptr IO where
+instance MutableArray E.Ptr IO where
   uncheckedRead = uncheckedReadPtr
   uncheckedWrite = uncheckedWritePtr
 
@@ -320,7 +286,7 @@ instance MutableArray (NativeMutableArray s) (ST s) where
   uncheckedRead = uncheckedReadNative
   uncheckedWrite = uncheckedWriteNative
 
-instance MutableArray (NativeMutableArray RealWorld) IO where
+instance MutableArray (NativeMutableArray E.RealWorld) IO where
   uncheckedRead arr = stToIO . uncheckedReadNative arr
   uncheckedWrite arr ix = stToIO . uncheckedWriteNative arr ix
 
@@ -369,24 +335,24 @@ instance AllocatorM (NativeMutableArray s) (AllocatorT Default (NativeMutableArr
   new n =
     AllocatorT $
     ST $ \s ->
-      case newByteArray# byteCount s of
+      case E.newByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
-      !(I# byteCount) = getByteCount $ inBytes n
+      !(E.I# byteCount) = getByteCount $ inBytes n
 
 instance AllocatorM (NativeMutableArray s) (AllocatorT Pinned (NativeMutableArray s) (ST s)) where
   new n =
     AllocatorT $
     ST $ \s ->
-      case newPinnedByteArray# byteCount s of
+      case E.newPinnedByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
-      !(I# byteCount) = getByteCount $ inBytes n
+      !(E.I# byteCount) = getByteCount $ inBytes n
 
-instance AllocatorM (NativeMutableArray RealWorld) (AllocatorT Pinned (NativeMutableArray RealWorld) IO) where
+instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Pinned (NativeMutableArray E.RealWorld) IO) where
   new = cast . new
     where
-      cast :: AllocatorT s a (ST RealWorld) b -> AllocatorT s a IO b
+      cast :: AllocatorT s a (ST E.RealWorld) b -> AllocatorT s a IO b
       cast = AllocatorT . stToIO . runAllocatorT
 
 class (Known storage, Typeable alloc) =>
@@ -420,7 +386,7 @@ instance Allocator 'Native Pinned where
   adopt array
     | SNative <- storage array
     , (NArray (NativeArray ba#)) <- array
-    , isTrue# (isByteArrayPinned# ba#)
+    , E.isTrue# (E.isByteArrayPinned# ba#)
     = Just (NArray (NativeArray ba#))
     | otherwise = Nothing
 
@@ -452,11 +418,11 @@ instance Allocator 'Foreign Pinned where
           Nothing -> Nothing
       SNative
         | (NArray narr@(NativeArray ba#)) <- array
-        , isTrue# (isByteArrayPinned# ba#) ->
+        , E.isTrue# (E.isByteArrayPinned# ba#) ->
           Just $
           FArray $
           ForeignArray
-            (ForeignPtr (byteArrayContents# ba#) (PlainPtr (unsafeCoerce# ba#)))
+            (ForeignPtr (E.byteArrayContents# ba#) (PlainPtr (E.unsafeCoerce# ba#)))
             (nativeArrayLength narr)
             -- mallocForeignPtrBytes in GHC.ForeignPtr has exactly the
             -- same unsafeCoerce#, but in opposite direction, so I
@@ -490,18 +456,18 @@ unsafeFreezeNative :: NativeMutableArray s a -> ST s (NativeArray a)
 {-# INLINE unsafeFreezeNative #-}
 unsafeFreezeNative NativeMutableArray {nativeMutableArrayBytes = mbytes} =
   ST $ \s ->
-    case unsafeFreezeByteArray# mbytes s of
+    case E.unsafeFreezeByteArray# mbytes s of
       (# s', ba #) -> (# s', NativeArray ba #)
 
 unsafeFreezeNativeToForeign ::
-     Primitive a => NativeMutableArray RealWorld a -> IO (ForeignArray a)
+     Primitive a => NativeMutableArray E.RealWorld a -> IO (ForeignArray a)
 {-# INLINE unsafeFreezeNativeToForeign #-}
 unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = bytes} = do
   n <- stToIO $ getNativeMutableArrayLength nma
   IO $ \s ->
-    case unsafeFreezeByteArray# bytes s of
+    case E.unsafeFreezeByteArray# bytes s of
       (# s', ba #) ->
-        let fptr = ForeignPtr (byteArrayContents# ba) (PlainPtr bytes)
+        let fptr = ForeignPtr (E.byteArrayContents# ba) (PlainPtr bytes)
          in (# s'
              , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
 
@@ -514,9 +480,9 @@ storage :: Known storage => Array storage alloc a -> Sing storage
 storage = const sing
 
 instance (Allocator storage alloc, Primitive a) =>
-         IsList (Array storage alloc a) where
+         E.IsList (Array storage alloc a) where
   type Item (Array storage alloc a) = a
-  fromList xs = fromListN (length xs) xs
+  fromList xs = E.fromListN (length xs) xs
   fromListN n xs =
     withAllocator $ do
       arr <- new (CountOf n)
