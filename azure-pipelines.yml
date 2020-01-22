@@ -262,11 +262,10 @@ jobs:
 
   - task: Cache@2
     inputs:
-      key: '"cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze | cabal.dry-run.log'
+      key: '"cabal..store" | "$(Agent.OS)" | "$(GHCVER)" | cabal.project.freeze | cabal.dry-run.log'
       restoreKeys: |
-        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)" | cabal.project.freeze
-        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)" | "$(CABALVER)"
-        "cabal.store" | "$(Agent.OS)" | "$(GHCVER)"
+        "cabal..store" | "$(Agent.OS)" | "$(GHCVER)" | cabal.project.freeze
+        "cabal..store" | "$(Agent.OS)" | "$(GHCVER)"
       path: $(CABAL_STORE_FOLDER)
 
   - bash: |
@@ -342,10 +341,10 @@ jobs:
 
   - task: Cache@2
     inputs:
-      key: '"stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
+      key: '"stack.root" | "$(Agent.OS)" | $(STACK_YAML) | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
       restoreKeys: |
-        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)" | azure.stack.yaml.lock
-        "stack.root" | "$(Agent.OS)" | "$(RESOLVER)"
+        "stack..root" | "$(Agent.OS)" | $(STACK_YAML) | "$(RESOLVER)" | azure.stack.yaml.lock
+        "stack..root" | "$(Agent.OS)" | $(STACK_YAML) | "$(RESOLVER)"
       path: $(STACK_ROOT)
 
   - script: |
