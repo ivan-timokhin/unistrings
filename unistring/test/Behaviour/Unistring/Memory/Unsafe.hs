@@ -139,4 +139,59 @@ tests =
             @Word8
             "Native/Pinned -> Foreign/Pinned"
         ]
+  , testGroup "Array Eq" $
+    let test ::
+             forall a storage alloc.
+             ( U.Allocator storage alloc
+             , U.Primitive a
+             , Num a
+             , Arbitrary a
+             , Show a
+             , Eq a
+             )
+          => String
+          -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "Equal" $ \(xs :: [a]) ->
+                let x, y :: U.Array storage alloc a
+                    x = fromList xs
+                    y = fromList xs
+                 in x == y
+            , testProperty "Not equal" $ \(xs :: [a]) ->
+                let x, y :: U.Array storage alloc a
+                    x = fromList (xs ++ [0])
+                    y = fromList (xs ++ [1])
+                 in x /= y
+            , testProperty "Not equal length" $ \(xs :: [a]) ->
+                let x, y :: U.Array storage alloc a
+                    x = fromList xs
+                    y = fromList (xs ++ [1])
+                 in x /= y && y /= x
+            , testProperty "Random" $ \xs ys ->
+                let x, y :: U.Array storage alloc a
+                    x = fromList xs
+                    y = fromList ys
+                 in (x == y) == (xs == ys)
+            ]
+     in [ testGroup
+            "Native"
+            [ test @Word8 @'U.Native @U.Default "Word8"
+            , test @Word16 @'U.Native @U.Default "Word16"
+            , test @Word32 @'U.Native @U.Default "Word32"
+            ]
+        , testGroup
+            "Native pinned"
+            [ test @Word8 @'U.Native @U.Pinned "Word8"
+            , test @Word16 @'U.Native @U.Pinned "Word16"
+            , test @Word32 @'U.Native @U.Pinned "Word32"
+            ]
+        , testGroup
+            "Foreign"
+            [ test @Word8 @'U.Foreign @U.Pinned "Word8"
+            , test @Word16 @'U.Foreign @U.Pinned "Word16"
+            , test @Word32 @'U.Foreign @U.Pinned "Word32"
+            ]
+        ]
   ]

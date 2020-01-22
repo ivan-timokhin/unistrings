@@ -1,0 +1,248 @@
+= Unsafe FFI
+Ivan Timokhin <dev.unistring@ivan.timokhin.name>
+v1.0, 2020-01-22
+:icons: font
+:source-highlighter: prettify
+:toc: left
+
+[abstract]
+As any other Haskell package attempting efficient manipulation of byte
+arrays, including via `Addr#`, `unistring` occasionally relies on C
+FFI for inner loops (as of the moment of this writing, only `memcmp`,
+but I anticipate more).  All of these calls are presently marked
+`unsafe`.  This note records my understanding of the difference
+between `safe` and `unsafe` FFI, and the reasoning behind the choice.
+
+== FFI overview
+
+My current understanding of the FFI situation is based on the
+following sources:
+
+* https://wiki.haskell.org/GHC/Using_the_FFI#Improving_efficiency['`GHC/Using the FFI`' on Haskell Wiki]
+* https://blog.melding-monads.com/2011/10/24/concurrency-and-foreign-functions-in-the-glasgow-haskell-compiler/['`Concurrency And Foreign Functions In The Glasgow Haskell Compiler`' by Leon P Smith]
+* https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ffi-chap.html[The FFI chapter of GHC User Guide]
+* https://www.haskell.org/onlinereport/haskell2010/haskellch8.html#x15-1540008.4[Section 8.4 '`Foreign Declarations`' in Haskell Report]
+
+Any insight and useful information present in the notes below is to be
+credited to them; any misinformation is on me.
+
+NOTE: This documents concerns specifically _C_ FFI, using `ccall`
+calling convention.  It is the only kind of FFI used in `unistring`,
+and so the only one I'm interested in.
+
+WARNING: All of the following reflects my current understanding of the
+topic.  I may very well be wrong, so this note doesn't count as an
+authoritative source on any of the topics discussed.
+
+=== Unsafe FFI
+
+Foreign calls marked `unsafe` compile directly to function calls,
+modulo some wrapping and unwrapping of arguments and results.  This,
+then, is the option carrying the least overhead.  Unfortunately, the
+called C function has no idea of GHC's cooperative concurrency, and
+never yields control to the runtime system until it completes.  This
+has a number of consequences:
+
+* The capability is occupied and cannot run any other Haskell thread.
+  This is not too bad from the throughput standpoint--the call is
+  CPU-bound anyway--but can be problematic for latency.
+* Comments to the L. P. Smith's blog post referenced above discuss the
+  possibility that the Haskell threads in the blocked capability's run
+  queue may end up waiting for the FFI call to complete even if there
+  are other capabilities ready to run them.  I do not know enough of
+  the GHC's scheduler to tell if this is a real concern.
+* The RTS cannot stop the world and initiate garbage collection.  This
+  can be good--we can pass unpinned memory to `unsafe` FFI, secure in
+  the knowledge that it won't move anywhere for the duration of the
+  call--and bad, especially if the call takes a while and other
+  threads allocate in the meanwhile.
+
+In addition, for technical reasons I don't really understand, `unsafe`
+calls cannot call back into Haskell code.  We never need that, so
+that's fine.
+
+The bottom line is that unsafe calls are an excellent choice for
+short-lived calls, but may become problematic if the function
+execution takes longer.
+
+=== Safe FFI
+
+In contrast to `unsafe` FFI, `safe` calls are designed to run
+concurrently with Haskell code.  To do so, the runtime gives up the OS
+thread that the call happens on, and transfers the capability to
+another one, taking it from a pool, or creating a new one if the pool
+is empty.  The end result is a bit similar to doing IO--one Haskell
+thread is blocked on an external operation, but otherwise execution
+proceeds as usual.
+
+The benefits and downsides, then, are mirror image of the above.  The
+overhead of a `safe` call is higher, but in exchange the capability is
+not blocked, so all other Haskell threads can continue to run as usual
+_and_ RTS can collect accumulating garbage.
+
+NOTE: _All_ FFI calls, `safe` or `unsafe`, render the calling Haskell
+thread impervious to cancellation--and all other asynchronous
+exceptions, for that matter.  GHC offers special `interruptible`
+modifier for foreign calls that _can_ be interrupted, but it seems to
+only work with system calls.
+
+== Benchmarks
+
+To estimate the overhead of `safe` foreign calls, I have run a couple
+of very unscientific benchmarks with `criterion`.
+
+=== No-op
+
+First, to test the pure overhead of a foreign call, I've measured the
+time and CPU cycles spent on calling an empty C function:
+
+[source,c]
+----
+void f(void) {}
+----
+
+in two ways:
+
+[source,haskell]
+----
+foreign import ccall unsafe "f" fUnsafe :: IO ()
+foreign import ccall safe "f" fSafe :: IO ()
+----
+
+and here are the results:
+
+.No-op call
+[cols=",4*>"]
+|===
+| GHC flags | Time, `unsafe` | Time, `safe` | CPU cycles, `unsafe` | CPU cycles, `safe`
+| | ~ 3 ns | ~ 59 ns | ~ 13 | ~ 246
+| `-threaded` | ~ 3 ns | ~ 89 ns | ~ 13 | ~ 375
+| `-threaded -with-rtsopts "-N"` | ~ 3 ns | ~ 96 ns | ~ 13 | ~ 404
+|===
+
+So the bottom line is that the overhead is measurable, but not too
+impressive, and seems to depend significantly on the runtime settings,
+getting worse the more threaded the program gets.
+
+=== Memcmp
+
+I have also tried measuring the overhead on an actual `memcmp` call,
+comparing a `ByteString` with itself (so it has to look through the
+whole thing).  All of the tests were performed with
+`-threaded -with-rtsopts "-N"`, as this is the setting that produced the most overhead above.
+
+Here's the code:
+[source,haskell]
+----
+foreign import ccall unsafe "string.h memcmp" memcmpUnsafe
+  :: Ptr a -> Ptr a -> CSize -> IO CInt
+foreign import ccall safe "string.h memcmp" memcmpSafe
+  :: Ptr a -> Ptr a -> CSize -> IO CInt
+
+selfCompareBS :: (Ptr CChar -> Ptr CChar -> CSize -> IO CInt) -> ByteString -> IO Int
+{-# INLINE selfCompareBS #-}
+selfCompareBS cmp x =
+  unsafeUseAsCStringLen x $ \(xptr, xlen) ->
+    fromIntegral <$> cmp xptr xptr (fromIntegral xlen)
+----
+
+And here are the results:
+
+.Memcmp
+[cols="5*>"]
+|===
+| `ByteString` size | Time, `unsafe` | Time, `safe` | CPU cycles, `unsafe` | CPU cycles, `safe`
+| 10^4^ | ~ 91 ns | ~ 180 ns | ~ 383 | ~ 751
+| 10^5^ | ~ 1.55 µs | ~ 1.70 µs | ~ 6.5 × 10^3^ | ~ 7.15 × 10^3^
+| 10^6^ | ~ 17.8 µs | ~ 18.1 µs | ~ 7.5 × 10^4^ | ~ 7.6 × 10^4^
+| 10^7^ | ~ 364 µs | ~ 370 µs | ~ 1.5 × 10^6^ | ~ 1.5 × 10^6^
+|===
+
+To summarise:
+
+* `memcmp` is _very_ fast;
+* the overhead is very noticeable at small sizes
+* but it drops to around 2% at 10^6^, which sounds like something we
+  might readily sacrifice.
+
+== Conclusion
+
+In the end, as hinted above, I have decided to go with the blanket
+`unsafe` for now.
+
+For short arrays there's really no way around that: the overhead from
+`safe` calls is _very_ noticeable.  So the only plausible design with
+`safe` calls is to provide _two_ bindings for the same C function,
+`safe` and `unsafe`, and use `safe` only for sufficiently large
+inputs--say, 10^6^ bytes and more.footnote:[As a bonus, GHC runtime
+pins all allocations of that size--it actually pins everything above
+3–4Kib--so we needn't worry about ``ByteArray#``s moving regardless of
+how they were allocated.]
+
+But that adds a noticeable amount of complexity to the code, which
+I've decided to avoid for the time being, because
+
+* `memcmp` is _fast_; we're not going to see noticeable pauses due to
+  `unsafe` calls blocking the capability until we're comparing at
+  least hundreds of megabytes, which is _much_ larger than the vast
+  majority of strings in most programs;
+* `bytestring`, one of the most battle-tested and relied upon Haskell
+  libraries, uses `unsafe` calls with abandon, and I do not see any
+  particular uproar about it--which makes me think this is not a
+  problem in practice.
+
+[appendix]
+== Full benchmark source
+
+.Main.hs
+[source,haskell,linenums]
+----
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE BangPatterns #-}
+{-# OPTIONS_GHC -Wall #-}
+
+module Main where
+
+import Criterion.Main
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
+import Foreign.C.Types
+import Foreign.Ptr
+
+main :: IO ()
+main =
+  defaultMain
+    [ bgroup
+        "noop"
+        [bench "unsafe" $ whnfIO fUnsafe, bench "safe" $ whnfIO fSafe]
+    , bgroup "memcmp" $
+      let !bstr = B.replicate 10000 0xAF
+       in [ bench "unsafe" $ whnfIO $ selfCompareBS memcmpUnsafe bstr
+          , bench "safe" $ whnfIO $ selfCompareBS memcmpSafe bstr
+          ]
+    ]
+
+foreign import ccall unsafe "f" fUnsafe :: IO ()
+
+foreign import ccall safe "f" fSafe :: IO ()
+
+foreign import ccall unsafe "string.h memcmp" memcmpUnsafe
+  :: Ptr a -> Ptr a -> CSize -> IO CInt
+
+foreign import ccall safe "string.h memcmp" memcmpSafe
+  :: Ptr a -> Ptr a -> CSize -> IO CInt
+
+selfCompareBS ::
+     (Ptr CChar -> Ptr CChar -> CSize -> IO CInt) -> ByteString -> IO Int
+{-# INLINE selfCompareBS #-}
+selfCompareBS cmp x =
+  unsafeUseAsCStringLen x $ \(xptr, xlen) ->
+    fromIntegral <$> cmp xptr xptr (fromIntegral xlen)
+----
+
+.c.c
+[source,c]
+----
+void f(void) {}
+----

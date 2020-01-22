@@ -33,6 +33,7 @@ limitations under the License.
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -92,6 +93,7 @@ import GHC.Word (Word16(W16#), Word32(W32#), Word8(W8#))
 import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Typeable (Typeable)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
+import Foreign.C.Types (CInt(CInt), CSize(CSize))
 
 import Data.Unistring.Singletons
   ( Decided(Disproven, Proven)
@@ -318,6 +320,26 @@ newtype instance Array 'Native allocator a =
 
 newtype instance Array 'Foreign allocator a =
   FArray {getFArray :: ForeignArray a}
+
+instance (Known storage, Primitive a) => Eq (Array storage allocator a) where
+  l == r =
+    case storage l of
+      SNative ->
+        let !(NArray (NativeArray l#)) = l
+            !(NArray (NativeArray r#)) = r
+            !llen# = E.sizeofByteArray# l#
+            !rlen# = E.sizeofByteArray# r#
+         in E.isTrue# (llen# E.==# rlen#) &&
+            E.isTrue# (E.compareByteArrays# l# 0# r# 0# llen# E.==# 0#)
+      SForeign ->
+        let !(FArray (ForeignArray lfptr llen)) = l
+            !(FArray (ForeignArray rfptr rlen)) = r
+         in llen == rlen &&
+            unsafeDupablePerformIO
+              (withForeignPtr lfptr $ \lptr ->
+                 withForeignPtr rfptr $ \rptr -> do
+                   diff <- memcmp lptr rptr (inBytes llen)
+                   pure (diff == 0))
 
 -- Allowed to have false negatives, but not false positives
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
@@ -550,3 +572,11 @@ forgetArrayAllocator ::
 {-# INLINE forgetArrayAllocator #-}
 forgetArrayAllocator =
   coerceWith (allocatorCoercion @alloc @Unknown @storage @a)
+
+memcmp :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
+{-# INLINE memcmp #-}
+memcmp lp rp len = fromIntegral <$> c_memcmp lp rp (fromIntegral len)
+
+-- See note ‘Unsafe FFI’
+foreign import ccall unsafe "string.h memcmp" c_memcmp
+  :: E.Ptr a -> E.Ptr a -> CSize -> IO CInt
