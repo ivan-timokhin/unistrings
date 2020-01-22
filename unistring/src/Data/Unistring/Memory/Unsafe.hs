@@ -34,6 +34,7 @@ limitations under the License.
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE UnliftedFFITypes #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -330,7 +331,7 @@ instance (Known storage, Primitive a) => Eq (Array storage allocator a) where
             !llen# = E.sizeofByteArray# l#
             !rlen# = E.sizeofByteArray# r#
          in E.isTrue# (llen# E.==# rlen#) &&
-            E.isTrue# (E.compareByteArrays# l# 0# r# 0# llen# E.==# 0#)
+            compareByteArraysFull l# r# (ByteCount (E.I# llen#)) == 0
       SForeign ->
         let !(FArray (ForeignArray lfptr llen)) = l
             !(FArray (ForeignArray rfptr rlen)) = r
@@ -580,3 +581,18 @@ memcmp lp rp len = fromIntegral <$> c_memcmp lp rp (fromIntegral len)
 -- See note ‘Unsafe FFI’
 foreign import ccall unsafe "string.h memcmp" c_memcmp
   :: E.Ptr a -> E.Ptr a -> CSize -> IO CInt
+
+compareByteArraysFull :: E.ByteArray# -> E.ByteArray# -> ByteCount -> Int
+{-# INLINE compareByteArraysFull #-}
+#if MIN_VERSION_base(4, 11, 0)
+compareByteArraysFull x# y# (ByteCount (E.I# n#)) =
+  E.I# (E.compareByteArrays# x# 0# y# 0# n#)
+#else
+compareByteArraysFull x# y# (ByteCount n) =
+  unsafeDupablePerformIO $
+  fromIntegral <$> c_memcmp_bytes x# y# (fromIntegral n)
+
+-- See note ‘Unsafe FFI’
+foreign import ccall unsafe "string.h memcmp" c_memcmp_bytes
+  :: E.ByteArray# -> E.ByteArray# -> CSize -> IO CInt
+#endif
