@@ -261,6 +261,7 @@ jobs:
       cabal v2-test ${CABAL_FLAGS} --dry-run ${CABAL_TEST_TARGETS} | tee cabal.dry-run.log
 
   - task: Cache@2
+    enabled: false
     inputs:
       key: '"cabal..store" | "$(Agent.OS)" | "$(GHCVER)" | cabal.project.freeze | cabal.dry-run.log'
       restoreKeys: |
@@ -340,6 +341,7 @@ jobs:
       cat stack.dry-run.log
 
   - task: Cache@2
+    enabled: false
     inputs:
       key: '"stack.root" | "$(Agent.OS)" | $(STACK_YAML) | "$(RESOLVER)" | azure.stack.yaml.lock | stack.dry-run.log'
       restoreKeys: |
