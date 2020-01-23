@@ -100,6 +100,28 @@ tests =
       , $(inspectTest "Sing" $ 'forgetNativeAllocator `hasNoType` ''U.Sing)
       , $(inspectTest "Known" $ 'forgetNativeAllocator `hasNoType` ''S.Known)
       ]
+  , testGroup
+      "Equality"
+      [ testGroup
+          "Native"
+          [ $(inspectTest "Sing" $ 'arrayEqNative `hasNoType` ''U.Sing)
+          , $(inspectTest "Known" $ 'arrayEqNative `hasNoType` ''S.Known)
+          , $(inspectTest "Primitive" $ 'arrayEqNative `hasNoType` ''U.Primitive)
+          ]
+      , testGroup
+          "Foreign"
+          [ $(inspectTest "Sing" $ 'arrayEqForeign `hasNoType` ''U.Sing)
+          , $(inspectTest "Known" $ 'arrayEqForeign `hasNoType` ''S.Known)
+          , $(inspectTest "Primitive" $
+              'arrayEqForeign `hasNoType` ''U.Primitive)
+          ]
+      , testGroup
+          "Mixed"
+          [ $(inspectTest "Sing" $ 'arrayEqMixed `hasNoType` ''U.Sing)
+          , $(inspectTest "Known" $ 'arrayEqMixed `hasNoType` ''S.Known)
+          , $(inspectTest "Primitive" $ 'arrayEqMixed `hasNoType` ''U.Primitive)
+          ]
+      ]
   ]
 
 nativeArrayLength :: U.Array 'U.Native alloc Word8 -> U.CountOf Word8
@@ -139,3 +161,21 @@ mkForeignArray ptr cts i =
 forgetNativeAllocator ::
      U.Array 'U.Native allocator a -> U.Array 'U.Native U.Unknown a
 forgetNativeAllocator = U.forgetArrayAllocator
+
+arrayEqNative ::
+     U.Array 'U.Native allocator Word8
+  -> U.Array 'U.Native allocator' Word8
+  -> Bool
+arrayEqNative = U.arrayEq
+
+arrayEqForeign ::
+     U.Array 'U.Foreign allocator Word8
+  -> U.Array 'U.Foreign allocator' Word8
+  -> Bool
+arrayEqForeign = U.arrayEq
+
+arrayEqMixed ::
+     U.Array 'U.Native allocator Word8
+  -> U.Array 'U.Foreign allocator' Word8
+  -> Bool
+arrayEqMixed = U.arrayEq
