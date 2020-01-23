@@ -579,6 +579,9 @@ memcmp :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
 memcmp lp rp len = fromIntegral <$> c_memcmp lp rp (fromIntegral len)
 
 -- See note ‘Unsafe FFI’
+-- It is logically pure, assuming the memory Ptr's point to is
+-- immutable, but we need IO anyway to sequence touch# (via
+-- withForeignPtr) after it.
 foreign import ccall unsafe "string.h memcmp" c_memcmp
   :: E.Ptr a -> E.Ptr a -> CSize -> IO CInt
 
@@ -589,10 +592,10 @@ compareByteArraysFull x# y# (ByteCount (E.I# n#)) =
   E.I# (E.compareByteArrays# x# 0# y# 0# n#)
 #else
 compareByteArraysFull x# y# (ByteCount n) =
-  unsafeDupablePerformIO $
-  fromIntegral <$> c_memcmp_bytes x# y# (fromIntegral n)
+  fromIntegral $ c_memcmp_bytes x# y# (fromIntegral n)
 
 -- See note ‘Unsafe FFI’
+-- It is logically pure, so we mark it as such
 foreign import ccall unsafe "string.h memcmp" c_memcmp_bytes
-  :: E.ByteArray# -> E.ByteArray# -> CSize -> IO CInt
+  :: E.ByteArray# -> E.ByteArray# -> CSize -> CInt
 #endif
