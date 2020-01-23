@@ -108,7 +108,7 @@ newtype CountOf a =
   CountOf
     { getCountOf :: Int
     }
-  deriving (Eq, Ord, Show, Enum, Bounded, Num, Real, Integral, Bits, FiniteBits)
+  deriving (Eq, Ord, Show, Enum, Bounded, Num, Bits, FiniteBits)
 
 type role CountOf representational
 
@@ -116,7 +116,7 @@ newtype ByteCount =
   ByteCount
     { getByteCount :: Int
     }
-  deriving (Eq, Ord, Show, Enum, Bounded, Num, Real, Integral)
+  deriving (Eq, Ord, Show, Enum, Bounded, Num)
 
 checkOverflow ::
      Int
@@ -576,7 +576,8 @@ forgetArrayAllocator =
 
 memcmp :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
 {-# INLINE memcmp #-}
-memcmp lp rp len = fromIntegral <$> c_memcmp lp rp (fromIntegral len)
+memcmp lp rp len =
+  fromIntegral <$> c_memcmp lp rp (fromIntegral $ getByteCount len)
 
 -- See note ‘Unsafe FFI’
 -- It is logically pure, assuming the memory Ptr's point to is
