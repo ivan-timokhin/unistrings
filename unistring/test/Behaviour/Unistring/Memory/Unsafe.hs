@@ -23,7 +23,7 @@ module Behaviour.Unistring.Memory.Unsafe
   ) where
 
 import Control.Exception (evaluate)
-import Data.Maybe (isJust)
+import Data.Functor.Classes (Eq1(liftEq))
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import System.IO.Unsafe (unsafePerformIO)
@@ -115,7 +115,7 @@ tests =
                 array = fromList xs
                 adopted :: Maybe (U.Array storage2 alloc2 a)
                 adopted = U.adopt array
-             in isJust adopted
+             in liftEq U.arrayEq adopted (Just array)
      in [ testGroup "Self" $
           let test ::
                    forall storage alloc a.

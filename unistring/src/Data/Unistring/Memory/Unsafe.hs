@@ -66,6 +66,7 @@ module Data.Unistring.Memory.Unsafe
   , Array(NArray, FArray, getNArray, getFArray)
   , arrayLength
   , arrayToList
+  , arrayEq
   , forgetArrayAllocator
   , allocatorCoercion
   , Default
@@ -323,24 +324,7 @@ newtype instance Array 'Foreign allocator a =
   FArray {getFArray :: ForeignArray a}
 
 instance (Known storage, Primitive a) => Eq (Array storage allocator a) where
-  l == r =
-    case storage l of
-      SNative ->
-        let !(NArray (NativeArray l#)) = l
-            !(NArray (NativeArray r#)) = r
-            !llen# = E.sizeofByteArray# l#
-            !rlen# = E.sizeofByteArray# r#
-         in E.isTrue# (llen# E.==# rlen#) &&
-            compareByteArraysFull l# r# (ByteCount (E.I# llen#)) == 0
-      SForeign ->
-        let !(FArray (ForeignArray lfptr llen)) = l
-            !(FArray (ForeignArray rfptr rlen)) = r
-         in llen == rlen &&
-            unsafeDupablePerformIO
-              (withForeignPtr lfptr $ \lptr ->
-                 withForeignPtr rfptr $ \rptr -> do
-                   diff <- memcmp lptr rptr (inBytes llen)
-                   pure (diff == 0))
+  (==) = arrayEq
 
 -- Allowed to have false negatives, but not false positives
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
@@ -574,6 +558,45 @@ forgetArrayAllocator ::
 forgetArrayAllocator =
   coerceWith (allocatorCoercion @alloc @Unknown @storage @a)
 
+arrayEq :: (Known storage1, Known storage2, Primitive a) =>
+  Array storage1 alloc1 a -> Array storage2 alloc2 a -> Bool
+{-# INLINEABLE arrayEq #-}
+arrayEq x y =
+  case (storage x, storage y) of
+    (SNative, SNative) -> nativeEq (getNArray x) (getNArray y)
+    (SForeign, SForeign) -> foreignEq (getFArray x) (getFArray y)
+    (SNative, SForeign) -> mixedEq (getNArray x) (getFArray y)
+    (SForeign, SNative) -> mixedEq (getNArray y) (getFArray x)
+  where
+    nativeEq :: NativeArray a -> NativeArray a -> Bool
+    {-# INLINE nativeEq #-}
+    nativeEq x' y' =
+      let !(NativeArray x#) = x'
+          !(NativeArray y#) = y'
+          !xn = sizeOfByteArray x#
+          !yn = sizeOfByteArray y#
+       in xn == yn && (compareByteArraysFull x# y# xn == 0)
+    foreignEq :: Primitive a => ForeignArray a -> ForeignArray a -> Bool
+    {-# INLINE foreignEq #-}
+    foreignEq x' y' =
+      let !(ForeignArray xfptr xlen) = x'
+          !(ForeignArray yfptr ylen) = y'
+       in xlen == ylen &&
+          unsafeDupablePerformIO
+            (withForeignPtr xfptr $ \xptr ->
+               withForeignPtr yfptr $ \yptr ->
+                 (== 0) <$> memcmp xptr yptr (inBytes xlen))
+    mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
+    {-# INLINE mixedEq #-}
+    mixedEq x' y' =
+      let !(NativeArray x#) = x'
+          !(ForeignArray yfptr ylen) = y'
+          !xb = sizeOfByteArray x#
+          !yb = inBytes ylen
+       in xb == yb &&
+          unsafeDupablePerformIO
+            (withForeignPtr yfptr $ \yptr -> (== 0) <$> memcmpMixed x# yptr xb)
+
 memcmp :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
 {-# INLINE memcmp #-}
 memcmp lp rp len =
@@ -600,3 +623,11 @@ compareByteArraysFull x# y# (ByteCount n) =
 foreign import ccall unsafe "string.h memcmp" c_memcmp_bytes
   :: E.ByteArray# -> E.ByteArray# -> CSize -> CInt
 #endif
+
+memcmpMixed :: E.ByteArray# -> E.Ptr a -> ByteCount -> IO Int
+memcmpMixed ba# ptr (ByteCount n) =
+  fromIntegral <$> c_memcmp_mixed ba# ptr (fromIntegral n)
+
+-- See note ‘Unsafe FFI’
+foreign import ccall unsafe "string.h memcmp" c_memcmp_mixed
+  :: E.ByteArray# -> E.Ptr a -> CSize -> IO CInt
