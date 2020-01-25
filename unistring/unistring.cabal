@@ -30,6 +30,7 @@ library
   exposed-modules:     Data.Unistring.Singletons
                      , Data.Unistring.Memory.Unsafe
                      , Data.Unistring.Memory.Count
+                     , Data.Unistring.Memory.Storage
                      , Data.Unistring.Memory.Primitive.Class.Unsafe
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe

@@ -27,11 +27,8 @@ limitations under the License.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE CPP #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -92,12 +89,7 @@ import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Typeable (Typeable)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
 
-import Data.Unistring.Singletons
-  ( Decided(Disproven, Proven)
-  , Known(sing)
-  , SDecide(decideEq)
-  , Sing
-  )
+import Data.Unistring.Singletons (Known(sing))
 import Data.Unistring.Compat.Typeable (TypeRep, typeRep)
 import Data.Unistring.Memory.Count
   ( ByteCount(ByteCount, getByteCount)
@@ -114,6 +106,10 @@ import Data.Unistring.Memory.Primitive.Operations.Unsafe
   , memcmpMixed
   , sizeOfByteArray
   , getSizeOfMutableByteArray
+  )
+import Data.Unistring.Memory.Storage
+  ( Sing(SForeign, SNative)
+  , Storage(Foreign, Native)
   )
 
 data ForeignArray a =
@@ -183,26 +179,6 @@ instance MutableArray (NativeMutableArray s) (ST s) where
 instance MutableArray (NativeMutableArray E.RealWorld) IO where
   uncheckedRead arr = stToIO . uncheckedReadNative arr
   uncheckedWrite arr ix = stToIO . uncheckedWriteNative arr ix
-
-data Storage
-  = Native
-  | Foreign
-
-data instance Sing (storage :: Storage) where
-  SNative :: Sing 'Native
-  SForeign :: Sing 'Foreign
-
-instance Known 'Native where
-  sing = SNative
-
-instance Known 'Foreign where
-  sing = SForeign
-
-instance SDecide Storage where
-  decideEq SNative SNative = Proven Refl
-  decideEq SForeign SForeign = Proven Refl
-  decideEq SNative SForeign = Disproven $ \case {}
-  decideEq SForeign SNative = Disproven $ \case {}
 
 data family Array (storage :: Storage) allocator :: Type -> Type
 
