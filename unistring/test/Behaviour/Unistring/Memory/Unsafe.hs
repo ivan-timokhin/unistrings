@@ -22,13 +22,10 @@ module Behaviour.Unistring.Memory.Unsafe
   ( tests
   ) where
 
-import Control.Exception (evaluate)
 import Data.Functor.Classes (Eq1(liftEq))
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
-import System.IO.Unsafe (unsafePerformIO)
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hspec (anyErrorCall, example, it, shouldThrow, testSpec)
 import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
 
 import qualified Data.Unistring.Memory.Unsafe as U
@@ -74,30 +71,6 @@ tests =
             , testGroup "Word32" (test @Word32 @'U.Foreign @U.Pinned)
             ]
         ]
-  , testGroup "Count validity checks" $
-    let test ::
-             forall a. U.Primitive a
-          => String
-          -> TestTree
-        test name =
-          unsafePerformIO $
-          testSpec name $ do
-            it "throws when element count is negative" $
-              evaluate (U.inBytes ((-1) :: U.CountOf a)) `shouldThrow`
-              anyErrorCall
-            it "throws when element count is negative and large" $
-              evaluate (U.inBytes (minBound :: U.CountOf a)) `shouldThrow`
-              anyErrorCall
-            it "doesn't throw when the element count is largest possible" $
-              example $
-              let maxCount :: U.CountOf a
-                  maxCount = U.inElements maxBound
-               in () <$ evaluate (U.inBytes maxCount)
-            it "throws when the element count is just a little bit too large" $
-              let maxCount :: U.CountOf a
-                  maxCount = U.inElements maxBound
-               in evaluate (U.inBytes (maxCount + 1)) `shouldThrow` anyErrorCall
-     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   , testGroup "Adoption" $
     let testSuccess ::
              forall storage1 alloc1 storage2 alloc2 a.

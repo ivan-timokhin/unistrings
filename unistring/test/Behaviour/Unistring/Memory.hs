@@ -13,14 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-module Behaviour
-  ( tests
-  ) where
+module Behaviour.Unistring.Memory (tests) where
 
 import Test.Tasty (TestTree, testGroup)
 
-import qualified Behaviour.Unistring.Memory
+import qualified Behaviour.Unistring.Memory.Primitive.Class.Unsafe as Primitive.Class.Unsafe
+import qualified Behaviour.Unistring.Memory.Unsafe as Unsafe
 
 tests :: [TestTree]
 tests =
-  [testGroup "Unistring" [testGroup "Memory" Behaviour.Unistring.Memory.tests]]
+  [ testGroup "Unsafe" Unsafe.tests
+  , testGroup
+      "Primitive"
+      [testGroup "Class" [testGroup "Unsafe" Primitive.Class.Unsafe.tests]]
+  ]

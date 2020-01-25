@@ -29,7 +29,10 @@ flag inspection
 library
   exposed-modules:     Data.Unistring.Singletons
                      , Data.Unistring.Memory.Unsafe
+                     , Data.Unistring.Memory.Count
+                     , Data.Unistring.Memory.Primitive.Class.Unsafe
   other-modules:       Data.Unistring.Compat.Typeable
+                     , Data.Unistring.Memory.Primitive.Operations.Unsafe
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
@@ -57,7 +60,9 @@ test-suite unistring-test
   hs-source-dirs:      test
   main-is:             Main.hs
   other-modules:       Behaviour
+                     , Behaviour.Unistring.Memory
                      , Behaviour.Unistring.Memory.Unsafe
+                     , Behaviour.Unistring.Memory.Primitive.Class.Unsafe
   build-depends:       base >=4.9 && <4.14
                      , unistring
                      , tasty
