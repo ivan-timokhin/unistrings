@@ -34,6 +34,7 @@ library
                      , Data.Unistring.Memory.Primitive.Class.Unsafe
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
+                     , Data.Unistring.Memory.Array.Internal
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
