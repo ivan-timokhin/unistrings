@@ -18,17 +18,20 @@ limitations under the License.
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DataKinds #-}
 
-module Behaviour.Unistring.Memory.Unsafe
+module Behaviour.Unistring.Memory.Array
   ( tests
   ) where
 
-import Data.Functor.Classes (Eq1(liftEq))
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
 
-import qualified Data.Unistring.Memory.Unsafe as U
+import qualified Data.Unistring.Memory.Allocator as U
+import qualified Data.Unistring.Memory.Array as U
+import qualified Data.Unistring.Memory.Count as U
+import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
+import qualified Data.Unistring.Memory.Storage as U
 
 tests :: [TestTree]
 tests =
@@ -50,7 +53,7 @@ tests =
           , testProperty "length . fromList == length" $ \(xs :: [a]) ->
               let array :: U.Array storage alloc a
                   array = fromList xs
-               in U.getCountOf (U.arrayLength array) === length xs
+               in U.getCountOf (U.size array) === length xs
           ]
      in [ testGroup
             "Native"
@@ -70,47 +73,6 @@ tests =
             , testGroup "Word16" (test @Word16 @'U.Foreign @U.Pinned)
             , testGroup "Word32" (test @Word32 @'U.Foreign @U.Pinned)
             ]
-        ]
-  , testGroup "Adoption" $
-    let testSuccess ::
-             forall storage1 alloc1 storage2 alloc2 a.
-             ( U.Allocator storage1 alloc1
-             , U.Allocator storage2 alloc2
-             , U.Primitive a
-             , Arbitrary a
-             , Show a
-             )
-          => String
-          -> TestTree
-        testSuccess name =
-          testProperty name $ \(xs :: [a]) ->
-            let array :: U.Array storage1 alloc1 a
-                array = fromList xs
-                adopted :: Maybe (U.Array storage2 alloc2 a)
-                adopted = U.adopt array
-             in liftEq U.arrayEq adopted (Just array)
-     in [ testGroup "Self" $
-          let test ::
-                   forall storage alloc a.
-                   ( U.Allocator storage alloc
-                   , U.Primitive a
-                   , Arbitrary a
-                   , Show a
-                   )
-                => String
-                -> TestTree
-              test = testSuccess @storage @alloc @storage @alloc @a
-           in [ test @'U.Native @U.Default @Word8 "Native Default"
-              , test @'U.Native @U.Pinned @Word8 "Native Pinned"
-              , test @'U.Foreign @U.Pinned @Word8 "Foreign Pinned"
-              ]
-        , testSuccess
-            @'U.Native
-            @U.Pinned
-            @'U.Foreign
-            @U.Pinned
-            @Word8
-            "Native/Pinned -> Foreign/Pinned"
         ]
   , testGroup "Array Eq" $
     let test ::

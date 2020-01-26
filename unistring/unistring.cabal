@@ -28,10 +28,13 @@ flag inspection
 
 library
   exposed-modules:     Data.Unistring.Singletons
-                     , Data.Unistring.Memory.Unsafe
                      , Data.Unistring.Memory.Count
                      , Data.Unistring.Memory.Storage
                      , Data.Unistring.Memory.Primitive.Class.Unsafe
+                     , Data.Unistring.Memory.Array
+                     , Data.Unistring.Memory.Array.Unsafe
+                     , Data.Unistring.Memory.Allocator
+                     , Data.Unistring.Memory.Allocator.Unsafe
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
@@ -63,7 +66,8 @@ test-suite unistring-test
   main-is:             Main.hs
   other-modules:       Behaviour
                      , Behaviour.Unistring.Memory
-                     , Behaviour.Unistring.Memory.Unsafe
+                     , Behaviour.Unistring.Memory.Array
+                     , Behaviour.Unistring.Memory.Allocator
                      , Behaviour.Unistring.Memory.Primitive.Class.Unsafe
   build-depends:       base >=4.9 && <4.14
                      , unistring
@@ -78,4 +82,4 @@ test-suite unistring-test
                      , template-haskell
     other-modules:     Inspection
                      , Inspection.TH
-                     , Inspection.Unistring.Memory.Unsafe
+                     , Inspection.Unistring.Memory.Array

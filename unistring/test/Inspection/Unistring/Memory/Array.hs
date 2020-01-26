@@ -19,7 +19,7 @@ limitations under the License.
 {-# LANGUAGE MagicHash #-}
 {-# OPTIONS_GHC -O -fplugin Test.Inspection.Plugin #-}
 
-module Inspection.Unistring.Memory.Unsafe
+module Inspection.Unistring.Memory.Array
   ( tests
   ) where
 
@@ -32,7 +32,12 @@ import Test.Inspection (hasNoType)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.ExpectedFailure (expectFail)
 
-import qualified Data.Unistring.Memory.Unsafe as U
+import qualified Data.Unistring.Memory.Allocator as U
+import qualified Data.Unistring.Memory.Array as U
+import qualified Data.Unistring.Memory.Array.Unsafe as U
+import qualified Data.Unistring.Memory.Count as U
+import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
+import qualified Data.Unistring.Memory.Storage as U
 import qualified Data.Unistring.Singletons as S
 
 import Inspection.TH (inspectTest)
@@ -125,16 +130,16 @@ tests =
   ]
 
 nativeArrayLength :: U.Array 'U.Native alloc Word8 -> U.CountOf Word8
-nativeArrayLength = U.arrayLength
+nativeArrayLength = U.size
 
 foreignArrayLength :: U.Array 'U.Foreign alloc Word8 -> U.CountOf Word8
-foreignArrayLength = U.arrayLength
+foreignArrayLength = U.size
 
 toListArrayNative :: U.Array 'U.Native alloc Word16 -> [Word16]
-toListArrayNative = U.arrayToList
+toListArrayNative = U.toList
 
 toListArrayForeign :: U.Array 'U.Foreign alloc Word16 -> [Word16]
-toListArrayForeign = U.arrayToList
+toListArrayForeign = U.toList
 
 toListArrayNativeFoldr ::
      (U.Allocator 'U.Native alloc, U.Primitive a)
@@ -166,16 +171,16 @@ arrayEqNative ::
      U.Array 'U.Native allocator Word8
   -> U.Array 'U.Native allocator' Word8
   -> Bool
-arrayEqNative = U.arrayEq
+arrayEqNative = U.equal
 
 arrayEqForeign ::
      U.Array 'U.Foreign allocator Word8
   -> U.Array 'U.Foreign allocator' Word8
   -> Bool
-arrayEqForeign = U.arrayEq
+arrayEqForeign = U.equal
 
 arrayEqMixed ::
      U.Array 'U.Native allocator Word8
   -> U.Array 'U.Foreign allocator' Word8
   -> Bool
-arrayEqMixed = U.arrayEq
+arrayEqMixed = U.equal

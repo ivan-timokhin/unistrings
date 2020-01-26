@@ -31,19 +31,21 @@ limitations under the License.
 {-# LANGUAGE FlexibleContexts #-}
 
 module Data.Unistring.Memory.Array.Internal
-  ( ForeignArray(ForeignArray, foreignArrayPtr, foreignArrayLength)
-  , NativeArray(NativeArray, nativeArrayBytes)
+  ( ForeignArray(ForeignArray)
+  , foreignArrayPtr
+  , foreignArrayLength
+  , NativeArray(NativeArray)
+  , nativeArrayBytes
   , nativeArrayLength
-  , uncheckedIndexNative
   , Default
   , Pinned
   , Unknown
   , Array(NArray, FArray, getNArray, getFArray)
   , storage
   , allocator
-  , arrayLength
-  , arrayToList
-  , arrayEq
+  , size
+  , toList
+  , equal
   , Allocator(withAllocator, adopt)
   , AllocatorM(new)
   , MutableArray(uncheckedRead, uncheckedWrite)
@@ -89,55 +91,53 @@ import Data.Unistring.Memory.Storage
   , Storage(Foreign, Native)
   )
 
+--------------------------------------------------------------------------------
+-- Arrays
+--------------------------------------------------------------------------------
+
 data ForeignArray a =
-  ForeignArray
-    { foreignArrayPtr :: {-# UNPACK #-}!(ForeignPtr a)
-    , foreignArrayLength :: {-# UNPACK #-}!(CountOf a)
-    }
+  ForeignArray {-# UNPACK #-}!(ForeignPtr a) {-# UNPACK #-}!(CountOf a)
 
 type role ForeignArray representational
 
+foreignArrayPtr :: ForeignArray a -> ForeignPtr a
+foreignArrayPtr (ForeignArray ptr _) = ptr
+
+foreignArrayLength :: ForeignArray a -> CountOf a
+foreignArrayLength (ForeignArray _ len) = len
+
 data NativeArray a =
-  NativeArray
-    { nativeArrayBytes :: E.ByteArray#
-    }
+  NativeArray E.ByteArray#
 
 type role NativeArray representational
 
+nativeArrayBytes :: NativeArray a -> E.ByteArray#
+nativeArrayBytes (NativeArray ba#) = ba#
+
 data NativeMutableArray s a =
-  NativeMutableArray
-    { nativeMutableArrayBytes :: E.MutableByteArray# s
-    }
+  NativeMutableArray (E.MutableByteArray# s)
 
 type role NativeMutableArray nominal representational
-
-uncheckedIndexNative :: Primitive a => NativeArray a -> CountOf a -> a
-{-# INLINE uncheckedIndexNative #-}
-uncheckedIndexNative NativeArray {nativeArrayBytes = bytes} =
-  uncheckedIndexBytes bytes
 
 uncheckedReadNative ::
      Primitive a => NativeMutableArray s a -> CountOf a -> ST s a
 {-# INLINE uncheckedReadNative #-}
-uncheckedReadNative NativeMutableArray {nativeMutableArrayBytes = bytes} =
-  uncheckedReadBytes bytes
+uncheckedReadNative (NativeMutableArray bytes#) = uncheckedReadBytes bytes#
 
 uncheckedWriteNative ::
      Primitive a => NativeMutableArray s a -> CountOf a -> a -> ST s ()
 {-# INLINE uncheckedWriteNative #-}
-uncheckedWriteNative NativeMutableArray {nativeMutableArrayBytes = bytes} =
-  uncheckedWriteBytes bytes
+uncheckedWriteNative (NativeMutableArray bytes#) = uncheckedWriteBytes bytes#
 
 nativeArrayLength :: Primitive a => NativeArray a -> CountOf a
 {-# INLINE nativeArrayLength #-}
-nativeArrayLength NativeArray {nativeArrayBytes = bytes} =
-  inElements (sizeOfByteArray bytes)
+nativeArrayLength (NativeArray bytes#) = inElements (sizeOfByteArray bytes#)
 
 getNativeMutableArrayLength ::
      Primitive a => NativeMutableArray s a -> ST s (CountOf a)
 {-# INLINE getNativeMutableArrayLength #-}
-getNativeMutableArrayLength NativeMutableArray {nativeMutableArrayBytes = bytes} =
-  inElements <$> getSizeOfMutableByteArray bytes
+getNativeMutableArrayLength (NativeMutableArray bytes#) =
+  inElements <$> getSizeOfMutableByteArray bytes#
 
 class Monad m =>
       MutableArray arr m
@@ -166,7 +166,7 @@ newtype instance Array 'Foreign allocator a =
   FArray {getFArray :: ForeignArray a}
 
 instance (Known storage, Primitive a) => Eq (Array storage allocator a) where
-  (==) = arrayEq
+  (==) = equal
 
 -- Allowed to have false negatives, but not false positives
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
@@ -187,6 +187,112 @@ isDefinitelyPinned array =
     Just Refl -> True
     Nothing -> False
 #endif
+
+allocator :: Typeable alloc => Array storage alloc a -> TypeRep alloc
+{-# INLINE allocator #-}
+allocator = const typeRep
+
+storage :: Known storage => Array storage alloc a -> Sing storage
+{-# INLINE storage #-}
+storage = const sing
+
+instance (Allocator storage alloc, Primitive a) =>
+         E.IsList (Array storage alloc a) where
+  type Item (Array storage alloc a) = a
+  fromList xs = E.fromListN (length xs) xs
+  fromListN n xs =
+    withAllocator $ do
+      arr <- new (CountOf n)
+      for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
+      pure arr
+  {-# INLINEABLE fromListN #-}
+  toList = toList
+  {-# INLINE toList #-}
+
+toList :: (Known storage, Primitive a) => Array storage alloc a -> [a]
+{-# INLINE toList #-}
+toList arr =
+  case storage arr of
+    SNative ->
+      let !(NArray (NativeArray arr#)) = arr
+       in flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
+            uncheckedIndexBytes arr# (CountOf i)
+    SForeign ->
+      unsafeDupablePerformIO $
+      withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
+        for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
+          uncheckedReadPtr ptr i
+
+size ::
+     (Known storage, Primitive a) => Array storage alloc a -> CountOf a
+{-# INLINEABLE size #-}
+size arr =
+  case storage arr of
+    SNative -> nativeArrayLength (getNArray arr)
+    SForeign -> foreignArrayLength (getFArray arr)
+
+allocatorCoercion ::
+     forall alloc1 alloc2 storage a. Known storage
+  => Coercion (Array storage alloc1 a) (Array storage alloc2 a)
+{-# INLINE allocatorCoercion #-}
+allocatorCoercion =
+  case sing @storage of
+    SNative -> Coercion
+    SForeign -> Coercion
+
+forgetArrayAllocator ::
+     forall alloc storage a. Known storage
+  => Array storage alloc a
+  -> Array storage Unknown a
+{-# INLINE forgetArrayAllocator #-}
+forgetArrayAllocator =
+  coerceWith (allocatorCoercion @alloc @Unknown @storage @a)
+
+equal ::
+     (Known storage1, Known storage2, Primitive a)
+  => Array storage1 alloc1 a
+  -> Array storage2 alloc2 a
+  -> Bool
+{-# INLINEABLE equal #-}
+equal x y =
+  case (storage x, storage y) of
+    (SNative, SNative) -> nativeEq (getNArray x) (getNArray y)
+    (SForeign, SForeign) -> foreignEq (getFArray x) (getFArray y)
+    (SNative, SForeign) -> mixedEq (getNArray x) (getFArray y)
+    (SForeign, SNative) -> mixedEq (getNArray y) (getFArray x)
+  where
+    nativeEq :: NativeArray a -> NativeArray a -> Bool
+    {-# INLINE nativeEq #-}
+    nativeEq x' y' =
+      let !(NativeArray x#) = x'
+          !(NativeArray y#) = y'
+          !xn = sizeOfByteArray x#
+          !yn = sizeOfByteArray y#
+       in xn == yn && (compareByteArraysFull x# y# xn == 0)
+    foreignEq :: Primitive a => ForeignArray a -> ForeignArray a -> Bool
+    {-# INLINE foreignEq #-}
+    foreignEq x' y' =
+      let !(ForeignArray xfptr xlen) = x'
+          !(ForeignArray yfptr ylen) = y'
+       in xlen == ylen &&
+          unsafeDupablePerformIO
+            (withForeignPtr xfptr $ \xptr ->
+               withForeignPtr yfptr $ \yptr ->
+                 (== 0) <$> memcmp xptr yptr (inBytes xlen))
+    mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
+    {-# INLINE mixedEq #-}
+    mixedEq x' y' =
+      let !(NativeArray x#) = x'
+          !(ForeignArray yfptr ylen) = y'
+          !xb = sizeOfByteArray x#
+          !yb = inBytes ylen
+       in xb == yb &&
+          unsafeDupablePerformIO
+            (withForeignPtr yfptr $ \yptr -> (== 0) <$> memcmpMixed x# yptr xb)
+
+--------------------------------------------------------------------------------
+-- Allocators
+--------------------------------------------------------------------------------
 
 class MutableArray arr m => AllocatorM arr m | m -> arr where
   new :: Primitive a => CountOf a -> m (arr a)
@@ -324,118 +430,18 @@ instance (TypeError ('ShowType Unknown
 
 unsafeFreezeNative :: NativeMutableArray s a -> ST s (NativeArray a)
 {-# INLINE unsafeFreezeNative #-}
-unsafeFreezeNative NativeMutableArray {nativeMutableArrayBytes = mbytes} =
+unsafeFreezeNative (NativeMutableArray mbytes#) =
   ST $ \s ->
-    case E.unsafeFreezeByteArray# mbytes s of
+    case E.unsafeFreezeByteArray# mbytes# s of
       (# s', ba #) -> (# s', NativeArray ba #)
 
 unsafeFreezeNativeToForeign ::
      Primitive a => NativeMutableArray E.RealWorld a -> IO (ForeignArray a)
 {-# INLINE unsafeFreezeNativeToForeign #-}
-unsafeFreezeNativeToForeign nma@NativeMutableArray {nativeMutableArrayBytes = bytes} = do
+unsafeFreezeNativeToForeign nma@(NativeMutableArray bytes#) = do
   n <- stToIO $ getNativeMutableArrayLength nma
   IO $ \s ->
-    case E.unsafeFreezeByteArray# bytes s of
+    case E.unsafeFreezeByteArray# bytes# s of
       (# s', ba #) ->
-        let fptr = ForeignPtr (E.byteArrayContents# ba) (PlainPtr bytes)
-         in (# s'
-             , ForeignArray {foreignArrayPtr = fptr, foreignArrayLength = n}#)
-
-allocator :: Typeable alloc => Array storage alloc a -> TypeRep alloc
-{-# INLINE allocator #-}
-allocator = const typeRep
-
-storage :: Known storage => Array storage alloc a -> Sing storage
-{-# INLINE storage #-}
-storage = const sing
-
-instance (Allocator storage alloc, Primitive a) =>
-         E.IsList (Array storage alloc a) where
-  type Item (Array storage alloc a) = a
-  fromList xs = E.fromListN (length xs) xs
-  fromListN n xs =
-    withAllocator $ do
-      arr <- new (CountOf n)
-      for_ (zip [0 ..] xs) $ uncurry (uncheckedWrite arr)
-      pure arr
-  {-# INLINEABLE fromListN #-}
-  toList = arrayToList
-  {-# INLINE toList #-}
-
-arrayToList :: (Known storage, Primitive a) => Array storage alloc a -> [a]
-{-# INLINE arrayToList #-}
-arrayToList arr =
-  case storage arr of
-    SNative ->
-      flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
-        uncheckedIndexNative (getNArray arr) (CountOf i)
-    SForeign ->
-      unsafeDupablePerformIO $
-      withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
-        for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
-          uncheckedReadPtr ptr i
-
-arrayLength ::
-     (Known storage, Primitive a) => Array storage alloc a -> CountOf a
-{-# INLINEABLE arrayLength #-}
-arrayLength arr =
-  case storage arr of
-    SNative -> nativeArrayLength (getNArray arr)
-    SForeign -> foreignArrayLength (getFArray arr)
-
-allocatorCoercion ::
-     forall alloc1 alloc2 storage a. Known storage
-  => Coercion (Array storage alloc1 a) (Array storage alloc2 a)
-{-# INLINE allocatorCoercion #-}
-allocatorCoercion =
-  case sing @storage of
-    SNative -> Coercion
-    SForeign -> Coercion
-
-forgetArrayAllocator ::
-     forall alloc storage a. Known storage
-  => Array storage alloc a
-  -> Array storage Unknown a
-{-# INLINE forgetArrayAllocator #-}
-forgetArrayAllocator =
-  coerceWith (allocatorCoercion @alloc @Unknown @storage @a)
-
-arrayEq :: (Known storage1, Known storage2, Primitive a) =>
-  Array storage1 alloc1 a -> Array storage2 alloc2 a -> Bool
-{-# INLINEABLE arrayEq #-}
-arrayEq x y =
-  case (storage x, storage y) of
-    (SNative, SNative) -> nativeEq (getNArray x) (getNArray y)
-    (SForeign, SForeign) -> foreignEq (getFArray x) (getFArray y)
-    (SNative, SForeign) -> mixedEq (getNArray x) (getFArray y)
-    (SForeign, SNative) -> mixedEq (getNArray y) (getFArray x)
-  where
-    nativeEq :: NativeArray a -> NativeArray a -> Bool
-    {-# INLINE nativeEq #-}
-    nativeEq x' y' =
-      let !(NativeArray x#) = x'
-          !(NativeArray y#) = y'
-          !xn = sizeOfByteArray x#
-          !yn = sizeOfByteArray y#
-       in xn == yn && (compareByteArraysFull x# y# xn == 0)
-    foreignEq :: Primitive a => ForeignArray a -> ForeignArray a -> Bool
-    {-# INLINE foreignEq #-}
-    foreignEq x' y' =
-      let !(ForeignArray xfptr xlen) = x'
-          !(ForeignArray yfptr ylen) = y'
-       in xlen == ylen &&
-          unsafeDupablePerformIO
-            (withForeignPtr xfptr $ \xptr ->
-               withForeignPtr yfptr $ \yptr ->
-                 (== 0) <$> memcmp xptr yptr (inBytes xlen))
-    mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
-    {-# INLINE mixedEq #-}
-    mixedEq x' y' =
-      let !(NativeArray x#) = x'
-          !(ForeignArray yfptr ylen) = y'
-          !xb = sizeOfByteArray x#
-          !yb = inBytes ylen
-       in xb == yb &&
-          unsafeDupablePerformIO
-            (withForeignPtr yfptr $ \yptr -> (== 0) <$> memcmpMixed x# yptr xb)
-
+        let fptr = ForeignPtr (E.byteArrayContents# ba) (PlainPtr bytes#)
+         in (# s', ForeignArray fptr n #)

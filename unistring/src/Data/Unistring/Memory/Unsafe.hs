@@ -33,14 +33,13 @@ module Data.Unistring.Memory.Unsafe
           uncheckedWriteBytes)
   , ForeignArray(ForeignArray, foreignArrayPtr, foreignArrayLength)
   , NativeArray(NativeArray, nativeArrayBytes)
-  , uncheckedIndexNative
   , nativeArrayLength
   , MutableArray(uncheckedRead, uncheckedWrite)
   , Storage(Native, Foreign)
   , Array(NArray, FArray, getNArray, getFArray)
-  , arrayLength
-  , arrayToList
-  , arrayEq
+  , size
+  , toList
+  , equal
   , forgetArrayAllocator
   , allocatorCoercion
   , Default
@@ -65,13 +64,12 @@ import Data.Unistring.Memory.Array.Internal
   , Unknown
   , allocator
   , allocatorCoercion
-  , arrayEq
-  , arrayLength
-  , arrayToList
+  , equal
   , forgetArrayAllocator
   , nativeArrayLength
+  , size
   , storage
-  , uncheckedIndexNative
+  , toList
   )
 import Data.Unistring.Memory.Count
   ( ByteCount(ByteCount, getByteCount)
