@@ -118,7 +118,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [X] Emoji_Modifier_Base
 - [X] Emoji_Component
 - [X] Extended_Pictographic
-* Unistring [0/2]
+* Unistring [0/3]
 ** TODO Core types [0/3]
 - [ ] Byte arrays
 - [ ] Unicode scalar arrays
@@ -146,6 +146,14 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [ ] Template Haskell support
   - [ ] Embedded strings
   - [ ] Lift instances
+** TODO Examples [0/3]
+I'm thinking of ~examples~ test suite that consists of several ~lhs~
+files (and doesn't actually test anything).
+
+- [ ] Wrapper type (say, dynamic unpinned ba#/unknown foreign)
+- [ ] Find distinct words and display in order of descending frequency
+- [ ] Line wrap text to different widths?  This one is going to be a
+  bit unprincipled…
 * Miscellaneous code tasks [7/8]
 ** DONE Switch age to enum
 Then convert it to Version if desired.
