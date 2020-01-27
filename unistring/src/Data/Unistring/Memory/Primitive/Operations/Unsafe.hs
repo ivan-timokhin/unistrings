@@ -30,9 +30,9 @@ Stability   : experimental
 
 -}
 module Data.Unistring.Memory.Primitive.Operations.Unsafe
-  ( memcmp
-  , compareByteArraysFull
-  , memcmpMixed
+  ( compareBytesForeign
+  , compareBytesNative
+  , compareBytesMixed
   , sizeOfByteArray
   , getSizeOfMutableByteArray
   ) where
@@ -43,9 +43,9 @@ import GHC.ST (ST(ST))
 
 import Data.Unistring.Memory.Count (ByteCount(ByteCount, getByteCount))
 
-memcmp :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
-{-# INLINE memcmp #-}
-memcmp lp rp len =
+compareBytesForeign :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
+{-# INLINE compareBytesForeign #-}
+compareBytesForeign lp rp len =
   fromIntegral <$> c_memcmp lp rp (fromIntegral $ getByteCount len)
 
 -- See note ‘Unsafe FFI’
@@ -55,13 +55,13 @@ memcmp lp rp len =
 foreign import ccall unsafe "string.h memcmp" c_memcmp
   :: E.Ptr a -> E.Ptr a -> CSize -> IO CInt
 
-compareByteArraysFull :: E.ByteArray# -> E.ByteArray# -> ByteCount -> Int
-{-# INLINE compareByteArraysFull #-}
+compareBytesNative :: E.ByteArray# -> E.ByteArray# -> ByteCount -> Int
+{-# INLINE compareBytesNative #-}
 #if MIN_VERSION_base(4, 11, 0)
-compareByteArraysFull x# y# (ByteCount (E.I# n#)) =
+compareBytesNative x# y# (ByteCount (E.I# n#)) =
   E.I# (E.compareByteArrays# x# 0# y# 0# n#)
 #else
-compareByteArraysFull x# y# (ByteCount n) =
+compareBytesNative x# y# (ByteCount n) =
   fromIntegral $ c_memcmp_bytes x# y# (fromIntegral n)
 
 -- See note ‘Unsafe FFI’
@@ -70,9 +70,9 @@ foreign import ccall unsafe "string.h memcmp" c_memcmp_bytes
   :: E.ByteArray# -> E.ByteArray# -> CSize -> CInt
 #endif
 
-memcmpMixed :: E.ByteArray# -> E.Ptr a -> ByteCount -> IO Int
-{-# INLINE memcmpMixed #-}
-memcmpMixed ba# ptr (ByteCount n) =
+compareBytesMixed :: E.ByteArray# -> E.Ptr a -> ByteCount -> IO Int
+{-# INLINE compareBytesMixed #-}
+compareBytesMixed ba# ptr (ByteCount n) =
   fromIntegral <$> c_memcmp_mixed ba# ptr (fromIntegral n)
 
 -- See note ‘Unsafe FFI’

@@ -80,11 +80,11 @@ import Data.Unistring.Memory.Primitive.Class.Unsafe
           uncheckedWritePtr)
   )
 import Data.Unistring.Memory.Primitive.Operations.Unsafe
-  ( compareByteArraysFull
-  , memcmp
-  , memcmpMixed
-  , sizeOfByteArray
+  ( compareBytesForeign
+  , compareBytesMixed
+  , compareBytesNative
   , getSizeOfMutableByteArray
+  , sizeOfByteArray
   )
 import Data.Unistring.Memory.Storage
   ( Sing(SForeign, SNative)
@@ -268,7 +268,7 @@ equal x y =
           !(NativeArray y#) = y'
           !xn = sizeOfByteArray x#
           !yn = sizeOfByteArray y#
-       in xn == yn && (compareByteArraysFull x# y# xn == 0)
+       in xn == yn && (compareBytesNative x# y# xn == 0)
     foreignEq :: Primitive a => ForeignArray a -> ForeignArray a -> Bool
     {-# INLINE foreignEq #-}
     foreignEq x' y' =
@@ -278,7 +278,7 @@ equal x y =
           unsafeDupablePerformIO
             (withForeignPtr xfptr $ \xptr ->
                withForeignPtr yfptr $ \yptr ->
-                 (== 0) <$> memcmp xptr yptr (inBytes xlen))
+                 (== 0) <$> compareBytesForeign xptr yptr (inBytes xlen))
     mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
     {-# INLINE mixedEq #-}
     mixedEq x' y' =
@@ -288,7 +288,8 @@ equal x y =
           !yb = inBytes ylen
        in xb == yb &&
           unsafeDupablePerformIO
-            (withForeignPtr yfptr $ \yptr -> (== 0) <$> memcmpMixed x# yptr xb)
+            (withForeignPtr yfptr $ \yptr ->
+               (== 0) <$> compareBytesMixed x# yptr xb)
 
 --------------------------------------------------------------------------------
 -- Allocators
