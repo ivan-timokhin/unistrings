@@ -13,14 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-module Inspection
-  ( tests
-  ) where
+module Inspection.Unistring.Memory (tests) where
 
 import Test.Tasty (TestTree, testGroup)
 
-import qualified Inspection.Unistring.Memory
+import qualified Inspection.Unistring.Memory.Array as Array
+import qualified Inspection.Unistring.Memory.Slice as Slice
 
 tests :: [TestTree]
-tests =
-  [testGroup "Unistring" [testGroup "Memory" Inspection.Unistring.Memory.tests]]
+tests = [testGroup "Array" Array.tests, testGroup "Slice" Slice.tests]

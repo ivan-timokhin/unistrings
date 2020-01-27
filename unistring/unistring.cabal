@@ -35,6 +35,7 @@ library
                      , Data.Unistring.Memory.Array.Unsafe
                      , Data.Unistring.Memory.Allocator
                      , Data.Unistring.Memory.Allocator.Unsafe
+                     , Data.Unistring.Memory.Slice.Internal
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
@@ -82,4 +83,6 @@ test-suite unistring-test
                      , template-haskell
     other-modules:     Inspection
                      , Inspection.TH
+                     , Inspection.Unistring.Memory
                      , Inspection.Unistring.Memory.Array
+                     , Inspection.Unistring.Memory.Slice
