@@ -25,13 +25,15 @@ module Behaviour.Unistring.Memory.Array
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
+import Test.Tasty.QuickCheck (Arbitrary, (.&&.), (===), testProperty)
 
 import qualified Data.Unistring.Memory.Allocator as U
 import qualified Data.Unistring.Memory.Array as U
 import qualified Data.Unistring.Memory.Count as U
 import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
 import qualified Data.Unistring.Memory.Storage as U
+
+import Behaviour.Common ((~~~), (~/~))
 
 tests :: [TestTree]
 tests =
@@ -95,25 +97,25 @@ tests =
                     x = fromList xs
                     y :: U.Array storage2 alloc2 a
                     y = fromList xs
-                 in x `U.equal` y
+                 in x ~~~ y
             , testProperty "Not equal" $ \(xs :: [a]) ->
                 let x :: U.Array storage1 alloc1 a
                     x = fromList (xs ++ [0])
                     y :: U.Array storage2 alloc2 a
                     y = fromList (xs ++ [1])
-                 in not (x `U.equal` y)
+                 in x ~/~ y
             , testProperty "Not equal length" $ \(xs :: [a]) ->
                 let x :: U.Array storage1 alloc1 a
                     x = fromList xs
                     y :: U.Array storage2 alloc2 a
                     y = fromList (xs ++ [1])
-                 in not (x `U.equal` y) && not (y `U.equal` x)
+                 in x ~/~ y .&&. y ~/~ x
             , testProperty "Random" $ \xs ys ->
                 let x :: U.Array storage1 alloc1 a
                     x = fromList xs
                     y :: U.Array storage2 alloc2 a
                     y = fromList ys
-                 in (x `U.equal` y) == (xs == ys)
+                 in (x `U.equal` y) === (xs == ys)
             ]
      in [ testGroup
             "Native"

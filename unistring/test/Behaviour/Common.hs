@@ -1,0 +1,53 @@
+{-
+Copyright 2020 Ivan Timokhin
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
+module Behaviour.Common
+  ( (~~~)
+  , (~/~)
+  ) where
+
+import Test.Tasty.QuickCheck (Property, counterexample)
+
+import qualified Data.Unistring.Memory.Array as Array
+import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
+import qualified Data.Unistring.Memory.Slice.Internal as Slice
+import Data.Unistring.Singletons (Known)
+
+class Eqv a b where
+  eqv :: a -> b -> Bool
+
+instance (Known storage1, Known storage2, Primitive a) =>
+         Eqv (Array.Array storage1 allocator1 a) (Array.Array storage2 allocator2 a) where
+  eqv = Array.equal
+
+instance (Known storage1, Known storage2, Primitive a) =>
+         Eqv (Slice.Slice storage1 allocator1 a) (Slice.Slice storage2 allocator2 a) where
+  eqv = Slice.equal
+
+(~~~) :: (Eqv a b, Show a, Show b) => a -> b -> Property
+a ~~~ b = counterexample (show a ++ interpret res ++ show b) res
+  where
+    res = a `eqv` b
+    interpret True = " == "
+    interpret False = " /= "
+
+(~/~) :: (Eqv a b, Show a, Show b) => a -> b -> Property
+a ~/~ b = counterexample (show a ++ interpret res ++ show b) res
+  where
+    res = not $ a `eqv` b
+    interpret True = " /= "
+    interpret False = " == "

@@ -33,6 +33,8 @@ import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as Primitive
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 
+import Behaviour.Common ((~~~), (~/~))
+
 tests :: [TestTree]
 tests =
   [ testGroup "IsList" $
@@ -162,19 +164,19 @@ tests =
                     x = from3Lists prefix1 xs suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 xs suffix2
-                 in x `Slice.equal` y
+                 in x ~~~ y
             , testProperty "Not equal" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
                 let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 (xs ++ [0]) suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 (xs ++ [1]) suffix2
-                 in not (x `Slice.equal` y)
+                 in x ~/~ y
             , testProperty "Not equal length" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
                 let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 (xs ++ [1]) suffix2
-                 in not (x `Slice.equal` y)
+                 in x ~/~ y
             , testProperty "Random" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (ys :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
                 let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
