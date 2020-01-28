@@ -76,8 +76,9 @@ tests =
         ]
   , testGroup "Array Eq" $
     let test ::
-             forall a storage alloc.
-             ( U.Allocator storage alloc
+             forall a storage1 alloc1 storage2 alloc2.
+             ( U.Allocator storage1 alloc1
+             , U.Allocator storage2 alloc2
              , U.Primitive a
              , Num a
              , Arbitrary a
@@ -90,43 +91,53 @@ tests =
           testGroup
             name
             [ testProperty "Equal" $ \(xs :: [a]) ->
-                let x, y :: U.Array storage alloc a
+                let x :: U.Array storage1 alloc1 a
                     x = fromList xs
+                    y :: U.Array storage2 alloc2 a
                     y = fromList xs
-                 in x == y
+                 in x `U.equal` y
             , testProperty "Not equal" $ \(xs :: [a]) ->
-                let x, y :: U.Array storage alloc a
+                let x :: U.Array storage1 alloc1 a
                     x = fromList (xs ++ [0])
+                    y :: U.Array storage2 alloc2 a
                     y = fromList (xs ++ [1])
-                 in x /= y
+                 in not (x `U.equal` y)
             , testProperty "Not equal length" $ \(xs :: [a]) ->
-                let x, y :: U.Array storage alloc a
+                let x :: U.Array storage1 alloc1 a
                     x = fromList xs
+                    y :: U.Array storage2 alloc2 a
                     y = fromList (xs ++ [1])
-                 in x /= y && y /= x
+                 in not (x `U.equal` y) && not (y `U.equal` x)
             , testProperty "Random" $ \xs ys ->
-                let x, y :: U.Array storage alloc a
+                let x :: U.Array storage1 alloc1 a
                     x = fromList xs
+                    y :: U.Array storage2 alloc2 a
                     y = fromList ys
-                 in (x == y) == (xs == ys)
+                 in (x `U.equal` y) == (xs == ys)
             ]
      in [ testGroup
             "Native"
-            [ test @Word8 @'U.Native @U.Default "Word8"
-            , test @Word16 @'U.Native @U.Default "Word16"
-            , test @Word32 @'U.Native @U.Default "Word32"
+            [ test @Word8 @'U.Native @U.Default @'U.Native @U.Default "Word8"
+            , test @Word16 @'U.Native @U.Default @'U.Native @U.Default "Word16"
+            , test @Word32 @'U.Native @U.Default @'U.Native @U.Default "Word32"
             ]
         , testGroup
             "Native pinned"
-            [ test @Word8 @'U.Native @U.Pinned "Word8"
-            , test @Word16 @'U.Native @U.Pinned "Word16"
-            , test @Word32 @'U.Native @U.Pinned "Word32"
+            [ test @Word8 @'U.Native @U.Pinned @'U.Native @U.Pinned "Word8"
+            , test @Word16 @'U.Native @U.Pinned @'U.Native @U.Pinned "Word16"
+            , test @Word32 @'U.Native @U.Pinned @'U.Native @U.Pinned "Word32"
             ]
         , testGroup
             "Foreign"
-            [ test @Word8 @'U.Foreign @U.Pinned "Word8"
-            , test @Word16 @'U.Foreign @U.Pinned "Word16"
-            , test @Word32 @'U.Foreign @U.Pinned "Word32"
+            [ test @Word8 @'U.Foreign @U.Pinned @'U.Foreign @U.Pinned "Word8"
+            , test @Word16 @'U.Foreign @U.Pinned @'U.Foreign @U.Pinned "Word16"
+            , test @Word32 @'U.Foreign @U.Pinned @'U.Foreign @U.Pinned "Word32"
+            ]
+        , testGroup
+            "Mixed"
+            [ test @Word8 @'U.Foreign @U.Pinned @'U.Native @U.Default "Word8"
+            , test @Word16 @'U.Foreign @U.Pinned @'U.Native @U.Default "Word16"
+            , test @Word32 @'U.Foreign @U.Pinned @'U.Native @U.Default "Word32"
             ]
         ]
   ]

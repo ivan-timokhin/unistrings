@@ -143,8 +143,9 @@ tests =
         ]
   , testGroup "Eq" $
     let test ::
-             forall a storage alloc.
-             ( Allocator.Allocator storage alloc
+             forall a storage1 alloc1 storage2 alloc2.
+             ( Allocator.Allocator storage1 alloc1
+             , Allocator.Allocator storage2 alloc2
              , Primitive.Primitive a
              , Arbitrary a
              , Show a
@@ -157,43 +158,125 @@ tests =
           testGroup
             name
             [ testProperty "Equal" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
-                let x, y :: Slice.Slice storage alloc a
+                let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
+                    y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 xs suffix2
-                 in x == y
+                 in x `Slice.equal` y
             , testProperty "Not equal" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
-                let x, y :: Slice.Slice storage alloc a
+                let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 (xs ++ [0]) suffix1
+                    y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 (xs ++ [1]) suffix2
-                 in x /= y
+                 in not (x `Slice.equal` y)
             , testProperty "Not equal length" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
-                let x, y :: Slice.Slice storage alloc a
+                let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
+                    y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 (xs ++ [1]) suffix2
-                 in x /= y
+                 in not (x `Slice.equal` y)
             , testProperty "Random" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (ys :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
-                let x, y :: Slice.Slice storage alloc a
+                let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
+                    y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 ys suffix2
-                 in (x == y) === (xs == ys)
+                 in (x `Slice.equal` y) === (xs == ys)
             ]
      in [ testGroup
             "Native"
-            [ test @Word8 @'Storage.Native @Allocator.Default "Word8"
-            , test @Word16 @'Storage.Native @Allocator.Default "Word16"
-            , test @Word32 @'Storage.Native @Allocator.Default "Word32"
+            [ test
+                @Word8
+                @'Storage.Native
+                @Allocator.Default
+                @'Storage.Native
+                @Allocator.Default
+                "Word8"
+            , test
+                @Word16
+                @'Storage.Native
+                @Allocator.Default
+                @'Storage.Native
+                @Allocator.Default
+                "Word16"
+            , test
+                @Word32
+                @'Storage.Native
+                @Allocator.Default
+                @'Storage.Native
+                @Allocator.Default
+                "Word32"
             ]
         , testGroup
             "Native pinned"
-            [ test @Word8 @'Storage.Native @Allocator.Pinned "Word8"
-            , test @Word16 @'Storage.Native @Allocator.Pinned "Word16"
-            , test @Word32 @'Storage.Native @Allocator.Pinned "Word32"
+            [ test
+                @Word8
+                @'Storage.Native
+                @Allocator.Pinned
+                @'Storage.Native
+                @Allocator.Pinned
+                "Word8"
+            , test
+                @Word16
+                @'Storage.Native
+                @Allocator.Pinned
+                @'Storage.Native
+                @Allocator.Pinned
+                "Word16"
+            , test
+                @Word32
+                @'Storage.Native
+                @Allocator.Pinned
+                @'Storage.Native
+                @Allocator.Pinned
+                "Word32"
             ]
         , testGroup
             "Foreign"
-            [ test @Word8 @'Storage.Foreign @Allocator.Pinned "Word8"
-            , test @Word16 @'Storage.Foreign @Allocator.Pinned "Word16"
-            , test @Word32 @'Storage.Foreign @Allocator.Pinned "Word32"
+            [ test
+                @Word8
+                @'Storage.Foreign
+                @Allocator.Pinned
+                @'Storage.Foreign
+                @Allocator.Pinned
+                "Word8"
+            , test
+                @Word16
+                @'Storage.Foreign
+                @Allocator.Pinned
+                @'Storage.Foreign
+                @Allocator.Pinned
+                "Word16"
+            , test
+                @Word32
+                @'Storage.Foreign
+                @Allocator.Pinned
+                @'Storage.Foreign
+                @Allocator.Pinned
+                "Word32"
+            ]
+        , testGroup
+            "Mixed"
+            [ test
+                @Word8
+                @'Storage.Foreign
+                @Allocator.Pinned
+                @'Storage.Native
+                @Allocator.Default
+                "Word8"
+            , test
+                @Word16
+                @'Storage.Foreign
+                @Allocator.Pinned
+                @'Storage.Native
+                @Allocator.Default
+                "Word16"
+            , test
+                @Word32
+                @'Storage.Foreign
+                @Allocator.Pinned
+                @'Storage.Native
+                @Allocator.Default
+                "Word32"
             ]
         ]
   ]
