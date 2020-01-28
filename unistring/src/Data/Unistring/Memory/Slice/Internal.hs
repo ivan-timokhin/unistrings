@@ -69,6 +69,10 @@ data instance Slice 'Storage.Native allocator a =
 instance (Known storage, Primitive a) => Eq (Slice storage allocator a) where
   (==) = equal
 
+instance (Known storage, Primitive a, Show a) =>
+         Show (Slice storage allocator a) where
+  showsPrec p = showsPrec p . toList
+
 storage :: Known storage => Slice storage allocator a -> Sing storage
 {-# INLINE storage #-}
 storage = const sing

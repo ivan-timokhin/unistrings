@@ -168,6 +168,10 @@ newtype instance Array 'Foreign allocator a =
 instance (Known storage, Primitive a) => Eq (Array storage allocator a) where
   (==) = equal
 
+instance (Known storage, Primitive a, Show a) =>
+         Show (Array storage allocator a) where
+  showsPrec p = showsPrec p . toList
+
 -- Allowed to have false negatives, but not false positives
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
 {-# INLINE isDefinitelyPinned #-}
