@@ -25,7 +25,7 @@ module Behaviour.Unistring.Memory.Slice
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (Arbitrary, (===), testProperty)
+import Test.Tasty.QuickCheck (Arbitrary, (.&&.), (===), testProperty)
 
 import qualified Data.Unistring.Memory.Allocator as Allocator
 import qualified Data.Unistring.Memory.Count as Count
@@ -33,7 +33,7 @@ import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as Primitive
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 
-import Behaviour.Common ((~~~), (~/~))
+import Behaviour.Common ((~/~), (~~~))
 
 tests :: [TestTree]
 tests =
@@ -164,25 +164,26 @@ tests =
                     x = from3Lists prefix1 xs suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 xs suffix2
-                 in x ~~~ y
+                 in x ~~~ y .&&. y ~~~ x
             , testProperty "Not equal" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
                 let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 (xs ++ [0]) suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 (xs ++ [1]) suffix2
-                 in x ~/~ y
+                 in x ~/~ y .&&. y ~/~ x
             , testProperty "Not equal length" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
                 let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 (xs ++ [1]) suffix2
-                 in x ~/~ y
+                 in x ~/~ y .&&. y ~/~ x
             , testProperty "Random" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (ys :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
                 let x :: Slice.Slice storage1 alloc1 a
                     x = from3Lists prefix1 xs suffix1
                     y :: Slice.Slice storage2 alloc2 a
                     y = from3Lists prefix2 ys suffix2
-                 in (x `Slice.equal` y) === (xs == ys)
+                 in (x `Slice.equal` y) === (xs == ys) .&&. (y `Slice.equal` x) ===
+                    (ys == xs)
             ]
      in [ testGroup
             "Native"

@@ -33,7 +33,7 @@ import qualified Data.Unistring.Memory.Count as U
 import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
 import qualified Data.Unistring.Memory.Storage as U
 
-import Behaviour.Common ((~~~), (~/~))
+import Behaviour.Common ((~/~), (~~~))
 
 tests :: [TestTree]
 tests =
@@ -97,13 +97,13 @@ tests =
                     x = fromList xs
                     y :: U.Array storage2 alloc2 a
                     y = fromList xs
-                 in x ~~~ y
+                 in x ~~~ y .&&. y ~~~ x
             , testProperty "Not equal" $ \(xs :: [a]) ->
                 let x :: U.Array storage1 alloc1 a
                     x = fromList (xs ++ [0])
                     y :: U.Array storage2 alloc2 a
                     y = fromList (xs ++ [1])
-                 in x ~/~ y
+                 in x ~/~ y .&&. y ~/~ x
             , testProperty "Not equal length" $ \(xs :: [a]) ->
                 let x :: U.Array storage1 alloc1 a
                     x = fromList xs
@@ -115,7 +115,8 @@ tests =
                     x = fromList xs
                     y :: U.Array storage2 alloc2 a
                     y = fromList ys
-                 in (x `U.equal` y) === (xs == ys)
+                 in (x `U.equal` y) === (xs == ys) .&&. (y `U.equal` x) ===
+                    (ys == xs)
             ]
      in [ testGroup
             "Native"
