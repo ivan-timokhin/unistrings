@@ -33,6 +33,9 @@ module Data.Unistring.Memory.Primitive.Operations.Unsafe
   ( compareBytesForeign
   , compareBytesNative
   , compareBytesMixed
+  , compareBytesSliceForeign
+  , compareBytesSliceNative
+  , compareBytesSliceMixed
   , sizeOfByteArray
   , getSizeOfMutableByteArray
   ) where
@@ -78,6 +81,41 @@ compareBytesMixed ba# ptr (ByteCount n) =
 -- See note ‘Unsafe FFI’
 foreign import ccall unsafe "string.h memcmp" c_memcmp_mixed
   :: E.ByteArray# -> E.Ptr a -> CSize -> IO CInt
+
+compareBytesSliceForeign :: E.Ptr a -> E.Ptr a -> ByteCount -> IO Int
+{-# INLINE compareBytesSliceForeign #-}
+compareBytesSliceForeign = compareBytesForeign
+
+compareBytesSliceNative ::
+     E.ByteArray# -> ByteCount -> E.ByteArray# -> ByteCount -> ByteCount -> Int
+{-# INLINE compareBytesSliceNative #-}
+#if MIN_VERSION_base(4, 11, 0)
+compareBytesSliceNative x# (ByteCount (E.I# xoff#)) y# (ByteCount (E.I# yoff#)) (ByteCount (E.I# n#)) =
+  E.I# (E.compareByteArrays# x# xoff# y# yoff# n#)
+#else
+compareBytesSliceNative x# (ByteCount xoff) y# (ByteCount yoff) (ByteCount n) =
+  fromIntegral $
+  c_compare_offset_2
+    x#
+    (fromIntegral xoff)
+    y#
+    (fromIntegral yoff)
+    (fromIntegral n)
+
+-- See note ‘Unsafe FFI’
+foreign import ccall unsafe "_hs__unistring__compare_offset_2" c_compare_offset_2
+  :: E.ByteArray# -> CSize -> E.ByteArray# -> CSize -> CSize -> CInt
+#endif
+
+compareBytesSliceMixed ::
+     E.ByteArray# -> ByteCount -> E.Ptr a -> ByteCount -> IO Int
+{-# INLINE compareBytesSliceMixed #-}
+compareBytesSliceMixed ba# (ByteCount off) ptr (ByteCount n) =
+  fromIntegral <$>
+  c_compare_offset_1 ba# (fromIntegral off) ptr (fromIntegral n)
+
+foreign import ccall unsafe "_hs__unistring__compare_offset_1" c_compare_offset_1
+  :: E.ByteArray# -> CSize -> E.Ptr a -> CSize -> IO CInt
 
 sizeOfByteArray :: E.ByteArray# -> ByteCount
 {-# INLINE sizeOfByteArray #-}

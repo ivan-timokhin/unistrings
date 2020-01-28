@@ -102,13 +102,8 @@ tests =
           => [TestTree]
         test =
           [ testProperty "toList . slice . fromList" $ \(prefix :: [a]) (xs :: [a]) (suffix :: [a]) ->
-              let full = prefix ++ xs ++ suffix
-                  slice :: Slice.Slice storage alloc a
-                  slice =
-                    Slice.sliceUnchecked
-                      (Count.CountOf $ length prefix)
-                      (Count.CountOf $ length xs) $
-                    fromList full
+              let slice :: Slice.Slice storage alloc a
+                  slice = from3Lists prefix xs suffix
                in toList slice === xs
           ]
      in [ testGroup
@@ -146,4 +141,71 @@ tests =
                 (test @Word32 @'Storage.Foreign @Allocator.Pinned)
             ]
         ]
+  , testGroup "Eq" $
+    let test ::
+             forall a storage alloc.
+             ( Allocator.Allocator storage alloc
+             , Primitive.Primitive a
+             , Arbitrary a
+             , Show a
+             , Eq a
+             , Num a
+             )
+          => String
+          -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "Equal" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
+                let x, y :: Slice.Slice storage alloc a
+                    x = from3Lists prefix1 xs suffix1
+                    y = from3Lists prefix2 xs suffix2
+                 in x == y
+            , testProperty "Not equal" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
+                let x, y :: Slice.Slice storage alloc a
+                    x = from3Lists prefix1 (xs ++ [0]) suffix1
+                    y = from3Lists prefix2 (xs ++ [1]) suffix2
+                 in x /= y
+            , testProperty "Not equal length" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
+                let x, y :: Slice.Slice storage alloc a
+                    x = from3Lists prefix1 xs suffix1
+                    y = from3Lists prefix2 (xs ++ [1]) suffix2
+                 in x /= y
+            , testProperty "Random" $ \(prefix1 :: [a]) (prefix2 :: [a]) (xs :: [a]) (ys :: [a]) (suffix1 :: [a]) (suffix2 :: [a]) ->
+                let x, y :: Slice.Slice storage alloc a
+                    x = from3Lists prefix1 xs suffix1
+                    y = from3Lists prefix2 ys suffix2
+                 in (x == y) === (xs == ys)
+            ]
+     in [ testGroup
+            "Native"
+            [ test @Word8 @'Storage.Native @Allocator.Default "Word8"
+            , test @Word16 @'Storage.Native @Allocator.Default "Word16"
+            , test @Word32 @'Storage.Native @Allocator.Default "Word32"
+            ]
+        , testGroup
+            "Native pinned"
+            [ test @Word8 @'Storage.Native @Allocator.Pinned "Word8"
+            , test @Word16 @'Storage.Native @Allocator.Pinned "Word16"
+            , test @Word32 @'Storage.Native @Allocator.Pinned "Word32"
+            ]
+        , testGroup
+            "Foreign"
+            [ test @Word8 @'Storage.Foreign @Allocator.Pinned "Word8"
+            , test @Word16 @'Storage.Foreign @Allocator.Pinned "Word16"
+            , test @Word32 @'Storage.Foreign @Allocator.Pinned "Word32"
+            ]
+        ]
   ]
+
+from3Lists ::
+     (Primitive.Primitive a, Allocator.Allocator storage allocator)
+  => [a]
+  -> [a]
+  -> [a]
+  -> Slice.Slice storage allocator a
+from3Lists prefix xs suffix =
+  Slice.sliceUnchecked
+    (Count.CountOf $ length prefix)
+    (Count.CountOf $ length xs) $
+  fromList (prefix ++ xs ++ suffix)

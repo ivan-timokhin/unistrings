@@ -24,6 +24,7 @@ module Data.Unistring.Memory.Slice.Internal
   , storage
   , allocator
   , fromArray
+  , equal
   , sliceUnchecked
   , size
   , uncons
@@ -34,6 +35,7 @@ import qualified GHC.Exts as E
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr))
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.List (unfoldr)
+import System.IO.Unsafe (unsafeDupablePerformIO)
 
 import qualified Data.Unistring.Memory.Storage as Storage
 import Data.Unistring.Memory.Storage (Storage, Sing(SNative, SForeign))
@@ -47,7 +49,11 @@ import Data.Unistring.Memory.Primitive.Class.Unsafe
   ( Primitive(inBytes, uncheckedIndexBytes, uncheckedReadPtr)
   )
 import Data.Unistring.Compat.Typeable (TypeRep, typeRep, Typeable)
-import System.IO.Unsafe (unsafeDupablePerformIO)
+import Data.Unistring.Memory.Primitive.Operations.Unsafe
+  ( compareBytesSliceForeign
+  , compareBytesSliceMixed
+  , compareBytesSliceNative
+  )
 
 data family Slice (storage :: Storage) allocator a
 
@@ -60,6 +66,9 @@ data instance Slice 'Storage.Native allocator a =
     {-# UNPACK #-}!(CountOf a)
     {-# UNPACK #-}!(CountOf a)
 
+instance (Known storage, Primitive a) => Eq (Slice storage allocator a) where
+  (==) = equal
+
 storage :: Known storage => Slice storage allocator a -> Sing storage
 {-# INLINE storage #-}
 storage = const sing
@@ -68,6 +77,58 @@ allocator ::
      Typeable allocator => Slice storage allocator a -> TypeRep allocator
 {-# INLINE allocator #-}
 allocator = const typeRep
+
+equal ::
+     (Known storage1, Known storage2, Primitive a)
+  => Slice storage1 allocator1 a
+  -> Slice storage2 allocator2 a
+  -> Bool
+{-# INLINEABLE equal #-}
+equal x y =
+  case (storage x, storage y) of
+    (SNative, SNative) -> nativeEq x y
+    (SForeign, SForeign) -> foreignEq x y
+    (SNative, SForeign) -> mixedEq x y
+    (SForeign, SNative) -> mixedEq y x
+  where
+    nativeEq ::
+         Primitive a
+      => Slice 'Storage.Native allocator1 a
+      -> Slice 'Storage.Native allocator2 a
+      -> Bool
+    {-# INLINE nativeEq #-}
+    nativeEq
+      (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
+      (NativeSlice (Array.NArray (Array.NativeArray y#)) yoff ylen)
+      = xlen == ylen
+      && compareBytesSliceNative x# (inBytes xoff) y# (inBytes yoff) (inBytes xlen) == 0
+    foreignEq ::
+         Primitive a
+      => Slice 'Storage.Foreign allocator1 a
+      -> Slice 'Storage.Foreign allocator2 a
+      -> Bool
+    {-# INLINE foreignEq #-}
+    foreignEq
+      (ForeignSlice (Array.FArray (Array.ForeignArray xfptr xlen)))
+      (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
+      = xlen == ylen
+      && unsafeDupablePerformIO
+           (withForeignPtr xfptr $ \xptr ->
+              withForeignPtr yfptr $ \yptr ->
+                (== 0) <$> compareBytesSliceForeign xptr yptr (inBytes xlen))
+    mixedEq ::
+         Primitive a
+      => Slice 'Storage.Native allocator1 a
+      -> Slice 'Storage.Foreign allocator2 a
+      -> Bool
+    {-# INLINE mixedEq #-}
+    mixedEq
+      (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
+      (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
+      = xlen == ylen
+      && unsafeDupablePerformIO
+           (withForeignPtr yfptr $ \yptr ->
+              (== 0) <$> compareBytesSliceMixed x# (inBytes xoff) yptr (inBytes xlen))
 
 fromArray ::
      (Primitive a, Known storage)

@@ -39,6 +39,7 @@ library
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
+  c-sources:           cbits/compare.c
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns

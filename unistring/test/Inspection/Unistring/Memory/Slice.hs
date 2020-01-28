@@ -100,6 +100,32 @@ tests =
           , $(inspectTest "Tuple" $ 'toListForeignFoldr `hasNoType` ''(,))
           ]
       ]
+  , testGroup
+      "Equality"
+      [ testGroup
+          "Native"
+          [ $(inspectTest "Sing" $ 'sliceEqNative `hasNoType` ''Singletons.Sing)
+          , $(inspectTest "Known" $
+              'sliceEqNative `hasNoType` ''Singletons.Known)
+          , $(inspectTest "Primitive" $
+              'sliceEqNative `hasNoType` ''Primitive.Primitive)
+          ]
+      , testGroup
+          "Foreign"
+          [ $(inspectTest "Sing" $ 'sliceEqForeign `hasNoType` ''Singletons.Sing)
+          , $(inspectTest "Known" $
+              'sliceEqForeign `hasNoType` ''Singletons.Known)
+          , $(inspectTest "Primitive" $
+              'sliceEqForeign `hasNoType` ''Primitive.Primitive)
+          ]
+      , testGroup
+          "Mixed"
+          [ $(inspectTest "Sing" $ 'sliceEqMixed `hasNoType` ''Singletons.Sing)
+          , $(inspectTest "Known" $ 'sliceEqMixed `hasNoType` ''Singletons.Known)
+          , $(inspectTest "Primitive" $
+              'sliceEqMixed `hasNoType` ''Primitive.Primitive)
+          ]
+      ]
   ]
 
 mkNativeSlice ::
@@ -143,3 +169,21 @@ toListForeignFoldr ::
   -> Slice.Slice 'Storage.Foreign allocator Word16
   -> r
 toListForeignFoldr f z = foldr f z . Slice.toList
+
+sliceEqNative ::
+     Slice.Slice 'Storage.Native allocator Word16
+  -> Slice.Slice 'Storage.Native allocator' Word16
+  -> Bool
+sliceEqNative = Slice.equal
+
+sliceEqForeign ::
+     Slice.Slice 'Storage.Foreign allocator Word16
+  -> Slice.Slice 'Storage.Foreign allocator' Word16
+  -> Bool
+sliceEqForeign = Slice.equal
+
+sliceEqMixed ::
+     Slice.Slice 'Storage.Native allocator Word16
+  -> Slice.Slice 'Storage.Foreign allocator' Word16
+  -> Bool
+sliceEqMixed = Slice.equal
