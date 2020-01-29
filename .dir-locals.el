@@ -49,6 +49,10 @@
   . ((nil
       . ((dante-target
           . "unistring:unistring-test")))))
+ ("unistring/common"
+  . ((nil
+      . ((dante-target
+          . "unistring:unistring")))))
  ("gen/ucd"
   . ((nil
       . ((dante-target

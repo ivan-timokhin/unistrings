@@ -37,6 +37,7 @@ module Data.Unistring.Compat.Typeable
 import Type.Reflection (TypeRep, Typeable, typeRep)
 #else
 import Data.Typeable (Typeable, eqT)
+import qualified Data.Typeable as T
 import Data.Type.Equality (TestEquality(testEquality))
 
 -- This type wraps a constraint instead of Data.Typeable.TypeRep,
@@ -44,6 +45,9 @@ import Data.Type.Equality (TestEquality(testEquality))
 -- there's no need to manually keep track of indices ourselves.
 data TypeRep a where
   TypeRep :: Typeable a => TypeRep a
+
+instance Show (TypeRep a) where
+  showsPrec p tr@TypeRep = showsPrec p (T.typeRep tr)
 
 typeRep :: Typeable a => TypeRep a
 typeRep = TypeRep

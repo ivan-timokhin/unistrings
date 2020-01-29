@@ -18,6 +18,7 @@ limitations under the License.
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -51,6 +52,8 @@ data Storage
 data instance  Sing (storage :: Storage) where
         SNative :: Sing 'Native
         SForeign :: Sing 'Foreign
+
+deriving instance Show (Sing (storage :: Storage))
 
 instance Known 'Native where
   sing = SNative
