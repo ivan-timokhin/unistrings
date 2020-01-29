@@ -40,6 +40,7 @@ library
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
   c-sources:           cbits/compare.c
+                     , cbits/copy.c
   -- other-extensions:
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns

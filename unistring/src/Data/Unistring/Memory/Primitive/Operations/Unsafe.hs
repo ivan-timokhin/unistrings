@@ -36,13 +36,15 @@ module Data.Unistring.Memory.Primitive.Operations.Unsafe
   , compareBytesSliceForeign
   , compareBytesSliceNative
   , compareBytesSliceMixed
+  , copyForeignToNative
+  , copyNativeToNative
   , sizeOfByteArray
   , getSizeOfMutableByteArray
   ) where
 
 import Foreign.C.Types (CInt(CInt), CSize(CSize))
 import qualified GHC.Exts as E
-import GHC.ST (ST(ST))
+import GHC.IO (IO(IO))
 
 import Data.Unistring.Memory.Count (ByteCount(ByteCount, getByteCount))
 
@@ -114,16 +116,70 @@ compareBytesSliceMixed ba# (ByteCount off) ptr (ByteCount n) =
   fromIntegral <$>
   c_compare_offset_1 ba# (fromIntegral off) ptr (fromIntegral n)
 
+-- See note ‘Unsafe FFI’
 foreign import ccall unsafe "_hs__unistring__compare_offset_1" c_compare_offset_1
   :: E.ByteArray# -> CSize -> E.Ptr a -> CSize -> IO CInt
+
+copyNativeToNative ::
+     E.ByteArray#
+  -> ByteCount
+  -> E.MutableByteArray# E.RealWorld
+  -> ByteCount
+  -> ByteCount
+  -> IO ()
+{-# INLINE copyNativeToNative #-}
+#if MIN_VERSION_base(4, 11, 0)
+copyNativeToNative src# (ByteCount (E.I# srcOff#)) dest# (ByteCount (E.I# destOff#)) (ByteCount (E.I# n#)) =
+  IO $ \s -> (# E.copyByteArray# src# srcOff# dest# destOff# n# s, () #)
+#else
+copyNativeToNative src# (ByteCount srcOff) dest# (ByteCount destOff) (ByteCount n) =
+  c_copy_off
+    dest#
+    (fromIntegral destOff)
+    src#
+    (fromIntegral srcOff)
+    (fromIntegral n)
+
+-- See note ‘Unsafe FFI’
+foreign import ccall unsafe "_hs__unistring__copy_off" c_copy_off
+  :: E.MutableByteArray# E.RealWorld
+  -> CSize
+  -> E.ByteArray#
+  -> CSize
+  -> CSize
+  -> IO ()
+#endif
+
+copyForeignToNative ::
+     E.Ptr a
+  -> E.MutableByteArray# E.RealWorld
+  -> ByteCount
+  -> ByteCount
+  -> IO ()
+{-# INLINE copyForeignToNative #-}
+#if MIN_VERSION_base(4, 11, 0)
+copyForeignToNative (E.Ptr src#) dest# (ByteCount (E.I# destOff#)) (ByteCount (E.I# n#)) =
+  IO $ \s -> (# E.copyAddrToByteArray# src# dest# destOff# n# s, () #)
+#else
+copyForeignToNative src dest# (ByteCount destOff) (ByteCount n) =
+  c_copy dest# (fromIntegral destOff) src (fromIntegral n)
+
+-- See note ‘Unsafe FFI’
+foreign import ccall unsafe "_hs__unistring__copy" c_copy
+  :: E.MutableByteArray# E.RealWorld
+  -> CSize
+  -> E.Ptr a
+  -> CSize
+  -> IO ()
+#endif
 
 sizeOfByteArray :: E.ByteArray# -> ByteCount
 {-# INLINE sizeOfByteArray #-}
 sizeOfByteArray ba = ByteCount (E.I# (E.sizeofByteArray# ba))
 
-getSizeOfMutableByteArray :: E.MutableByteArray# s -> ST s ByteCount
+getSizeOfMutableByteArray :: E.MutableByteArray# E.RealWorld -> IO ByteCount
 {-# INLINE getSizeOfMutableByteArray #-}
 getSizeOfMutableByteArray mba =
-  ST $ \s ->
+  IO $ \s ->
     case E.getSizeofMutableByteArray# mba s of
       (# s', n #) -> (# s', ByteCount (E.I# n) #)

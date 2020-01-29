@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -}
 {-# OPTIONS_HADDOCK show-extensions #-}
+
 {-|
 Module      : Data.Unistring.Memory.Array.Unsafe
 Description : Unsafe Array API
@@ -29,6 +30,7 @@ module Data.Unistring.Memory.Array.Unsafe
   , foreignArrayPtr
   , NativeArray(NativeArray)
   , allocatorCoercion
+  , uncheckedCopyArray
   ) where
 
 import Data.Unistring.Memory.Array.Internal
@@ -36,4 +38,5 @@ import Data.Unistring.Memory.Array.Internal
   , NativeArray(NativeArray)
   , allocatorCoercion
   , foreignArrayPtr
+  , uncheckedCopyArray
   )

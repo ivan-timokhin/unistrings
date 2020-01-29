@@ -46,6 +46,8 @@ module Data.Unistring.Memory.Array.Internal
   , size
   , toList
   , equal
+  , convert
+  , uncheckedCopyArray
   , Allocator(withAllocator, adopt)
   , AllocatorM(new)
   , MutableArray(uncheckedRead, uncheckedWrite)
@@ -53,16 +55,15 @@ module Data.Unistring.Memory.Array.Internal
   , forgetArrayAllocator
   ) where
 
-import Control.Monad.ST (runST, stToIO)
+import Control.Monad.ST (stToIO)
 import Data.Foldable (for_)
 import Data.Kind (Type)
 import Data.Traversable (for)
 import Data.Type.Coercion (Coercion(Coercion), coerceWith)
-import Foreign.ForeignPtr (withForeignPtr)
+import qualified Foreign.ForeignPtr as ForeignPtr
 import qualified GHC.Exts as E
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents(PlainPtr))
 import GHC.IO (IO(IO))
-import GHC.ST (ST(ST))
 import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
 import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Typeable (Typeable)
@@ -76,16 +77,9 @@ import Data.Unistring.Memory.Count
   )
 import Data.Unistring.Memory.Primitive.Class.Unsafe
   ( Primitive(inBytes, inElements, uncheckedIndexBytes,
-          uncheckedReadBytes, uncheckedReadPtr, uncheckedWriteBytes,
-          uncheckedWritePtr)
+          uncheckedReadBytes, uncheckedReadPtr, uncheckedWriteBytes)
   )
-import Data.Unistring.Memory.Primitive.Operations.Unsafe
-  ( compareBytesForeign
-  , compareBytesMixed
-  , compareBytesNative
-  , getSizeOfMutableByteArray
-  , sizeOfByteArray
-  )
+import qualified Data.Unistring.Memory.Primitive.Operations.Unsafe as Operations
 import Data.Unistring.Memory.Storage
   ( Sing(SForeign, SNative)
   , Storage(Foreign, Native)
@@ -120,42 +114,27 @@ data NativeMutableArray s a =
 type role NativeMutableArray nominal representational
 
 uncheckedReadNative ::
-     Primitive a => NativeMutableArray s a -> CountOf a -> ST s a
+     Primitive a => NativeMutableArray E.RealWorld a -> CountOf a -> IO a
 {-# INLINE uncheckedReadNative #-}
-uncheckedReadNative (NativeMutableArray bytes#) = uncheckedReadBytes bytes#
+uncheckedReadNative (NativeMutableArray bytes#) =
+  stToIO . uncheckedReadBytes bytes#
 
 uncheckedWriteNative ::
-     Primitive a => NativeMutableArray s a -> CountOf a -> a -> ST s ()
+     Primitive a => NativeMutableArray E.RealWorld a -> CountOf a -> a -> IO ()
 {-# INLINE uncheckedWriteNative #-}
-uncheckedWriteNative (NativeMutableArray bytes#) = uncheckedWriteBytes bytes#
+uncheckedWriteNative (NativeMutableArray bytes#) =
+  (stToIO .) . uncheckedWriteBytes bytes#
 
 nativeArrayLength :: Primitive a => NativeArray a -> CountOf a
 {-# INLINE nativeArrayLength #-}
-nativeArrayLength (NativeArray bytes#) = inElements (sizeOfByteArray bytes#)
+nativeArrayLength (NativeArray bytes#) =
+  inElements (Operations.sizeOfByteArray bytes#)
 
 getNativeMutableArrayLength ::
-     Primitive a => NativeMutableArray s a -> ST s (CountOf a)
+     Primitive a => NativeMutableArray E.RealWorld a -> IO (CountOf a)
 {-# INLINE getNativeMutableArrayLength #-}
 getNativeMutableArrayLength (NativeMutableArray bytes#) =
-  inElements <$> getSizeOfMutableByteArray bytes#
-
-class Monad m =>
-      MutableArray arr m
-  where
-  uncheckedRead :: Primitive a => arr a -> CountOf a -> m a
-  uncheckedWrite :: Primitive a => arr a -> CountOf a -> a -> m ()
-
-instance MutableArray E.Ptr IO where
-  uncheckedRead = uncheckedReadPtr
-  uncheckedWrite = uncheckedWritePtr
-
-instance MutableArray (NativeMutableArray s) (ST s) where
-  uncheckedRead = uncheckedReadNative
-  uncheckedWrite = uncheckedWriteNative
-
-instance MutableArray (NativeMutableArray E.RealWorld) IO where
-  uncheckedRead arr = stToIO . uncheckedReadNative arr
-  uncheckedWrite arr ix = stToIO . uncheckedWriteNative arr ix
+  inElements <$> Operations.getSizeOfMutableByteArray bytes#
 
 data family Array (storage :: Storage) allocator :: Type -> Type
 
@@ -270,9 +249,9 @@ equal x y =
     nativeEq x' y' =
       let !(NativeArray x#) = x'
           !(NativeArray y#) = y'
-          !xn = sizeOfByteArray x#
-          !yn = sizeOfByteArray y#
-       in xn == yn && (compareBytesNative x# y# xn == 0)
+          !xn = Operations.sizeOfByteArray x#
+          !yn = Operations.sizeOfByteArray y#
+       in xn == yn && (Operations.compareBytesNative x# y# xn == 0)
     foreignEq :: Primitive a => ForeignArray a -> ForeignArray a -> Bool
     {-# INLINE foreignEq #-}
     foreignEq x' y' =
@@ -282,59 +261,135 @@ equal x y =
           unsafeDupablePerformIO
             (withForeignPtr xfptr $ \xptr ->
                withForeignPtr yfptr $ \yptr ->
-                 (== 0) <$> compareBytesForeign xptr yptr (inBytes xlen))
+                 (== 0) <$>
+                 Operations.compareBytesForeign xptr yptr (inBytes xlen))
     mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
     {-# INLINE mixedEq #-}
     mixedEq x' y' =
       let !(NativeArray x#) = x'
           !(ForeignArray yfptr ylen) = y'
-          !xb = sizeOfByteArray x#
+          !xb = Operations.sizeOfByteArray x#
           !yb = inBytes ylen
        in xb == yb &&
           unsafeDupablePerformIO
             (withForeignPtr yfptr $ \yptr ->
-               (== 0) <$> compareBytesMixed x# yptr xb)
+               (== 0) <$> Operations.compareBytesMixed x# yptr xb)
+
+convert ::
+     ( Known storage
+     , Typeable allocator
+     , Allocator storage' allocator'
+     , Primitive a
+     )
+  => Array storage allocator a
+  -> Array storage' allocator' a
+{-# INLINEABLE convert #-}
+convert src =
+  case adopt src of
+    Just dest -> dest
+    Nothing ->
+      withAllocator $ do
+        let !n = size src
+        arr <- new n
+        uncheckedCopyArray src arr 0
+        pure arr
+
+uncheckedCopyArray ::
+     (Known storage, Primitive a, MutableArray arr m, MonadWithPtr m)
+  => Array storage allocator a
+  -> arr a
+  -> CountOf a
+  -> m ()
+{-# INLINE uncheckedCopyArray #-}
+uncheckedCopyArray src dest destOff =
+  case storage src of
+    SNative ->
+      let !(NArray (NativeArray src#)) = src
+       in uncheckedCopyNativeSlice src# 0 dest destOff n
+    SForeign ->
+      let !(FArray (ForeignArray fptr _)) = src
+       in withForeignPtr fptr $ \ptr ->
+            uncheckedCopyForeignSlice ptr dest destOff n
+  where
+    !n = size src
 
 --------------------------------------------------------------------------------
 -- Allocators
 --------------------------------------------------------------------------------
 
-class MutableArray arr m => AllocatorM arr m | m -> arr where
+class Monad m =>
+      MutableArray arr m
+  where
+  uncheckedRead :: Primitive a => arr a -> CountOf a -> m a
+  uncheckedWrite :: Primitive a => arr a -> CountOf a -> a -> m ()
+  uncheckedCopyNativeSlice ::
+       Primitive a
+    => E.ByteArray#
+    -> CountOf a
+    -> arr a
+    -> CountOf a
+    -> CountOf a
+    -> m ()
+  uncheckedCopyForeignSlice ::
+       Primitive a => E.Ptr a -> arr a -> CountOf a -> CountOf a -> m ()
+
+instance MutableArray (NativeMutableArray E.RealWorld) IO where
+  uncheckedRead = uncheckedReadNative
+  uncheckedWrite = uncheckedWriteNative
+  uncheckedCopyNativeSlice src# srcOff (NativeMutableArray dest#) destOff n =
+    Operations.copyNativeToNative
+      src#
+      (inBytes srcOff)
+      dest#
+      (inBytes destOff)
+      (inBytes n)
+  uncheckedCopyForeignSlice src (NativeMutableArray dest#) destOff n =
+    Operations.copyForeignToNative src dest# (inBytes destOff) (inBytes n)
+
+class Monad m => MonadWithPtr m where
+  withForeignPtr :: ForeignPtr a -> (E.Ptr a -> m r) -> m r
+
+instance MonadWithPtr IO where
+  withForeignPtr = ForeignPtr.withForeignPtr
+
+class (MutableArray arr m, MonadWithPtr m) =>
+      AllocatorM arr m
+  | m -> arr
+  where
   new :: Primitive a => CountOf a -> m (arr a)
 
-newtype AllocatorT alloc (arr :: Type -> Type) m a =
+newtype AllocatorT alloc (arr :: Type -> Type) a =
   AllocatorT
-    { runAllocatorT :: m a
+    { runAllocatorT :: IO a
     }
-  deriving (Functor, Applicative, Monad, MutableArray arr)
+  deriving ( Functor
+           , Applicative
+           , Monad
+           , MutableArray (NativeMutableArray E.RealWorld)
+           , MonadWithPtr
+           )
 
 data Default
 data Pinned
 data Unknown
 
-instance AllocatorM (NativeMutableArray s) (AllocatorT Default (NativeMutableArray s) (ST s)) where
+instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Default (NativeMutableArray E.RealWorld)) where
   new n =
     AllocatorT $
-    ST $ \s ->
+    IO $ \s ->
       case E.newByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
       !(E.I# byteCount) = getByteCount $ inBytes n
 
-instance AllocatorM (NativeMutableArray s) (AllocatorT Pinned (NativeMutableArray s) (ST s)) where
+instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Pinned (NativeMutableArray E.RealWorld)) where
   new n =
     AllocatorT $
-    ST $ \s ->
+    IO $ \s ->
       case E.newPinnedByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
       !(E.I# byteCount) = getByteCount $ inBytes n
-
-instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Pinned (NativeMutableArray E.RealWorld) IO) where
-  new = cast . new
-    where
-      cast :: AllocatorT s a (ST E.RealWorld) b -> AllocatorT s a IO b
-      cast = AllocatorT . stToIO . runAllocatorT
 
 class (Known storage, Typeable alloc) =>
       Allocator (storage :: Storage) alloc
@@ -354,15 +409,15 @@ class (Known storage, Typeable alloc) =>
     Just arr
 
 instance Allocator 'Native Default where
-  withAllocator f = runST $ withNativeAllocator run f
+  withAllocator = withNativeAllocator run
     where
-      run :: AllocatorT Default arr m (arr a) -> m (arr a)
+      run :: AllocatorT Default arr (arr a) -> IO (arr a)
       run = runAllocatorT
 
 instance Allocator 'Native Pinned where
-  withAllocator f = runST $ withNativeAllocator run f
+  withAllocator = withNativeAllocator run
     where
-      run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
+      run :: AllocatorT Pinned arr (arr a) -> IO (arr a)
       run = runAllocatorT
   adopt array
     | SNative <- storage array
@@ -372,12 +427,12 @@ instance Allocator 'Native Pinned where
     | otherwise = Nothing
 
 withNativeAllocator ::
-     AllocatorM (NativeMutableArray s) n
-  => (n (NativeMutableArray s a) -> ST s (NativeMutableArray s a))
-  -> n (NativeMutableArray s a)
-  -> ST s (Array 'Native alloc a)
+     AllocatorM (NativeMutableArray E.RealWorld) n
+  => (n (NativeMutableArray E.RealWorld a) -> IO (NativeMutableArray E.RealWorld a))
+  -> n (NativeMutableArray E.RealWorld a)
+  -> Array 'Native alloc a
 {-# INLINE withNativeAllocator #-}
-withNativeAllocator run f = do
+withNativeAllocator run f = unsafeDupablePerformIO $ do
   mutArr <- run f
   arr <- unsafeFreezeNative mutArr
   pure $ NArray arr
@@ -389,7 +444,7 @@ instance Allocator 'Foreign Pinned where
       arr <- unsafeFreezeNativeToForeign mutArr
       pure $ FArray arr
     where
-      run :: AllocatorT Pinned arr m (arr a) -> m (arr a)
+      run :: AllocatorT Pinned arr (arr a) -> IO (arr a)
       run = runAllocatorT
   adopt array =
     case storage array of
@@ -433,10 +488,10 @@ instance (TypeError ('ShowType Unknown
          Allocator storage Unknown where
   withAllocator _ = error "unreachable"
 
-unsafeFreezeNative :: NativeMutableArray s a -> ST s (NativeArray a)
+unsafeFreezeNative :: NativeMutableArray E.RealWorld a -> IO (NativeArray a)
 {-# INLINE unsafeFreezeNative #-}
 unsafeFreezeNative (NativeMutableArray mbytes#) =
-  ST $ \s ->
+  IO $ \s ->
     case E.unsafeFreezeByteArray# mbytes# s of
       (# s', ba #) -> (# s', NativeArray ba #)
 
@@ -444,7 +499,7 @@ unsafeFreezeNativeToForeign ::
      Primitive a => NativeMutableArray E.RealWorld a -> IO (ForeignArray a)
 {-# INLINE unsafeFreezeNativeToForeign #-}
 unsafeFreezeNativeToForeign nma@(NativeMutableArray bytes#) = do
-  n <- stToIO $ getNativeMutableArrayLength nma
+  n <- getNativeMutableArrayLength nma
   IO $ \s ->
     case E.unsafeFreezeByteArray# bytes# s of
       (# s', ba #) ->

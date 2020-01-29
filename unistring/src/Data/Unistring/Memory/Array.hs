@@ -37,6 +37,7 @@ module Data.Unistring.Memory.Array
   , size
   , toList
   , equal
+  , convert
   , forgetArrayAllocator
   ) where
 
@@ -45,6 +46,7 @@ import Data.Unistring.Memory.Array.Internal
   , ForeignArray
   , NativeArray
   , allocator
+  , convert
   , equal
   , foreignArrayLength
   , forgetArrayAllocator
