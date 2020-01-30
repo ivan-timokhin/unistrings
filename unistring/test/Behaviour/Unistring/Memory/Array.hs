@@ -25,7 +25,6 @@ module Behaviour.Unistring.Memory.Array
   ( tests
   ) where
 
-import Data.Proxy (Proxy(Proxy), asProxyTypeOf)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
@@ -53,110 +52,47 @@ tests :: [TestTree]
 tests =
   [ testGroup "IsList" $
     let test ::
-             forall a storage alloc.
-             ( U.Primitive a
-             , Eq a
-             , Show a
-             , Arbitrary a
-             , U.Allocator storage alloc
-             )
+             forall a. (U.Primitive a, Eq a, Show a, Arbitrary a)
           => [TestTree]
         test =
-          [ testProperty "toList . fromList == id" $ \(xs :: [a]) ->
-              let array :: U.Array storage alloc a
-                  array = fromList xs
+          [ testProperty "toList . fromList == id" $ \(SomeArrayType t) (xs :: [a]) ->
+              let array = fromList xs `asArrayType` t
                in toList array === xs
-          , testProperty "length . fromList == length" $ \(xs :: [a]) ->
-              let array :: U.Array storage alloc a
-                  array = fromList xs
+          , testProperty "length . fromList == length" $ \(SomeArrayType t) (xs :: [a]) ->
+              let array = fromList xs `asArrayType` t
                in U.getCountOf (U.size array) === length xs
           ]
-     in [ testGroup
-            "Native"
-            [ testGroup "Word8" (test @Word8 @'U.Native @U.Default)
-            , testGroup "Word16" (test @Word16 @'U.Native @U.Default)
-            , testGroup "Word32" (test @Word32 @'U.Native @U.Default)
-            ]
-        , testGroup
-            "Native pinned"
-            [ testGroup "Word8" (test @Word8 @'U.Native @U.Pinned)
-            , testGroup "Word16" (test @Word16 @'U.Native @U.Pinned)
-            , testGroup "Word32" (test @Word32 @'U.Native @U.Pinned)
-            ]
-        , testGroup
-            "Foreign"
-            [ testGroup "Word8" (test @Word8 @'U.Foreign @U.Pinned)
-            , testGroup "Word16" (test @Word16 @'U.Foreign @U.Pinned)
-            , testGroup "Word32" (test @Word32 @'U.Foreign @U.Pinned)
-            ]
+     in [ testGroup "Word8" (test @Word8)
+        , testGroup "Word16" (test @Word16)
+        , testGroup "Word32" (test @Word32)
         ]
   , testGroup "Array Eq" $
     let test ::
-             forall a storage1 alloc1 storage2 alloc2.
-             ( U.Allocator storage1 alloc1
-             , U.Allocator storage2 alloc2
-             , U.Primitive a
-             , Num a
-             , Arbitrary a
-             , Show a
-             , Eq a
-             )
+             forall a. (U.Primitive a, Num a, Arbitrary a, Show a, Eq a)
           => String
           -> TestTree
         test name =
           testGroup
             name
-            [ testProperty "Equal" $ \(xs :: [a]) ->
-                let x :: U.Array storage1 alloc1 a
-                    x = fromList xs
-                    y :: U.Array storage2 alloc2 a
-                    y = fromList xs
+            [ testProperty "Equal" $ \(SomeArrayType lt) (SomeArrayType rt) (xs :: [a]) ->
+                let x = fromList xs `asArrayType` lt
+                    y = fromList xs `asArrayType` rt
                  in x ~~~ y .&&. y ~~~ x
-            , testProperty "Not equal" $ \(xs :: [a]) ->
-                let x :: U.Array storage1 alloc1 a
-                    x = fromList (xs ++ [0])
-                    y :: U.Array storage2 alloc2 a
-                    y = fromList (xs ++ [1])
+            , testProperty "Not equal" $ \(SomeArrayType lt) (SomeArrayType rt) (xs :: [a]) ->
+                let x = fromList (xs ++ [0]) `asArrayType` lt
+                    y = fromList (xs ++ [1]) `asArrayType` rt
                  in x ~/~ y .&&. y ~/~ x
-            , testProperty "Not equal length" $ \(xs :: [a]) ->
-                let x :: U.Array storage1 alloc1 a
-                    x = fromList xs
-                    y :: U.Array storage2 alloc2 a
-                    y = fromList (xs ++ [1])
+            , testProperty "Not equal length" $ \(SomeArrayType lt) (SomeArrayType rt) (xs :: [a]) ->
+                let x = fromList xs `asArrayType` lt
+                    y = fromList (xs ++ [1]) `asArrayType` rt
                  in x ~/~ y .&&. y ~/~ x
-            , testProperty "Random" $ \xs ys ->
-                let x :: U.Array storage1 alloc1 a
-                    x = fromList xs
-                    y :: U.Array storage2 alloc2 a
-                    y = fromList ys
+            , testProperty "Random" $ \(SomeArrayType lt) (xs :: [a]) (SomeArrayType rt) ys ->
+                let x = fromList xs `asArrayType` lt
+                    y = fromList ys `asArrayType` rt
                  in (x `U.equal` y) === (xs == ys) .&&. (y `U.equal` x) ===
                     (ys == xs)
             ]
-     in [ testGroup
-            "Native"
-            [ test @Word8 @'U.Native @U.Default @'U.Native @U.Default "Word8"
-            , test @Word16 @'U.Native @U.Default @'U.Native @U.Default "Word16"
-            , test @Word32 @'U.Native @U.Default @'U.Native @U.Default "Word32"
-            ]
-        , testGroup
-            "Native pinned"
-            [ test @Word8 @'U.Native @U.Pinned @'U.Native @U.Pinned "Word8"
-            , test @Word16 @'U.Native @U.Pinned @'U.Native @U.Pinned "Word16"
-            , test @Word32 @'U.Native @U.Pinned @'U.Native @U.Pinned "Word32"
-            ]
-        , testGroup
-            "Foreign"
-            [ test @Word8 @'U.Foreign @U.Pinned @'U.Foreign @U.Pinned "Word8"
-            , test @Word16 @'U.Foreign @U.Pinned @'U.Foreign @U.Pinned "Word16"
-            , test @Word32 @'U.Foreign @U.Pinned @'U.Foreign @U.Pinned "Word32"
-            ]
-        , testGroup
-            "Mixed"
-            [ test @Word8 @'U.Foreign @U.Pinned @'U.Native @U.Default "Word8"
-            , test @Word16 @'U.Foreign @U.Pinned @'U.Native @U.Default "Word16"
-            , test @Word32 @'U.Foreign @U.Pinned @'U.Native @U.Default "Word32"
-            ]
-        ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   , testGroup "Convert" $
     let test ::
              forall a. (U.Primitive a, Show a, Arbitrary a)
@@ -166,8 +102,8 @@ tests =
           testGroup
             name
             [ testProperty "equal before and after" $ \(SomeArrayType inputP) (SomeArrayType outputP) (xs :: [a]) ->
-                let input = fromList xs `asProxyTypeOf` arrayTypeProxy inputP
-                    output = U.convert input `asProxyTypeOf` arrayTypeProxy outputP
+                let input = fromList xs `asArrayType` inputP
+                    output = U.convert input `asArrayType` outputP
                  in input ~~~ output
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
@@ -178,8 +114,11 @@ data ArrayType (storage :: U.Storage) allocator a where
     :: TypeRep allocator -> U.Sing storage -> ArrayType storage allocator a
   deriving (Show)
 
-arrayTypeProxy :: ArrayType storage allocator a -> Proxy (U.Array storage allocator a)
-arrayTypeProxy _ = Proxy
+asArrayType ::
+     U.Array storage allocator a
+  -> ArrayType storage allocator a
+  -> U.Array storage allocator a
+asArrayType = const
 
 data SomeArrayType a where
   SomeArrayType
