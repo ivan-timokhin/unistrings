@@ -20,6 +20,7 @@ module Inspection.TH
   ( inspectTest
   , inspectTests
   , hasNoneOfTypes
+  , allHaveNoneOfTypes
   ) where
 
 import Language.Haskell.TH.Lib (listE)
@@ -50,3 +51,7 @@ inspectTests = listE . map (uncurry inspectTest)
 
 hasNoneOfTypes :: Name -> [Name] -> [(T.TestName, I.Obligation)]
 hasNoneOfTypes fn tys = [(show ty, fn `I.hasNoType` ty) | ty <- tys]
+
+allHaveNoneOfTypes :: [Name] -> [Name] -> [(T.TestName, I.Obligation)]
+allHaveNoneOfTypes fns tys =
+  [(show fn ++ " ∌ " ++ show ty, fn `I.hasNoType` ty) | fn <- fns, ty <- tys]

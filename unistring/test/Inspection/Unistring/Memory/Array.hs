@@ -41,23 +41,20 @@ import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
 import qualified Data.Unistring.Memory.Storage as U
 import qualified Data.Unistring.Singletons as S
 
-import Inspection.TH (hasNoneOfTypes, inspectTest, inspectTests)
+import Inspection.TH
+  ( allHaveNoneOfTypes
+  , hasNoneOfTypes
+  , inspectTest
+  , inspectTests
+  )
 
 tests :: [TestTree]
 tests =
   [ testGroup
       "Length"
-      [ testGroup
-          "Native array"
-          $(inspectTests $
-            'nativeArrayLength `hasNoneOfTypes`
-            [''U.Sing, ''S.Known, ''U.Primitive])
-      , testGroup
-          "Foreign array"
-          $(inspectTests $
-            'foreignArrayLength `hasNoneOfTypes`
-            [''U.Sing, ''S.Known, ''U.Primitive])
-      ]
+      $(inspectTests $
+        ['nativeArrayLength, 'foreignArrayLength] `allHaveNoneOfTypes`
+        [''U.Sing, ''S.Known, ''U.Primitive])
   , testGroup
       "toList"
       [ testGroup
@@ -77,49 +74,18 @@ tests =
       $(inspectTest "fromListN fuses" $ 'fromListNEnum `hasNoType` ''[])
   , testGroup
       "fromListN allocator optimised out"
-      [ testGroup
-          "Default"
-          $(inspectTests $
-            'fromListNEnum `hasNoneOfTypes`
-            [ ''U.AllocatorM
-            , ''U.Allocator
-            , ''IO
-            , ''ST
-            , ''U.MutableArray
-            , ''U.MonadWithPtr
-            , ''U.Primitive
-            , ''U.Sing
-            , ''S.Known
-            ])
-      , testGroup
-          "Pinned"
-          $(inspectTests $
-            'fromListNEnumP `hasNoneOfTypes`
-            [ ''U.AllocatorM
-            , ''U.Allocator
-            , ''IO
-            , ''ST
-            , ''U.MutableArray
-            , ''U.MonadWithPtr
-            , ''U.Primitive
-            , ''U.Sing
-            , ''S.Known
-            ])
-      , testGroup
-          "Pinned foreign"
-          $(inspectTests $
-            'fromListNEnumF `hasNoneOfTypes`
-            [ ''U.AllocatorM
-            , ''U.Allocator
-            , ''IO
-            , ''ST
-            , ''U.MutableArray
-            , ''U.MonadWithPtr
-            , ''U.Primitive
-            , ''U.Sing
-            , ''S.Known
-            ])
-      ]
+      $(inspectTests $
+        ['fromListNEnum, 'fromListNEnumP, 'fromListNEnumF] `allHaveNoneOfTypes`
+        [ ''U.AllocatorM
+        , ''U.Allocator
+        , ''IO
+        , ''ST
+        , ''U.MutableArray
+        , ''U.MonadWithPtr
+        , ''U.Primitive
+        , ''U.Sing
+        , ''S.Known
+        ])
   , testGroup
       "Unpack"
       [ testGroup
@@ -134,20 +100,9 @@ tests =
         [''Coercion, ''U.Sing, ''S.Known])
   , testGroup
       "Equality"
-      [ testGroup
-          "Native"
-          $(inspectTests $
-            'arrayEqNative `hasNoneOfTypes` [''U.Sing, ''S.Known, ''U.Primitive])
-      , testGroup
-          "Foreign"
-          $(inspectTests $
-            'arrayEqForeign `hasNoneOfTypes`
-            [''U.Sing, ''S.Known, ''U.Primitive])
-      , testGroup
-          "Mixed"
-          $(inspectTests $
-            'arrayEqMixed `hasNoneOfTypes` [''U.Sing, ''S.Known, ''U.Primitive])
-      ]
+      $(inspectTests $
+        ['arrayEqNative, 'arrayEqForeign, 'arrayEqMixed] `allHaveNoneOfTypes`
+        [''U.Sing, ''S.Known, ''U.Primitive])
   , testGroup
       "Convert"
       [ testGroup

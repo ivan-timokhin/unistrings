@@ -35,7 +35,7 @@ import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Singletons as Singletons
 
-import Inspection.TH (hasNoneOfTypes, inspectTests)
+import Inspection.TH (allHaveNoneOfTypes, hasNoneOfTypes, inspectTests)
 
 tests :: [TestTree]
 tests =
@@ -49,58 +49,24 @@ tests =
       ]
   , testGroup
       "Slice unchecked"
-      [ testGroup
-          "Native"
-          $(inspectTests $
-            'sliceUncheckedNativeW16 `hasNoneOfTypes`
-            [''Singletons.Known, ''Singletons.Sing, ''Primitive.Primitive])
-      , testGroup
-          "Foreign"
-          $(inspectTests $
-            'sliceUncheckedForeignW16 `hasNoneOfTypes`
-            [''Singletons.Known, ''Singletons.Sing, ''Primitive.Primitive])
-      ]
+      $(inspectTests $
+        ['sliceUncheckedNativeW16, 'sliceUncheckedForeignW16] `allHaveNoneOfTypes`
+        [''Singletons.Known, ''Singletons.Sing, ''Primitive.Primitive])
   , testGroup
       "Size"
-      [ testGroup
-          "Native"
-          $(inspectTests $
-            'nativeSize `hasNoneOfTypes` [''Singletons.Known, ''Singletons.Sing])
-      , testGroup
-          "Foreign"
-          $(inspectTests $
-            'foreignSize `hasNoneOfTypes`
-            [''Singletons.Known, ''Singletons.Sing])
-      ]
+      $(inspectTests $
+        ['nativeSize, 'foreignSize] `allHaveNoneOfTypes`
+        [''Singletons.Known, ''Singletons.Sing])
   , testGroup
       "List fusion"
-      [ testGroup
-          "Native"
-          $(inspectTests $
-            'toListNativeFoldr `hasNoneOfTypes` [''[], ''Maybe, ''(,)])
-      , testGroup
-          "Foreign"
-          $(inspectTests $
-            'toListForeignFoldr `hasNoneOfTypes` [''[], ''Maybe, ''(,)])
-      ]
+      $(inspectTests $
+        ['toListNativeFoldr, 'toListForeignFoldr] `allHaveNoneOfTypes`
+        [''[], ''Maybe, ''(,)])
   , testGroup
       "Equality"
-      [ testGroup
-          "Native"
-          $(inspectTests $
-            'sliceEqNative `hasNoneOfTypes`
-            [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
-      , testGroup
-          "Foreign"
-          $(inspectTests $
-            'sliceEqForeign `hasNoneOfTypes`
-            [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
-      , testGroup
-          "Mixed"
-          $(inspectTests $
-            'sliceEqMixed `hasNoneOfTypes`
-            [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
-      ]
+      $(inspectTests $
+        ['sliceEqNative, 'sliceEqForeign, 'sliceEqMixed] `allHaveNoneOfTypes`
+        [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
   ]
 
 mkNativeSlice ::
