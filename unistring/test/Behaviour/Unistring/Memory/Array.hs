@@ -18,9 +18,8 @@ limitations under the License.
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE KindSignatures #-}
 
 module Behaviour.Unistring.Memory.Array
   ( tests
@@ -166,58 +165,49 @@ tests =
         test name =
           testGroup
             name
-            [ testProperty "equal before and after" $ \(SAT inputP) (SAT outputP) (xs :: [a]) ->
-                let input = fromList xs `asProxyTypeOf` inputP
-                    output = U.convert input `asProxyTypeOf` outputP
+            [ testProperty "equal before and after" $ \(SomeArrayType inputP) (SomeArrayType outputP) (xs :: [a]) ->
+                let input = fromList xs `asProxyTypeOf` arrayTypeProxy inputP
+                    output = U.convert input `asProxyTypeOf` arrayTypeProxy outputP
                  in input ~~~ output
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   ]
 
+data ArrayType (storage :: U.Storage) allocator a where
+  ArrayType
+    :: TypeRep allocator -> U.Sing storage -> ArrayType storage allocator a
+  deriving (Show)
+
+arrayTypeProxy :: ArrayType storage allocator a -> Proxy (U.Array storage allocator a)
+arrayTypeProxy _ = Proxy
+
 data SomeArrayType a where
   SomeArrayType
     :: U.Allocator storage allocator
-    => TypeRep allocator
-    -> U.Sing storage
+    => ArrayType storage allocator a
     -> SomeArrayType a
 
 deriving instance Show (SomeArrayType a)
 
-data SATProxy a where
-  SATProxy
-    :: U.Allocator storage allocator
-    => Proxy (U.Array storage allocator a)
-    -> SATProxy a
-
-mkSATProxy :: SomeArrayType a -> SATProxy a
-mkSATProxy (SomeArrayType t s) = SATProxy (mkProxy t s)
-  where
-    mkProxy :: TypeRep a -> U.Sing s -> Proxy (U.Array s a b)
-    mkProxy _ _ = Proxy
-
-pattern SAT :: () => (U.Allocator storage allocator) =>
-        Proxy (U.Array storage allocator a) -> SomeArrayType a
-
-pattern SAT p <- (mkSATProxy -> SATProxy p)
-  where SAT (_ :: Proxy (U.Array storage allocator a))
-          = SomeArrayType (typeRep @allocator) (U.sing @storage)
-
-{-# COMPLETE SAT #-}
+mkSAT ::
+     forall storage allocator a. U.Allocator storage allocator
+  => SomeArrayType a
+mkSAT = SomeArrayType (ArrayType (typeRep @allocator) (U.sing @storage))
 
 instance Arbitrary (SomeArrayType a) where
   arbitrary = do
     n <- choose (0 :: Int, 2)
     case n of
-      0 -> pure $ SAT (Proxy :: Proxy (U.Array 'U.Native U.Default a))
-      1 -> pure $ SAT (Proxy :: Proxy (U.Array 'U.Native U.Pinned a))
-      _ -> pure $ SAT (Proxy :: Proxy (U.Array 'U.Foreign U.Pinned a))
-  shrink (SomeArrayType alloc storage)
+      0 -> pure $ mkSAT @'U.Native @U.Default
+      1 -> pure $ mkSAT @'U.Native @U.Pinned
+      _ -> pure $ mkSAT @'U.Foreign @U.Pinned
+  shrink (SomeArrayType (ArrayType alloc storage))
     | Just Refl <- testEquality alloc (typeRep @U.Default) =
       case storage of
         U.SNative -> []
-        U.SForeign -> [SomeArrayType alloc U.SNative]
+        U.SForeign -> [mkSAT @'U.Native @U.Default]
     | Just Refl <- testEquality alloc (typeRep @U.Pinned) =
       case storage of
-        U.SNative -> [SomeArrayType (typeRep @U.Default) storage]
-        U.SForeign -> [SomeArrayType alloc U.SNative]
+        U.SNative -> [mkSAT @'U.Native @U.Default]
+        U.SForeign -> [mkSAT @'U.Native @U.Pinned]
     | otherwise = []
