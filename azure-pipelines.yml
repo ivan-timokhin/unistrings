@@ -82,7 +82,7 @@ jobs:
           unistring:unistring-test
       lts-11.22:
         RESOLVER: lts-11.22
-        STACK_FLAGS:
+        STACK_FLAGS: --flag unistring:-inspection
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
@@ -90,7 +90,7 @@ jobs:
           unistring:unistring-test
       lts-12.26:
         RESOLVER: lts-12.26
-        STACK_FLAGS:
+        STACK_FLAGS: --flag unistring:-inspection
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
@@ -297,7 +297,7 @@ jobs:
           unistring:unistring-test
       lts-11.22:
         RESOLVER: lts-11.22
-        STACK_FLAGS:
+        STACK_FLAGS: --flag unistring:-inspection
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
@@ -305,7 +305,7 @@ jobs:
           unistring:unistring-test
       lts-12.26:
         RESOLVER: lts-12.26
-        STACK_FLAGS:
+        STACK_FLAGS: --flag unistring:-inspection
         STACK_TEST_TARGETS: |
           unistring-ucd:ucd-test-xml
           unistring-ucd:ucd-test-inspection
