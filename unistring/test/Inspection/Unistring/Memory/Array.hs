@@ -46,87 +46,107 @@ import Inspection.TH (hasNoneOfTypes, inspectTest, inspectTests)
 tests :: [TestTree]
 tests =
   [ testGroup
-      "Native array length"
-      [ $(inspectTest "Sing" $ 'nativeArrayLength `hasNoType` ''U.Sing)
-      , $(inspectTest "Known" $ 'nativeArrayLength `hasNoType` ''S.Known)
+      "Length"
+      [ testGroup
+          "Native array"
+          $(inspectTests $
+            'nativeArrayLength `hasNoneOfTypes`
+            [''U.Sing, ''S.Known, ''U.Primitive])
+      , testGroup
+          "Foreign array"
+          $(inspectTests $
+            'foreignArrayLength `hasNoneOfTypes`
+            [''U.Sing, ''S.Known, ''U.Primitive])
       ]
   , testGroup
-      "Foreign array length"
-      [ $(inspectTest "Sing" $ 'foreignArrayLength `hasNoType` ''U.Sing)
-      , $(inspectTest "Known" $ 'foreignArrayLength `hasNoType` ''S.Known)
-      ]
-  , testGroup
-      "Native array toList"
-      [ $(inspectTest "Sing" $ 'toListArrayNative `hasNoType` ''U.Sing)
-      , $(inspectTest "Known" $ 'toListArrayNative `hasNoType` ''S.Known)
-      ]
-  , testGroup
-      "Foreign array toList"
-      [ $(inspectTest "Sing" $ 'toListArrayForeign `hasNoType` ''U.Sing)
-      , $(inspectTest "Known" $ 'toListArrayForeign `hasNoType` ''S.Known)
+      "toList"
+      [ testGroup
+          "Native array"
+          $(inspectTests $
+            'toListArrayNative `hasNoneOfTypes`
+            [''U.Sing, ''S.Known, ''U.Primitive])
+      , testGroup
+          "Foreign array"
+          $(inspectTests $
+            'toListArrayForeign `hasNoneOfTypes`
+            [''U.Sing, ''S.Known, ''U.Primitive])
       ]
   , $(inspectTest "Native array toList fuses" $
       'toListArrayNativeFoldr `hasNoType` ''[])
   , expectFail
       $(inspectTest "fromListN fuses" $ 'fromListNEnum `hasNoType` ''[])
   , testGroup
-      "Default allocator optimised out"
-      [ $(inspectTest "AllocatorM" $ 'fromListNEnum `hasNoType` ''U.AllocatorM)
-      , $(inspectTest "Allocator" $ 'fromListNEnum `hasNoType` ''U.Allocator)
-      , $(inspectTest "IO" $ 'fromListNEnum `hasNoType` ''IO)
-      , $(inspectTest "ST" $ 'fromListNEnum `hasNoType` ''ST)
-      ]
-  , testGroup
-      "Pinned allocator optimised out"
-      [ $(inspectTest "AllocatorM" $ 'fromListNEnumP `hasNoType` ''U.AllocatorM)
-      , $(inspectTest "Allocator" $ 'fromListNEnumP `hasNoType` ''U.Allocator)
-      , $(inspectTest "IO" $ 'fromListNEnumP `hasNoType` ''IO)
-      , $(inspectTest "ST" $ 'fromListNEnumP `hasNoType` ''ST)
-      ]
-  , testGroup
-      "Pinned foreign allocator optimised out"
-      [ $(inspectTest "AllocatorM" $ 'fromListNEnumF `hasNoType` ''U.AllocatorM)
-      , $(inspectTest "Allocator" $ 'fromListNEnumF `hasNoType` ''U.Allocator)
-      , $(inspectTest "IO" $ 'fromListNEnumF `hasNoType` ''IO)
-      , $(inspectTest "ST" $ 'fromListNEnumF `hasNoType` ''ST)
+      "fromListN allocator optimised out"
+      [ testGroup
+          "Default"
+          $(inspectTests $
+            'fromListNEnum `hasNoneOfTypes`
+            [ ''U.AllocatorM
+            , ''U.Allocator
+            , ''IO
+            , ''ST
+            , ''U.MutableArray
+            , ''U.MonadWithPtr
+            , ''U.Primitive
+            , ''U.Sing
+            , ''S.Known
+            ])
+      , testGroup
+          "Pinned"
+          $(inspectTests $
+            'fromListNEnumP `hasNoneOfTypes`
+            [ ''U.AllocatorM
+            , ''U.Allocator
+            , ''IO
+            , ''ST
+            , ''U.MutableArray
+            , ''U.MonadWithPtr
+            , ''U.Primitive
+            , ''U.Sing
+            , ''S.Known
+            ])
+      , testGroup
+          "Pinned foreign"
+          $(inspectTests $
+            'fromListNEnumF `hasNoneOfTypes`
+            [ ''U.AllocatorM
+            , ''U.Allocator
+            , ''IO
+            , ''ST
+            , ''U.MutableArray
+            , ''U.MonadWithPtr
+            , ''U.Primitive
+            , ''U.Sing
+            , ''S.Known
+            ])
       ]
   , testGroup
       "Unpack"
       [ testGroup
           "Foreign"
-          [ $(inspectTest "ForeignPtr" $
-              'mkForeignArray `hasNoType` ''ForeignPtr)
-          , $(inspectTest "CountOf" $ 'mkForeignArray `hasNoType` ''U.CountOf)
-          , $(inspectTest "Int" $ 'mkForeignArray `hasNoType` ''Int)
-          ]
+          $(inspectTests $
+            'mkForeignArray `hasNoneOfTypes` [''ForeignPtr, ''U.CountOf, ''Int])
       ]
   , testGroup
       "Free forgetfulness"
-      [ $(inspectTest "Coercion" $ 'forgetNativeAllocator `hasNoType` ''Coercion)
-      , $(inspectTest "Sing" $ 'forgetNativeAllocator `hasNoType` ''U.Sing)
-      , $(inspectTest "Known" $ 'forgetNativeAllocator `hasNoType` ''S.Known)
-      ]
+      $(inspectTests $
+        'forgetNativeAllocator `hasNoneOfTypes`
+        [''Coercion, ''U.Sing, ''S.Known])
   , testGroup
       "Equality"
       [ testGroup
           "Native"
-          [ $(inspectTest "Sing" $ 'arrayEqNative `hasNoType` ''U.Sing)
-          , $(inspectTest "Known" $ 'arrayEqNative `hasNoType` ''S.Known)
-          , $(inspectTest "Primitive" $ 'arrayEqNative `hasNoType` ''U.Primitive)
-          ]
+          $(inspectTests $
+            'arrayEqNative `hasNoneOfTypes` [''U.Sing, ''S.Known, ''U.Primitive])
       , testGroup
           "Foreign"
-          [ $(inspectTest "Sing" $ 'arrayEqForeign `hasNoType` ''U.Sing)
-          , $(inspectTest "Known" $ 'arrayEqForeign `hasNoType` ''S.Known)
-          , $(inspectTest "Primitive" $
-              'arrayEqForeign `hasNoType` ''U.Primitive)
-          ]
+          $(inspectTests $
+            'arrayEqForeign `hasNoneOfTypes`
+            [''U.Sing, ''S.Known, ''U.Primitive])
       , testGroup
           "Mixed"
-          [ $(inspectTest "Sing" $ 'arrayEqMixed `hasNoType` ''U.Sing)
-          , $(inspectTest "Known" $ 'arrayEqMixed `hasNoType` ''S.Known)
-          , $(inspectTest "Primitive" $ 'arrayEqMixed `hasNoType` ''U.Primitive)
-          ]
+          $(inspectTests $
+            'arrayEqMixed `hasNoneOfTypes` [''U.Sing, ''S.Known, ''U.Primitive])
       ]
   , testGroup
       "Convert"

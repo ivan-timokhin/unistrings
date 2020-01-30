@@ -25,7 +25,6 @@ module Inspection.Unistring.Memory.Slice
 
 import Data.Word (Word16)
 import GHC.Exts (ByteArray#, Int(I#), Int#)
-import Test.Inspection (hasNoType)
 import Test.Tasty (TestTree, testGroup)
 
 import qualified Data.Unistring.Memory.Array as Array
@@ -36,7 +35,7 @@ import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Singletons as Singletons
 
-import Inspection.TH (inspectTest)
+import Inspection.TH (hasNoneOfTypes, inspectTests)
 
 tests :: [TestTree]
 tests =
@@ -44,87 +43,63 @@ tests =
       "Unpack"
       [ testGroup
           "Native"
-          [ $(inspectTest "NativeArray" $
-              'mkNativeSlice `hasNoType` ''Array.NativeArray)
-          , $(inspectTest "Array" $ 'mkNativeSlice `hasNoType` ''Array.Array)
-          , $(inspectTest "CountOf" $ 'mkNativeSlice `hasNoType` ''Count.CountOf)
-          , $(inspectTest "Int" $ 'mkNativeSlice `hasNoType` ''Int)
-          ]
+          $(inspectTests $
+            'mkNativeSlice `hasNoneOfTypes`
+            [''Array.NativeArray, ''Array.Array, ''Count.CountOf, ''Int])
       ]
   , testGroup
       "Slice unchecked"
       [ testGroup
           "Native"
-          [ $(inspectTest "Known" $
-              'sliceUncheckedNativeW16 `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Sing" $
-              'sliceUncheckedNativeW16 `hasNoType` ''Singletons.Sing)
-          , $(inspectTest "Primitive" $
-              'sliceUncheckedNativeW16 `hasNoType` ''Primitive.Primitive)
-          ]
+          $(inspectTests $
+            'sliceUncheckedNativeW16 `hasNoneOfTypes`
+            [''Singletons.Known, ''Singletons.Sing, ''Primitive.Primitive])
       , testGroup
           "Foreign"
-          [ $(inspectTest "Known" $
-              'sliceUncheckedForeignW16 `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Sing" $
-              'sliceUncheckedForeignW16 `hasNoType` ''Singletons.Sing)
-          , $(inspectTest "Primitive" $
-              'sliceUncheckedForeignW16 `hasNoType` ''Primitive.Primitive)
-          ]
+          $(inspectTests $
+            'sliceUncheckedForeignW16 `hasNoneOfTypes`
+            [''Singletons.Known, ''Singletons.Sing, ''Primitive.Primitive])
       ]
   , testGroup
       "Size"
       [ testGroup
           "Native"
-          [ $(inspectTest "Known" $ 'nativeSize `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Sing" $ 'nativeSize `hasNoType` ''Singletons.Sing)
-          ]
+          $(inspectTests $
+            'nativeSize `hasNoneOfTypes` [''Singletons.Known, ''Singletons.Sing])
       , testGroup
           "Foreign"
-          [ $(inspectTest "Known" $ 'foreignSize `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Sing" $ 'foreignSize `hasNoType` ''Singletons.Sing)
-          ]
+          $(inspectTests $
+            'foreignSize `hasNoneOfTypes`
+            [''Singletons.Known, ''Singletons.Sing])
       ]
   , testGroup
       "List fusion"
       [ testGroup
           "Native"
-          [ $(inspectTest "List" $ 'toListNativeFoldr `hasNoType` ''[])
-          , $(inspectTest "Maybe" $ 'toListNativeFoldr `hasNoType` ''Maybe)
-          , $(inspectTest "Tuple" $ 'toListNativeFoldr `hasNoType` ''(,))
-          ]
+          $(inspectTests $
+            'toListNativeFoldr `hasNoneOfTypes` [''[], ''Maybe, ''(,)])
       , testGroup
           "Foreign"
-          [ $(inspectTest "List" $ 'toListForeignFoldr `hasNoType` ''[])
-          , $(inspectTest "Maybe" $ 'toListForeignFoldr `hasNoType` ''Maybe)
-          , $(inspectTest "Tuple" $ 'toListForeignFoldr `hasNoType` ''(,))
-          ]
+          $(inspectTests $
+            'toListForeignFoldr `hasNoneOfTypes` [''[], ''Maybe, ''(,)])
       ]
   , testGroup
       "Equality"
       [ testGroup
           "Native"
-          [ $(inspectTest "Sing" $ 'sliceEqNative `hasNoType` ''Singletons.Sing)
-          , $(inspectTest "Known" $
-              'sliceEqNative `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Primitive" $
-              'sliceEqNative `hasNoType` ''Primitive.Primitive)
-          ]
+          $(inspectTests $
+            'sliceEqNative `hasNoneOfTypes`
+            [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
       , testGroup
           "Foreign"
-          [ $(inspectTest "Sing" $ 'sliceEqForeign `hasNoType` ''Singletons.Sing)
-          , $(inspectTest "Known" $
-              'sliceEqForeign `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Primitive" $
-              'sliceEqForeign `hasNoType` ''Primitive.Primitive)
-          ]
+          $(inspectTests $
+            'sliceEqForeign `hasNoneOfTypes`
+            [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
       , testGroup
           "Mixed"
-          [ $(inspectTest "Sing" $ 'sliceEqMixed `hasNoType` ''Singletons.Sing)
-          , $(inspectTest "Known" $ 'sliceEqMixed `hasNoType` ''Singletons.Known)
-          , $(inspectTest "Primitive" $
-              'sliceEqMixed `hasNoType` ''Primitive.Primitive)
-          ]
+          $(inspectTests $
+            'sliceEqMixed `hasNoneOfTypes`
+            [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
       ]
   ]
 
