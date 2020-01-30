@@ -51,6 +51,7 @@ module Data.Unistring.Memory.Array.Internal
   , Allocator(withAllocator, adopt)
   , AllocatorM(new)
   , MutableArray(uncheckedRead, uncheckedWrite)
+  , MonadWithPtr(withForeignPtr)
   , allocatorCoercion
   , forgetArrayAllocator
   ) where

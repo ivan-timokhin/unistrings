@@ -18,9 +18,12 @@ limitations under the License.
 
 module Inspection.TH
   ( inspectTest
+  , inspectTests
+  , hasNoneOfTypes
   ) where
 
-import Language.Haskell.TH.Syntax (Exp, Q)
+import Language.Haskell.TH.Lib (listE)
+import Language.Haskell.TH.Syntax (Exp, Name, Q)
 import qualified Test.Inspection as I
 import qualified Test.Tasty.Providers as T
 
@@ -41,3 +44,9 @@ inspectTest :: T.TestName -> I.Obligation -> Q Exp
 inspectTest name obl =
   [|T.singleTest name $
     PrerunTest $ inspectionResultToTastyResult $(I.inspectTest obl)|]
+
+inspectTests :: [(T.TestName, I.Obligation)] -> Q Exp
+inspectTests = listE . map (uncurry inspectTest)
+
+hasNoneOfTypes :: Name -> [Name] -> [(T.TestName, I.Obligation)]
+hasNoneOfTypes fn tys = [(show ty, fn `I.hasNoType` ty) | ty <- tys]

@@ -25,6 +25,7 @@ module Inspection.Unistring.Memory.Array
 
 import Control.Monad.ST (ST)
 import Data.Type.Coercion (Coercion)
+import Data.Typeable (Typeable)
 import Data.Word (Word16, Word8)
 import GHC.Exts (Addr#, Int(I#), Int#, fromListN, toList)
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents)
@@ -40,7 +41,7 @@ import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
 import qualified Data.Unistring.Memory.Storage as U
 import qualified Data.Unistring.Singletons as S
 
-import Inspection.TH (inspectTest)
+import Inspection.TH (hasNoneOfTypes, inspectTest, inspectTests)
 
 tests :: [TestTree]
 tests =
@@ -127,6 +128,22 @@ tests =
           , $(inspectTest "Primitive" $ 'arrayEqMixed `hasNoType` ''U.Primitive)
           ]
       ]
+  , testGroup
+      "Convert"
+      [ testGroup
+          "Native/Default -> Foreign/Pinned"
+          $(inspectTests $
+            'convertNativeToForeign `hasNoneOfTypes`
+            [ ''S.Known
+            , ''U.Sing
+            , ''U.Allocator
+            , ''U.AllocatorM
+            , ''U.MutableArray
+            , ''U.MonadWithPtr
+            , ''U.Primitive
+            , ''Typeable
+            ])
+      ]
   ]
 
 nativeArrayLength :: U.Array 'U.Native alloc Word8 -> U.CountOf Word8
@@ -184,3 +201,7 @@ arrayEqMixed ::
   -> U.Array 'U.Foreign allocator' Word8
   -> Bool
 arrayEqMixed = U.equal
+
+convertNativeToForeign ::
+     U.Array 'U.Native U.Default Word8 -> U.Array 'U.Foreign U.Pinned Word8
+convertNativeToForeign = U.convert

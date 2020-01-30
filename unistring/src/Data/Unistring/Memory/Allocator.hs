@@ -32,12 +32,14 @@ module Data.Unistring.Memory.Allocator
   , Unknown
   , AllocatorM
   , MutableArray
+  , MonadWithPtr(withForeignPtr)
   ) where
 
 import Data.Unistring.Memory.Array.Internal
   ( Allocator(adopt, withAllocator)
   , AllocatorM
   , Default
+  , MonadWithPtr(withForeignPtr)
   , MutableArray
   , Pinned
   , Unknown
