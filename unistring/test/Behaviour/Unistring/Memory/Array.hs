@@ -16,37 +16,25 @@ limitations under the License.
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE KindSignatures #-}
 
 module Behaviour.Unistring.Memory.Array
   ( tests
   ) where
 
-import Data.Type.Equality ((:~:)(Refl), testEquality)
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck
-  ( Arbitrary(arbitrary, shrink)
-  , (.&&.)
-  , (===)
-  , choose
-  , testProperty
-  )
+import Test.Tasty.QuickCheck (Arbitrary, (.&&.), (===), testProperty)
 
-import qualified Data.Unistring.Memory.Allocator as U
 import qualified Data.Unistring.Memory.Array as U
 import qualified Data.Unistring.Memory.Count as U
 import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as U
-import qualified Data.Unistring.Memory.Storage as U
-import qualified Data.Unistring.Singletons as U
-
-import Data.Unistring.Compat.Typeable (TypeRep, typeRep)
 
 import Behaviour.Common ((~/~), (~~~))
+import Behaviour.Unistring.Memory.ArrayType
+  ( ArrayType
+  , SomeArrayType(SomeArrayType)
+  )
 
 tests :: [TestTree]
 tests =
@@ -109,44 +97,8 @@ tests =
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   ]
 
-data ArrayType (storage :: U.Storage) allocator a where
-  ArrayType
-    :: TypeRep allocator -> U.Sing storage -> ArrayType storage allocator a
-  deriving (Show)
-
 asArrayType ::
      U.Array storage allocator a
   -> ArrayType storage allocator a
   -> U.Array storage allocator a
 asArrayType = const
-
-data SomeArrayType a where
-  SomeArrayType
-    :: U.Allocator storage allocator
-    => ArrayType storage allocator a
-    -> SomeArrayType a
-
-deriving instance Show (SomeArrayType a)
-
-mkSAT ::
-     forall storage allocator a. U.Allocator storage allocator
-  => SomeArrayType a
-mkSAT = SomeArrayType (ArrayType (typeRep @allocator) (U.sing @storage))
-
-instance Arbitrary (SomeArrayType a) where
-  arbitrary = do
-    n <- choose (0 :: Int, 2)
-    case n of
-      0 -> pure $ mkSAT @'U.Native @U.Default
-      1 -> pure $ mkSAT @'U.Native @U.Pinned
-      _ -> pure $ mkSAT @'U.Foreign @U.Pinned
-  shrink (SomeArrayType (ArrayType alloc storage))
-    | Just Refl <- testEquality alloc (typeRep @U.Default) =
-      case storage of
-        U.SNative -> []
-        U.SForeign -> [mkSAT @'U.Native @U.Default]
-    | Just Refl <- testEquality alloc (typeRep @U.Pinned) =
-      case storage of
-        U.SNative -> [mkSAT @'U.Native @U.Default]
-        U.SForeign -> [mkSAT @'U.Native @U.Pinned]
-    | otherwise = []
