@@ -50,7 +50,8 @@ module Data.Unistring.Memory.Array.Internal
   , uncheckedCopyArray
   , Allocator(withAllocator, adopt)
   , AllocatorM(new)
-  , MutableArray(uncheckedRead, uncheckedWrite)
+  , MutableArray(uncheckedRead, uncheckedWrite,
+             uncheckedCopyNativeSlice, uncheckedCopyForeignSlice)
   , MonadWithPtr(withForeignPtr)
   , allocatorCoercion
   , forgetArrayAllocator

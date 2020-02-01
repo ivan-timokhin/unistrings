@@ -24,6 +24,7 @@ module Data.Unistring.Memory.Slice.Internal
   , storage
   , allocator
   , fromArray
+  , toArray
   , equal
   , sliceUnchecked
   , size
@@ -43,6 +44,7 @@ import Data.Unistring.Memory.Count (CountOf, ByteCount(ByteCount))
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Array.Unsafe as Array
 import qualified Data.Unistring.Memory.Allocator as Allocator
+import qualified Data.Unistring.Memory.Allocator.Unsafe as Allocator
 import Data.Unistring.Memory.Array (Array)
 import Data.Unistring.Singletons (Known(sing))
 import Data.Unistring.Memory.Primitive.Class.Unsafe
@@ -143,6 +145,36 @@ fromArray arr =
   case Array.storage arr of
     SForeign -> ForeignSlice arr
     SNative -> NativeSlice arr 0 (Array.size arr)
+
+toArray ::
+     ( Primitive a
+     , Known storage
+     , Typeable allocator
+     , Allocator.Allocator storage' allocator'
+     )
+  => Slice storage allocator a
+  -> Array storage' allocator' a
+{-# INLINEABLE toArray #-}
+toArray slice =
+  case storage slice of
+    SNative ->
+      let !(NativeSlice arr@(Array.NArray (Array.NativeArray arr#)) xoff xlen) =
+            slice
+       in case xlen == Array.size arr of
+            True
+              | Just arr' <- Allocator.adopt arr -> arr'
+            _ ->
+              Allocator.withAllocator $ do
+                arr' <- Allocator.new xlen
+                Allocator.uncheckedCopyNativeSlice arr# xoff arr' 0 xlen
+                pure arr'
+    SForeign ->
+      let !(ForeignSlice (Array.FArray (Array.ForeignArray xfptr xlen))) = slice
+       in Allocator.withAllocator $ do
+            arr' <- Allocator.new xlen
+            Allocator.withForeignPtr xfptr $ \xptr ->
+              Allocator.uncheckedCopyForeignSlice xptr arr' 0 xlen
+            pure arr'
 
 sliceUnchecked ::
      (Known storage, Primitive a)

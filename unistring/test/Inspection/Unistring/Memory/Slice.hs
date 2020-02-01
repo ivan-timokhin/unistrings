@@ -26,9 +26,11 @@ module Inspection.Unistring.Memory.Slice
 import Data.Word (Word16)
 import GHC.Exts (ByteArray#, Int(I#), Int#)
 import Test.Tasty (TestTree, testGroup)
+import Data.Typeable (Typeable)
 
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Array.Unsafe as Array
+import qualified Data.Unistring.Memory.Allocator as Allocator
 import qualified Data.Unistring.Memory.Count as Count
 import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as Primitive
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
@@ -67,6 +69,19 @@ tests =
       $(inspectTests $
         ['sliceEqNative, 'sliceEqForeign, 'sliceEqMixed] `allHaveNoneOfTypes`
         [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
+  , testGroup
+      "To Array"
+      $(inspectTests $
+        ['sliceToArrayFromNative, 'sliceToArrayFromForeign] `allHaveNoneOfTypes`
+        [ ''Primitive.Primitive
+        , ''Singletons.Sing
+        , ''Singletons.Known
+        , ''Typeable
+        , ''Allocator.Allocator
+        , ''Allocator.MutableArray
+        , ''Allocator.MonadWithPtr
+        , ''IO
+        ])
   ]
 
 mkNativeSlice ::
@@ -128,3 +143,13 @@ sliceEqMixed ::
   -> Slice.Slice 'Storage.Foreign allocator' Word16
   -> Bool
 sliceEqMixed = Slice.equal
+
+sliceToArrayFromNative ::
+     Slice.Slice 'Storage.Native Allocator.Default Word16
+  -> Array.Array 'Storage.Foreign Allocator.Pinned Word16
+sliceToArrayFromNative = Slice.toArray
+
+sliceToArrayFromForeign ::
+     Slice.Slice 'Storage.Foreign Allocator.Pinned Word16
+  -> Array.Array 'Storage.Native Allocator.Default Word16
+sliceToArrayFromForeign = Slice.toArray

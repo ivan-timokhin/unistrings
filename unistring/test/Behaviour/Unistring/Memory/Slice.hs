@@ -28,6 +28,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (Arbitrary, (.&&.), (===), testProperty)
 
 import qualified Data.Unistring.Memory.Allocator as Allocator
+import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Count as Count
 import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as Primitive
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
@@ -129,6 +130,33 @@ tests =
                     .&&. (y `Slice.equal` x) === (ys == xs)
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "toArray" $
+    let test ::
+             forall a. (Primitive.Primitive a, Eq a, Show a, Arbitrary a)
+          => String -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "toList match" $
+              \(SomeArrayType srcT)
+               (SomeArrayType destT)
+               (prefix :: [a])
+               (xs :: [a])
+               (suffix :: [a]) ->
+                let src = from3Lists prefix xs suffix `asSliceType` srcT
+                    dest = Slice.toArray src `asArrayType` destT
+                 in toList src === toList dest
+            , testProperty "Slices match" $
+              \(SomeArrayType srcT)
+               (SomeArrayType destT)
+               (prefix :: [a])
+               (xs :: [a])
+               (suffix :: [a]) ->
+                let src = from3Lists prefix xs suffix `asSliceType` srcT
+                    dest = Slice.fromArray (Slice.toArray src) `asSliceType` destT
+                 in src ~~~ dest
+            ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   ]
 
 from3Lists ::
@@ -148,3 +176,9 @@ asSliceType ::
   -> ArrayType storage allocator a
   -> Slice.Slice storage allocator a
 asSliceType = const
+
+asArrayType ::
+     Array.Array storage allocator a
+  -> ArrayType storage allocator a
+  -> Array.Array storage allocator a
+asArrayType = const
