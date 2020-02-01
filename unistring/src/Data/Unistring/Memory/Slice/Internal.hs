@@ -18,6 +18,8 @@ limitations under the License.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Data.Unistring.Memory.Slice.Internal
   ( Slice(NativeSlice, ForeignSlice)
@@ -25,6 +27,7 @@ module Data.Unistring.Memory.Slice.Internal
   , allocator
   , fromArray
   , toArray
+  , convert
   , equal
   , sliceUnchecked
   , size
@@ -37,6 +40,7 @@ import GHC.ForeignPtr (ForeignPtr(ForeignPtr))
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.List (unfoldr)
 import System.IO.Unsafe (unsafeDupablePerformIO)
+import Data.Type.Equality ((:~:)(Refl), testEquality)
 
 import qualified Data.Unistring.Memory.Storage as Storage
 import Data.Unistring.Memory.Storage (Storage, Sing(SNative, SForeign))
@@ -175,6 +179,28 @@ toArray slice =
             Allocator.withForeignPtr xfptr $ \xptr ->
               Allocator.uncheckedCopyForeignSlice xptr arr' 0 xlen
             pure arr'
+
+convert ::
+  forall storage' allocator' storage allocator a.
+     ( Primitive a
+     , Known storage
+     , Typeable allocator
+     , Allocator.Allocator storage' allocator'
+     )
+  => Slice storage allocator a
+  -> Slice storage' allocator' a
+{-# INLINEABLE convert #-}
+convert slice =
+  case storage slice of
+    SNative
+      | (NativeSlice arr xoff xlen) <- slice
+      , Just arr' <- Allocator.adopt arr ->
+        sliceUnchecked xoff xlen $ fromArray arr'
+    SForeign
+      | SForeign <- sing @storage'
+      , Just Refl <- testEquality (allocator slice) (typeRep @allocator') ->
+        slice
+    _ -> fromArray $ toArray slice -- TODO: this may re-check `adopt`
 
 sliceUnchecked ::
      (Known storage, Primitive a)

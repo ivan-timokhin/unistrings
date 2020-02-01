@@ -23,14 +23,14 @@ module Inspection.Unistring.Memory.Slice
   ( tests
   ) where
 
+import Data.Typeable (Typeable)
 import Data.Word (Word16)
 import GHC.Exts (ByteArray#, Int(I#), Int#)
 import Test.Tasty (TestTree, testGroup)
-import Data.Typeable (Typeable)
 
+import qualified Data.Unistring.Memory.Allocator as Allocator
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Array.Unsafe as Array
-import qualified Data.Unistring.Memory.Allocator as Allocator
 import qualified Data.Unistring.Memory.Count as Count
 import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as Primitive
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
@@ -70,9 +70,13 @@ tests =
         ['sliceEqNative, 'sliceEqForeign, 'sliceEqMixed] `allHaveNoneOfTypes`
         [''Singletons.Sing, ''Singletons.Known, ''Primitive.Primitive])
   , testGroup
-      "To Array"
+      "Conversion"
       $(inspectTests $
-        ['sliceToArrayFromNative, 'sliceToArrayFromForeign] `allHaveNoneOfTypes`
+        [ 'sliceToArrayFromNative
+        , 'sliceToArrayFromForeign
+        , 'sliceToSliceFromNative
+        , 'sliceToSliceFromForeign
+        ] `allHaveNoneOfTypes`
         [ ''Primitive.Primitive
         , ''Singletons.Sing
         , ''Singletons.Known
@@ -153,3 +157,13 @@ sliceToArrayFromForeign ::
      Slice.Slice 'Storage.Foreign Allocator.Pinned Word16
   -> Array.Array 'Storage.Native Allocator.Default Word16
 sliceToArrayFromForeign = Slice.toArray
+
+sliceToSliceFromNative ::
+     Slice.Slice 'Storage.Native Allocator.Default Word16
+  -> Slice.Slice 'Storage.Foreign Allocator.Pinned Word16
+sliceToSliceFromNative = Slice.convert
+
+sliceToSliceFromForeign ::
+     Slice.Slice 'Storage.Foreign Allocator.Pinned Word16
+  -> Slice.Slice 'Storage.Native Allocator.Default Word16
+sliceToSliceFromForeign = Slice.convert

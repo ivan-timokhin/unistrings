@@ -157,6 +157,24 @@ tests =
                  in src ~~~ dest
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "toSlice" $
+    let test ::
+             forall a. (Primitive.Primitive a, Eq a, Show a, Arbitrary a)
+          => String -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "Slices match" $
+              \(SomeArrayType srcT)
+               (SomeArrayType destT)
+               (prefix :: [a])
+               (xs :: [a])
+               (suffix :: [a]) ->
+                let src = from3Lists prefix xs suffix `asSliceType` srcT
+                    dest = Slice.convert src `asSliceType` destT
+                 in src ~~~ dest
+            ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   ]
 
 from3Lists ::
