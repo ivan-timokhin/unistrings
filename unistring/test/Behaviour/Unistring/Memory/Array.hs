@@ -95,6 +95,40 @@ tests =
                  in input ~~~ output
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "Empty" $
+    let test ::
+             forall a. (U.Primitive a, Show a)
+          => String
+          -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "Equal to fromList []" $ \(SomeArrayType t) ->
+                let empty = U.empty `asArrayType` t
+                 in empty === fromList ([] :: [a])
+            ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "Append" $
+    let test ::
+             forall a. (U.Primitive a, Show a, Arbitrary a)
+          => String
+          -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "isomorphic to lists" $
+              \(SomeArrayType xt)
+               (SomeArrayType yt)
+               (SomeArrayType zt)
+               (xs :: [a])
+               (ys :: [a]) ->
+                let xa = fromList xs `asArrayType` xt
+                    ya = fromList ys `asArrayType` yt
+                    za = U.append xa ya `asArrayType` zt
+                    zs = xs ++ ys
+                 in za === fromList zs
+            ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   ]
 
 asArrayType ::

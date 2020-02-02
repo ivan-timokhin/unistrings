@@ -47,6 +47,8 @@ module Data.Unistring.Memory.Array.Internal
   , toList
   , equal
   , convert
+  , append
+  , empty
   , uncheckedCopyArray
   , Allocator(withAllocator, adopt)
   , AllocatorM(new)
@@ -70,6 +72,10 @@ import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
 import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Typeable (Typeable)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
+
+#if !MIN_VERSION_base(4, 11, 0)
+import Data.Semigroup (Semigroup((<>)))
+#endif
 
 import Data.Unistring.Singletons (Known(sing))
 import Data.Unistring.Compat.Typeable (TypeRep, typeRep)
@@ -152,6 +158,17 @@ instance (Known storage, Primitive a) => Eq (Array storage allocator a) where
 instance (Known storage, Primitive a, Show a) =>
          Show (Array storage allocator a) where
   showsPrec p = showsPrec p . toList
+
+instance (Allocator storage allocator, Primitive a) =>
+         Semigroup (Array storage allocator a) where
+  (<>) = append
+
+instance (Allocator storage allocator, Primitive a) =>
+         Monoid (Array storage allocator a) where
+  mempty = empty
+#if !MIN_VERSION_base(4, 11, 0)
+  mappend = (<>)
+#endif
 
 -- Allowed to have false negatives, but not false positives
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
@@ -295,6 +312,27 @@ convert src =
         arr <- new n
         uncheckedCopyArray src arr 0
         pure arr
+
+append ::
+     ( Known xStorage
+     , Known yStorage
+     , Allocator zStorage zAllocator
+     , Primitive a
+     )
+  => Array xStorage xAllocator a
+  -> Array yStorage yAllocator a
+  -> Array zStorage zAllocator a
+{-# INLINEABLE append #-}
+append x y =
+  withAllocator $ do
+    arr <- new $ size x + size y
+    uncheckedCopyArray x arr 0
+    uncheckedCopyArray y arr $ size x
+    pure arr
+
+empty :: (Allocator storage allocator, Primitive a) => Array storage allocator a
+{-# INLINEABLE empty #-}
+empty = withAllocator $ new 0
 
 uncheckedCopyArray ::
      (Known storage, Primitive a, MutableArray arr m, MonadWithPtr m)

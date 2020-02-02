@@ -38,6 +38,8 @@ module Data.Unistring.Memory.Array
   , toList
   , equal
   , convert
+  , append
+  , empty
   , forgetArrayAllocator
   ) where
 
@@ -46,7 +48,9 @@ import Data.Unistring.Memory.Array.Internal
   , ForeignArray
   , NativeArray
   , allocator
+  , append
   , convert
+  , empty
   , equal
   , foreignArrayLength
   , forgetArrayAllocator
