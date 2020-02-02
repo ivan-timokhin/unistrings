@@ -24,7 +24,13 @@ module Behaviour.Unistring.Memory.Array
 import Data.Word (Word16, Word32, Word8)
 import GHC.Exts (IsList(fromList, toList))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (Arbitrary, (.&&.), (===), testProperty)
+import Test.Tasty.QuickCheck
+  ( Arbitrary
+  , NonNegative(NonNegative)
+  , (.&&.)
+  , (===)
+  , testProperty
+  )
 
 import qualified Data.Unistring.Memory.Array as U
 import qualified Data.Unistring.Memory.Count as U
@@ -144,6 +150,25 @@ tests =
                 let xas = map (\xs -> fromList xs `asArrayType` inputT) xss
                     ya = U.concat xas `asArrayType` outputT
                     ys = concat xss
+                 in ya === fromList ys
+            ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "Times" $
+    let test ::
+             forall a. (U.Primitive a, Show a, Arbitrary a)
+          => String
+          -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "isomorphic to lists" $
+              \(SomeArrayType inputT)
+               (SomeArrayType outputT)
+               (xs :: [a])
+               (NonNegative (n :: Int)) ->
+                let xa = fromList xs `asArrayType` inputT
+                    ya = U.times n xa `asArrayType` outputT
+                    ys = concat $ replicate n xs
                  in ya === fromList ys
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]

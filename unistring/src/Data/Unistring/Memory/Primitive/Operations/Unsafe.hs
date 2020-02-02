@@ -38,6 +38,7 @@ module Data.Unistring.Memory.Primitive.Operations.Unsafe
   , compareBytesSliceMixed
   , copyForeignToNative
   , copyNativeToNative
+  , copyMutableNativeToNative
   , sizeOfByteArray
   , getSizeOfMutableByteArray
   ) where
@@ -169,6 +170,35 @@ foreign import ccall unsafe "_hs__unistring__copy" c_copy
   :: E.MutableByteArray# E.RealWorld
   -> CSize
   -> E.Ptr a
+  -> CSize
+  -> IO ()
+#endif
+
+copyMutableNativeToNative ::
+     E.MutableByteArray# E.RealWorld
+  -> ByteCount
+  -> E.MutableByteArray# E.RealWorld
+  -> ByteCount
+  -> ByteCount
+  -> IO ()
+{-# INLINE copyMutableNativeToNative #-}
+#if MIN_VERSION_base(4, 11, 0)
+copyMutableNativeToNative src# (ByteCount (E.I# srcOff#)) dest# (ByteCount (E.I# destOff#)) (ByteCount (E.I# n#)) =
+  IO $ \s -> (# E.copyMutableByteArray# src# srcOff# dest# destOff# n# s, () #)
+#else
+copyMutableNativeToNative src# (ByteCount srcOff) dest# (ByteCount destOff) (ByteCount n) =
+  c_copy_off_mut
+    dest#
+    (fromIntegral destOff)
+    src#
+    (fromIntegral srcOff)
+    (fromIntegral n)
+
+foreign import ccall unsafe "_hs__unistring__copy_off" c_copy_off_mut
+  :: E.MutableByteArray# E.RealWorld
+  -> CSize
+  -> E.MutableByteArray# E.RealWorld
+  -> CSize
   -> CSize
   -> IO ()
 #endif

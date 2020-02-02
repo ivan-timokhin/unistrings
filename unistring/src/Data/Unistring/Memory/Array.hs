@@ -41,6 +41,7 @@ module Data.Unistring.Memory.Array
   , append
   , empty
   , Data.Unistring.Memory.Array.Internal.concat
+  , times
   , forgetArrayAllocator
   ) where
 
@@ -60,5 +61,6 @@ import Data.Unistring.Memory.Array.Internal
   , nativeArrayLength
   , size
   , storage
+  , times
   , toList
   )

@@ -49,6 +49,7 @@ module Data.Unistring.Memory.Array.Internal
   , convert
   , append
   , Data.Unistring.Memory.Array.Internal.concat
+  , times
   , empty
   , uncheckedCopyArray
   , Allocator(withAllocator, adopt)
@@ -77,9 +78,9 @@ import Control.Monad.Trans.State.Strict (evalStateT, get, put)
 import Control.Monad.Trans.Class (lift)
 
 #if MIN_VERSION_base(4, 11, 0)
-import Data.Semigroup (Semigroup(sconcat))
+import Data.Semigroup (Semigroup(sconcat, stimes))
 #else
-import Data.Semigroup (Semigroup((<>), sconcat))
+import Data.Semigroup (Semigroup((<>), sconcat, stimes))
 #endif
 
 import Data.Unistring.Singletons (Known(sing))
@@ -168,6 +169,7 @@ instance (Allocator storage allocator, Primitive a) =>
          Semigroup (Array storage allocator a) where
   (<>) = append
   sconcat = Data.Unistring.Memory.Array.Internal.concat
+  stimes = times
 
 instance (Allocator storage allocator, Primitive a) =>
          Monoid (Array storage allocator a) where
@@ -357,6 +359,28 @@ concat arrays =
         put $! offset + size array
     pure result
 
+times ::
+     ( Known storage
+     , Typeable allocator
+     , Allocator storage' allocator'
+     , Primitive a
+     , Integral n)
+  => n
+  -> Array storage allocator a
+  -> Array storage' allocator' a
+{-# INLINEABLE times #-}
+times 0 _ = empty
+times 1 array = convert array
+times n array
+  | n < 0 = errorWithoutStackTrace "stimes Array: negative repetition count"
+  | otherwise =
+    withAllocator $ do
+      let !sz = size array
+      result <- new $ fromIntegral n * sz
+      uncheckedCopyArray array result 0
+      cyclePrefix result sz
+      pure result
+
 empty :: (Allocator storage allocator, Primitive a) => Array storage allocator a
 {-# INLINEABLE empty #-}
 empty = withAllocator $ new 0
@@ -399,6 +423,15 @@ class Monad m =>
     -> m ()
   uncheckedCopyForeignSlice ::
        Primitive a => E.Ptr a -> arr a -> CountOf a -> CountOf a -> m ()
+  uncheckedCopyArraySlice ::
+       Primitive a
+    => arr a
+    -> CountOf a
+    -> arr a
+    -> CountOf a
+    -> CountOf a
+    -> m ()
+  arraySize :: Primitive a => arr a -> m (CountOf a)
 
 instance MutableArray (NativeMutableArray E.RealWorld) IO where
   uncheckedRead = uncheckedReadNative
@@ -412,6 +445,29 @@ instance MutableArray (NativeMutableArray E.RealWorld) IO where
       (inBytes n)
   uncheckedCopyForeignSlice src (NativeMutableArray dest#) destOff n =
     Operations.copyForeignToNative src dest# (inBytes destOff) (inBytes n)
+  uncheckedCopyArraySlice (NativeMutableArray src#) srcOff (NativeMutableArray dest#) destOff n =
+    Operations.copyMutableNativeToNative
+      src#
+      (inBytes srcOff)
+      dest#
+      (inBytes destOff)
+      (inBytes n)
+  arraySize = getNativeMutableArrayLength
+
+cyclePrefix :: (MutableArray arr m, Primitive a) => arr a -> CountOf a -> m ()
+{-# INLINEABLE cyclePrefix #-}
+cyclePrefix arr prefixLen = do
+  fullLen <- arraySize arr
+  let go currentPrefixLen
+        | currentPrefixLen >= fullLen = pure ()
+        | let doubledLen = 2 * currentPrefixLen
+        , doubledLen <= fullLen = do
+          uncheckedCopyArraySlice arr 0 arr currentPrefixLen currentPrefixLen
+          go doubledLen
+        | otherwise =
+          uncheckedCopyArraySlice arr 0 arr currentPrefixLen $
+          fullLen - currentPrefixLen
+  go prefixLen
 
 class Monad m => MonadWithPtr m where
   withForeignPtr :: ForeignPtr a -> (E.Ptr a -> m r) -> m r
