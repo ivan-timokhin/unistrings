@@ -36,6 +36,9 @@ library
                      , Data.Unistring.Memory.Allocator
                      , Data.Unistring.Memory.Allocator.Unsafe
                      , Data.Unistring.Memory.Slice.Internal
+                     , Data.Unistring.Memory.Ownership
+                     , Data.Unistring.Memory.Strictness
+                     , Data.Unistring.Memory.Sequence.Internal
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
@@ -94,3 +97,4 @@ test-suite unistring-test
                      , Inspection.Unistring.Memory
                      , Inspection.Unistring.Memory.Array
                      , Inspection.Unistring.Memory.Slice
+                     , Inspection.Unistring.Memory.Sequence

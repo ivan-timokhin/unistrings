@@ -19,6 +19,11 @@ import Test.Tasty (TestTree, testGroup)
 
 import qualified Inspection.Unistring.Memory.Array as Array
 import qualified Inspection.Unistring.Memory.Slice as Slice
+import qualified Inspection.Unistring.Memory.Sequence as Sequence
 
 tests :: [TestTree]
-tests = [testGroup "Array" Array.tests, testGroup "Slice" Slice.tests]
+tests =
+  [ testGroup "Array" Array.tests
+  , testGroup "Slice" Slice.tests
+  , testGroup "Sequence" Sequence.tests
+  ]
