@@ -159,7 +159,7 @@ tests =
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   , testGroup "toSlice" $
     let test ::
-             forall a. (Primitive.Primitive a, Eq a, Show a, Arbitrary a)
+             forall a. (Primitive.Primitive a, Show a, Arbitrary a)
           => String -> TestTree
         test name =
           testGroup

@@ -550,8 +550,7 @@ instance Allocator 'Native Pinned where
     | otherwise = Nothing
 
 withNativeAllocator ::
-     AllocatorM (NativeMutableArray E.RealWorld) n
-  => (n (NativeMutableArray E.RealWorld a) -> IO (NativeMutableArray E.RealWorld a))
+     (n (NativeMutableArray E.RealWorld a) -> IO (NativeMutableArray E.RealWorld a))
   -> n (NativeMutableArray E.RealWorld a)
   -> Array 'Native alloc a
 {-# INLINE withNativeAllocator #-}
