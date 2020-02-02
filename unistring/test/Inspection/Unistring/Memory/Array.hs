@@ -119,6 +119,24 @@ tests =
             , ''Typeable
             ])
       ]
+  , testGroup
+      "Concatenation"
+      $(inspectTests $
+        [ 'emptyForeign
+        , 'emptyNative
+        , 'appendMixed
+        , 'concatForeignToNative
+        , 'timesNativeToForeign
+        ] `allHaveNoneOfTypes`
+        [ ''S.Known
+        , ''U.Sing
+        , ''U.Allocator
+        , ''U.AllocatorM
+        , ''U.MutableArray
+        , ''U.MonadWithPtr
+        , ''U.Primitive
+        , ''Typeable
+        ])
   ]
 
 nativeArrayLength :: U.Array 'U.Native alloc Word8 -> U.CountOf Word8
@@ -180,3 +198,25 @@ arrayEqMixed = U.equal
 convertNativeToForeign ::
      U.Array 'U.Native U.Default Word8 -> U.Array 'U.Foreign U.Pinned Word8
 convertNativeToForeign = U.convert
+
+emptyForeign :: U.Array 'U.Foreign U.Pinned Word8
+emptyForeign = U.empty
+
+emptyNative :: U.Array 'U.Native U.Default Word8
+emptyNative = U.empty
+
+appendMixed ::
+     U.Array 'U.Native U.Default Word8
+  -> U.Array 'U.Foreign U.Pinned Word8
+  -> U.Array 'U.Native U.Pinned Word8
+appendMixed = U.append
+
+concatForeignToNative ::
+     [U.Array 'U.Foreign U.Unknown Word8] -> U.Array 'U.Native U.Default Word8
+concatForeignToNative = U.concat
+
+timesNativeToForeign ::
+     Int
+  -> U.Array 'U.Native U.Unknown Word8
+  -> U.Array 'U.Foreign U.Pinned Word8
+timesNativeToForeign = U.times

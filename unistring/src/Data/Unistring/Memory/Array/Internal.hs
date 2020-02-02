@@ -455,7 +455,7 @@ instance MutableArray (NativeMutableArray E.RealWorld) IO where
   arraySize = getNativeMutableArrayLength
 
 cyclePrefix :: (MutableArray arr m, Primitive a) => arr a -> CountOf a -> m ()
-{-# INLINEABLE cyclePrefix #-}
+{-# INLINE cyclePrefix #-}
 cyclePrefix arr prefixLen = do
   fullLen <- arraySize arr
   let go currentPrefixLen
