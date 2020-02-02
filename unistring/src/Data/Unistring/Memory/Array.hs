@@ -40,6 +40,7 @@ module Data.Unistring.Memory.Array
   , convert
   , append
   , empty
+  , Data.Unistring.Memory.Array.Internal.concat
   , forgetArrayAllocator
   ) where
 
@@ -49,6 +50,7 @@ import Data.Unistring.Memory.Array.Internal
   , NativeArray
   , allocator
   , append
+  , concat
   , convert
   , empty
   , equal

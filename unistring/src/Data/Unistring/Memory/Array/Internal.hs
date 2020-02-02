@@ -48,6 +48,7 @@ module Data.Unistring.Memory.Array.Internal
   , equal
   , convert
   , append
+  , Data.Unistring.Memory.Array.Internal.concat
   , empty
   , uncheckedCopyArray
   , Allocator(withAllocator, adopt)
@@ -60,7 +61,7 @@ module Data.Unistring.Memory.Array.Internal
   ) where
 
 import Control.Monad.ST (stToIO)
-import Data.Foldable (for_)
+import Data.Foldable (for_, foldl')
 import Data.Kind (Type)
 import Data.Traversable (for)
 import Data.Type.Coercion (Coercion(Coercion), coerceWith)
@@ -72,9 +73,13 @@ import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
 import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Typeable (Typeable)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
+import Control.Monad.Trans.State.Strict (evalStateT, get, put)
+import Control.Monad.Trans.Class (lift)
 
-#if !MIN_VERSION_base(4, 11, 0)
-import Data.Semigroup (Semigroup((<>)))
+#if MIN_VERSION_base(4, 11, 0)
+import Data.Semigroup (Semigroup(sconcat))
+#else
+import Data.Semigroup (Semigroup((<>), sconcat))
 #endif
 
 import Data.Unistring.Singletons (Known(sing))
@@ -162,6 +167,7 @@ instance (Known storage, Primitive a, Show a) =>
 instance (Allocator storage allocator, Primitive a) =>
          Semigroup (Array storage allocator a) where
   (<>) = append
+  sconcat = Data.Unistring.Memory.Array.Internal.concat
 
 instance (Allocator storage allocator, Primitive a) =>
          Monoid (Array storage allocator a) where
@@ -169,6 +175,7 @@ instance (Allocator storage allocator, Primitive a) =>
 #if !MIN_VERSION_base(4, 11, 0)
   mappend = (<>)
 #endif
+  mconcat = Data.Unistring.Memory.Array.Internal.concat
 
 -- Allowed to have false negatives, but not false positives
 isDefinitelyPinned :: Typeable allocator => Array 'Native allocator a -> Bool
@@ -329,6 +336,26 @@ append x y =
     uncheckedCopyArray x arr 0
     uncheckedCopyArray y arr $ size x
     pure arr
+
+concat ::
+     ( Known storage
+     , Typeable allocator
+     , Allocator storage' allocator'
+     , Primitive a
+     , Foldable f
+     )
+  => f (Array storage allocator a)
+  -> Array storage' allocator' a
+{-# INLINEABLE concat #-}
+concat arrays =
+  withAllocator $ do
+    result <- new $ foldl' (\n array -> n + size array) 0 arrays
+    flip evalStateT 0 $
+      for_ arrays $ \array -> do
+        offset <- get
+        lift $ uncheckedCopyArray array result offset
+        put $! offset + size array
+    pure result
 
 empty :: (Allocator storage allocator, Primitive a) => Array storage allocator a
 {-# INLINEABLE empty #-}

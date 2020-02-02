@@ -129,6 +129,24 @@ tests =
                  in za === fromList zs
             ]
      in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
+  , testGroup "Concat" $
+    let test ::
+             forall a. (U.Primitive a, Show a, Arbitrary a)
+          => String
+          -> TestTree
+        test name =
+          testGroup
+            name
+            [ testProperty "isomorphic to lists" $
+              \(SomeArrayType inputT)
+               (SomeArrayType outputT)
+               (xss :: [[a]]) ->
+                let xas = map (\xs -> fromList xs `asArrayType` inputT) xss
+                    ya = U.concat xas `asArrayType` outputT
+                    ys = concat xss
+                 in ya === fromList ys
+            ]
+     in [test @Word8 "Word8", test @Word16 "Word16", test @Word32 "Word32"]
   ]
 
 asArrayType ::
