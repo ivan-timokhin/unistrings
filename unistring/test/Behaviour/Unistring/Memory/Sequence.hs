@@ -31,6 +31,7 @@ import Test.Tasty.QuickCheck
   ( Arbitrary
   , (===)
   , testProperty
+  , NonNegative(NonNegative)
 #if MIN_VERSION_tasty_quickcheck(0, 10, 1)
   , InfiniteList(getInfiniteList)
 #endif
@@ -49,6 +50,7 @@ import Behaviour.Unistring.Memory.SequenceType
   ( SequenceType
   , SomeSequenceType(SomeSequenceType)
   )
+import Behaviour.Common ((~~~))
 
 tests :: [TestTree]
 tests =
@@ -73,6 +75,61 @@ tests =
         , testGroup "Word16" (test @Word16)
         , testGroup "Word32" (test @Word32)
         ]
+  , testGroup "Eq" $
+    let test ::
+             forall a. (Primitive.Primitive a, Eq a, Show a, Arbitrary a)
+          => [TestTree]
+        test = [
+          testProperty "Equal" $
+          \(SomeSequenceType t1)
+           (SomeSequenceType t2)
+           prefixes1
+           prefixes2
+           (xs :: [a])
+           lengths1
+           lengths2
+           suffixes1
+           suffixes2 ->
+            let s1 =
+                  fromLists
+                  (infiniteList prefixes1)
+                  (intoChunks lengths1 xs)
+                  (infiniteList suffixes1)
+                  `asSequenceType` t1
+                s2 =
+                  fromLists
+                  (infiniteList prefixes2)
+                  (intoChunks lengths2 xs)
+                  (infiniteList suffixes2)
+                  `asSequenceType` t2
+             in s1 ~~~ s2
+         , testProperty "Random" $
+           \(SomeSequenceType t1)
+            (SomeSequenceType t2)
+            prefixes1
+            prefixes2
+            (xss :: [[a]])
+            (yss :: [[a]])
+            suffixes1
+            suffixes2 ->
+             let s1 =
+                   fromLists
+                   (infiniteList prefixes1)
+                   xss
+                   (infiniteList suffixes1)
+                   `asSequenceType` t1
+                 s2 =
+                   fromLists
+                   (infiniteList prefixes2)
+                   yss
+                   (infiniteList suffixes2)
+                   `asSequenceType` t2
+              in (s1 `Sequence.equal` s2) === (concat xss == concat yss)
+         ]
+    in [ testGroup "Word8" $ test @Word8
+       , testGroup "Word16" $ test @Word16
+       , testGroup "Word32" $ test @Word32
+       ]
   ]
 
 #if MIN_VERSION_tasty_quickcheck(0, 10, 1)
@@ -84,11 +141,11 @@ infiniteList [] = repeat mempty
 infiniteList xs = cycle xs
 #endif
 
--- intoChunks :: [NonNegative Int] -> [a] -> [[a]]
--- intoChunks [] xs = [xs]
--- intoChunks (NonNegative n:ns) xs = prefix : intoChunks ns suffix
---   where
---     (prefix, suffix) = splitAt n xs
+intoChunks :: [NonNegative Int] -> [a] -> [[a]]
+intoChunks [] xs = [xs]
+intoChunks (NonNegative n:ns) xs = prefix : intoChunks ns suffix
+  where
+    (prefix, suffix) = splitAt n xs
 
 fromLists ::
      forall storage allocator ownership strictness a.

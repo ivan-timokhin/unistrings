@@ -29,6 +29,7 @@ module Data.Unistring.Memory.Slice.Internal
   , toArray
   , convert
   , equal
+  , Data.Unistring.Memory.Slice.Internal.splitAt
   , sliceUnchecked
   , size
   , uncons
@@ -201,6 +202,18 @@ convert slice =
       , Just Refl <- testEquality (allocator slice) (typeRep @allocator') ->
         slice
     _ -> fromArray $ toArray slice -- TODO: this may re-check `adopt`
+
+splitAt ::
+     (Known storage, Primitive a)
+  => CountOf a
+  -> Slice storage allocator a
+  -> (Slice storage allocator a, Slice storage allocator a)
+{-# INLINEABLE splitAt #-}
+splitAt n sl
+  | n < sz = (sliceUnchecked 0 n sl, sliceUnchecked n (sz - n) sl)
+  | otherwise = (sl, sliceUnchecked sz 0 sl)
+  where
+    !sz = size sl
 
 sliceUnchecked ::
      (Known storage, Primitive a)

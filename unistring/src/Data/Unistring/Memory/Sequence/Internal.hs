@@ -24,6 +24,7 @@ module Data.Unistring.Memory.Sequence.Internal
   ( Sequence(FullStrict, SliceStrict, ConsNF, NilNF, ConsFF, NilFF,
          ConsNS, NilNS, ConsFS, NilFS)
   , toList
+  , equal
   , nilL
   , unconsChunk
   , consChunk
@@ -34,6 +35,7 @@ module Data.Unistring.Memory.Sequence.Internal
   ) where
 
 import Data.List (unfoldr)
+import Data.Maybe (isNothing)
 
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Slice.Internal as Slice -- TODO
@@ -42,6 +44,7 @@ import qualified Data.Unistring.Memory.Ownership as Ownership
 import qualified Data.Unistring.Memory.Strictness as Strictness
 import Data.Unistring.Singletons (Known(sing), Sing)
 import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
+import Data.Unistring.Memory.Count (CountOf)
 
 data family
      Sequence
@@ -154,16 +157,19 @@ unconsChunk =
         NilFS -> Nothing
 
 consChunk :: forall storage allocator ownership a.
-  (Known storage, Known ownership)
+  (Known storage, Known ownership, Primitive a)
   => Sequence storage allocator ownership 'Strictness.Strict a
   -> Sequence storage allocator ownership 'Strictness.Lazy a
   -> Sequence storage allocator ownership 'Strictness.Lazy a
 {-# INLINE consChunk #-}
-consChunk = case (sing @storage, sing @ownership) of
-  (Storage.SNative, Ownership.SFull) -> ConsNF . getFullStrict
-  (Storage.SNative, Ownership.SSlice) -> ConsNS . getSliceStrict
-  (Storage.SForeign, Ownership.SFull) -> ConsFF . getFullStrict
-  (Storage.SForeign, Ownership.SSlice) -> ConsFS . getSliceStrict
+consChunk c cs
+  | sizeStrict c == 0 = cs
+  | otherwise =
+  case (sing @storage, sing @ownership) of
+    (Storage.SNative, Ownership.SFull) -> ConsNF (getFullStrict c) cs
+    (Storage.SNative, Ownership.SSlice) -> ConsNS (getSliceStrict c) cs
+    (Storage.SForeign, Ownership.SFull) -> ConsFF (getFullStrict c) cs
+    (Storage.SForeign, Ownership.SSlice) -> ConsFS (getSliceStrict c) cs
   where
     getFullStrict (FullStrict a) = a
     getSliceStrict (SliceStrict a) = a
@@ -174,6 +180,18 @@ chunks ::
   -> [Sequence storage allocator ownership 'Strictness.Strict a]
 {-# INLINE chunks #-}
 chunks = unfoldr unconsChunk
+
+sizeStrict ::
+     (Known storage, Known ownership, Primitive a)
+  => Sequence storage allocator ownership 'Strictness.Strict a
+  -> CountOf a
+{-# INLINEABLE sizeStrict #-}
+sizeStrict s =
+  case ownership s of
+    Ownership.SFull
+      | (FullStrict array) <- s -> Array.size array
+    Ownership.SSlice
+      | (SliceStrict slice) <- s -> Slice.size slice
 
 toList ::
      (Known storage, Known ownership, Known strictness, Primitive a)
@@ -203,6 +221,115 @@ toListLazy ::
   -> [a]
 {-# INLINE toListLazy #-}
 toListLazy = concatMap toListStrict . chunks
+
+equal ::
+     ( Known storage1
+     , Known storage2
+     , Known ownership1
+     , Known ownership2
+     , Known strictness1
+     , Known strictness2
+     , Primitive a)
+     => Sequence storage1 allocator1 ownership1 strictness1 a
+     -> Sequence storage2 allocator2 ownership2 strictness2 a
+     -> Bool
+{-# INLINEABLE equal #-}
+equal s1 s2 =
+  case (strictness s1, strictness s2) of
+    (Strictness.SStrict, Strictness.SStrict) -> s1 `equalStrict` s2
+    (Strictness.SStrict, Strictness.SLazy) -> s1 `equalMixed` s2
+    (Strictness.SLazy, Strictness.SStrict) -> s2 `equalMixed` s1
+    (Strictness.SLazy, Strictness.SLazy) -> s1 `equalLazy` s2
+
+equalStrict ::
+     ( Known storage1
+     , Known storage2
+     , Known ownership1
+     , Known ownership2
+     , Primitive a
+     )
+  => Sequence storage1 allocator1 ownership1 'Strictness.Strict a
+  -> Sequence storage2 allocator2 ownership2 'Strictness.Strict a
+  -> Bool
+{-# INLINEABLE equalStrict #-}
+equalStrict s1 s2 =
+  case (ownership s1, ownership s2) of
+    (Ownership.SFull, Ownership.SFull)
+      | FullStrict arr1 <- s1
+      , FullStrict arr2 <- s2 -> Array.equal arr1 arr2
+    _ -> asSlice s1 `Slice.equal` asSlice s2
+
+equalMixed ::
+     ( Known storage1
+     , Known storage2
+     , Known ownership1
+     , Known ownership2
+     , Primitive a
+     )
+  => Sequence storage1 allocator1 ownership1 'Strictness.Strict a
+  -> Sequence storage2 allocator2 ownership2 'Strictness.Lazy a
+  -> Bool
+{-# INLINEABLE equalMixed #-}
+equalMixed = go . asSlice
+  where
+    go slice sq =
+      case unconsChunk sq of
+        Nothing -> Slice.size slice == 0
+        Just (strict, rest) ->
+          let headSlice = asSlice strict
+              headSize = Slice.size headSlice
+              (prefix, suffix) = Slice.splitAt headSize slice
+           in prefix `Slice.equal` headSlice && go suffix rest
+
+equalLazy ::
+     ( Known storage1
+     , Known storage2
+     , Known ownership1
+     , Known ownership2
+     , Primitive a
+     )
+  => Sequence storage1 allocator1 ownership1 'Strictness.Lazy a
+  -> Sequence storage2 allocator2 ownership2 'Strictness.Lazy a
+  -> Bool
+{-# INLINEABLE equalLazy #-}
+equalLazy = go0
+  where
+    go0 sq1 sq2 =
+      case unconsChunk sq1 of
+        Nothing -> isNothing $ unconsChunk sq2
+        Just (h1, t1) -> go1 (asSlice h1) t1 sq2
+    go1 h1 t1 sq2 =
+      case unconsChunk sq2 of
+        Nothing -> False
+        Just (h2, t2) -> go2 h1 t1 (asSlice h2) t2
+    go1' sq1 h2 t2 =
+      case unconsChunk sq1 of
+        Nothing -> False
+        Just (h1, t1) -> go2 (asSlice h1) t1 h2 t2
+    go2 h1 t1 h2 t2 =
+      case size1 `compare` size2 of
+        EQ -> h1 `Slice.equal` h2 && go0 t1 t2
+        LT
+          | (h2prefix, h2suffix) <- Slice.splitAt size1 h2 ->
+            h1 `Slice.equal` h2prefix && go1' t1 h2suffix t2
+        GT
+          | (h1prefix, h1suffix) <- Slice.splitAt size2 h1 ->
+            h1prefix `Slice.equal` h2 && go1 h1suffix t1 t2
+      where
+        size1 = Slice.size h1
+        size2 = Slice.size h2
+
+asSlice ::
+     (Primitive a, Known storage, Known ownership)
+  => Sequence storage allocator ownership 'Strictness.Strict a
+  -> Slice.Slice storage allocator a
+{-# INLINE asSlice #-}
+asSlice s1 =
+  case ownership s1 of
+    Ownership.SFull
+      | FullStrict arr <- s1 -> Slice.fromArray arr
+    Ownership.SSlice
+      | SliceStrict sl <- s1 -> sl
 
 storage ::
      Known storage

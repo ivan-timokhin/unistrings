@@ -72,6 +72,11 @@ tests =
         , 'toListFoldrForeignSliceLazy
         ] `allHaveNoneOfTypes`
         [''[], ''Known, ''Sing, ''Primitive.Primitive])
+  , testGroup
+      "equal"
+      $(inspectTests $
+        ['equal1, 'equal2, 'equal3, 'equal4, 'equal5] `allHaveNoneOfTypes`
+        [''Known, ''Sing, ''Primitive.Primitive])
   ]
 
 mkNativeFullLazy ::
@@ -171,3 +176,33 @@ toListFoldrForeignSliceLazy ::
   -> Sequence.Sequence 'Storage.Foreign allocator 'Ownership.Slice 'Strictness.Lazy Word32
   -> r
 toListFoldrForeignSliceLazy f z = foldr f z . Sequence.toList
+
+equal1 ::
+     Sequence.Sequence 'Storage.Foreign a1 'Ownership.Full 'Strictness.Strict Word32
+  -> Sequence.Sequence 'Storage.Native a2 'Ownership.Full 'Strictness.Strict Word32
+  -> Bool
+equal1 = Sequence.equal
+
+equal2 ::
+     Sequence.Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Strict Word32
+  -> Sequence.Sequence 'Storage.Native a2 'Ownership.Full 'Strictness.Strict Word32
+  -> Bool
+equal2 = Sequence.equal
+
+equal3 ::
+     Sequence.Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Lazy Word32
+  -> Sequence.Sequence 'Storage.Native a2 'Ownership.Full 'Strictness.Strict Word32
+  -> Bool
+equal3 = Sequence.equal
+
+equal4 ::
+     Sequence.Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Lazy Word32
+  -> Sequence.Sequence 'Storage.Native a2 'Ownership.Full 'Strictness.Lazy Word32
+  -> Bool
+equal4 = Sequence.equal
+
+equal5 ::
+     Sequence.Sequence 'Storage.Foreign a1 'Ownership.Full 'Strictness.Lazy Word32
+  -> Sequence.Sequence 'Storage.Native a2 'Ownership.Slice 'Strictness.Lazy Word32
+  -> Bool
+equal5 = Sequence.equal
