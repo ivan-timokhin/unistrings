@@ -18,6 +18,7 @@ limitations under the License.
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE CPP #-}
 
 module Behaviour.Unistring.Memory.Sequence
   ( tests
@@ -30,7 +31,9 @@ import Test.Tasty.QuickCheck
   ( Arbitrary
   , (===)
   , testProperty
-  , InfiniteList(InfiniteList, getInfiniteList)
+#if MIN_VERSION_tasty_quickcheck(0, 10, 1)
+  , InfiniteList(getInfiniteList)
+#endif
   )
 
 import qualified Data.Unistring.Memory.Allocator as Allocator
@@ -56,10 +59,14 @@ tests =
         test = [
           testProperty "toList . fromLists" $
           \(SomeSequenceType t)
-           InfiniteList {getInfiniteList = prefixes :: [[a]]}
+           prefixes
            (xss :: [[a]])
-           InfiniteList {getInfiniteList = suffixes :: [[a]]} ->
-            let s = fromLists prefixes xss suffixes `asSequenceType` t
+           suffixes ->
+            let s = fromLists
+                    (infiniteList prefixes)
+                    xss
+                    (infiniteList suffixes)
+                  `asSequenceType` t
              in Sequence.toList s === concat xss
           ]
      in [ testGroup "Word8" (test @Word8)
@@ -67,6 +74,15 @@ tests =
         , testGroup "Word32" (test @Word32)
         ]
   ]
+
+#if MIN_VERSION_tasty_quickcheck(0, 10, 1)
+infiniteList :: InfiniteList a -> [a]
+infiniteList = getInfiniteList
+#else
+infiniteList :: Monoid a => [a] -> [a]
+infiniteList [] = repeat mempty
+infiniteList xs = cycle xs
+#endif
 
 -- intoChunks :: [NonNegative Int] -> [a] -> [[a]]
 -- intoChunks [] xs = [xs]
