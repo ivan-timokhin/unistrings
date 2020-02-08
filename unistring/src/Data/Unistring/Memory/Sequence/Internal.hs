@@ -23,6 +23,7 @@ limitations under the License.
 module Data.Unistring.Memory.Sequence.Internal
   ( Sequence(FullStrict, SliceStrict, ConsNF, NilNF, ConsFF, NilFF,
          ConsNS, NilNS, ConsFS, NilFS)
+  , toList
   , nilL
   , unconsChunk
   , consChunk
@@ -40,6 +41,7 @@ import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Ownership as Ownership
 import qualified Data.Unistring.Memory.Strictness as Strictness
 import Data.Unistring.Singletons (Known(sing), Sing)
+import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
 
 data family
      Sequence
@@ -111,6 +113,10 @@ data instance
      | ConsFS {-# UNPACK #-}!(Slice.Slice 'Storage.Foreign allocator a)
               (Sequence 'Storage.Foreign allocator 'Ownership.Slice 'Strictness.Lazy a)
 
+instance (Known storage, Known ownership, Known strictness, Primitive a, Show a) =>
+         Show (Sequence storage allocator ownership strictness a) where
+  showsPrec p = showsPrec p . toList
+
 nilL :: forall storage allocator ownership a.
      (Known storage, Known ownership)
   => Sequence storage allocator ownership 'Strictness.Lazy a
@@ -168,6 +174,35 @@ chunks ::
   -> [Sequence storage allocator ownership 'Strictness.Strict a]
 {-# INLINE chunks #-}
 chunks = unfoldr unconsChunk
+
+toList ::
+     (Known storage, Known ownership, Known strictness, Primitive a)
+  => Sequence storage allocator ownership strictness a
+  -> [a]
+{-# INLINE toList #-}
+toList xs =
+  case strictness xs of
+    Strictness.SStrict -> toListStrict xs
+    Strictness.SLazy -> toListLazy xs
+
+toListStrict ::
+     (Known storage, Known ownership, Primitive a)
+  => Sequence storage allocator ownership 'Strictness.Strict a
+  -> [a]
+{-# INLINE toListStrict #-}
+toListStrict xs =
+  case ownership xs of
+    Ownership.SFull
+      | FullStrict arr <- xs -> Array.toList arr
+    Ownership.SSlice
+      | SliceStrict slice <- xs -> Slice.toList slice
+
+toListLazy ::
+     (Known storage, Known ownership, Primitive a)
+  => Sequence storage allocator ownership 'Strictness.Lazy a
+  -> [a]
+{-# INLINE toListLazy #-}
+toListLazy = concatMap toListStrict . chunks
 
 storage ::
      Known storage

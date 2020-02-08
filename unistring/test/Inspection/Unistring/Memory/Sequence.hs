@@ -26,6 +26,8 @@ module Inspection.Unistring.Memory.Sequence
 import GHC.Exts (Addr#, ByteArray#, Int(I#), Int#)
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents)
 import Test.Tasty (TestTree, testGroup)
+import Data.Word (Word32)
+import Test.Tasty.ExpectedFailure (expectFail)
 
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Array.Unsafe as Array
@@ -35,6 +37,8 @@ import qualified Data.Unistring.Memory.Sequence.Internal as Sequence
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Strictness as Strictness
+import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as Primitive
+import Data.Unistring.Singletons (Known, Sing)
 
 import Inspection.TH (allHaveNoneOfTypes, inspectTests)
 
@@ -56,6 +60,23 @@ tests =
         , ''Array.Array
         , ''Slice.Slice
         ])
+  , testGroup
+      "toList + fusion"
+      $(inspectTests $
+        [ 'toListFoldrNativeFullStrict
+        , 'toListFoldrNativeSliceStrict
+        , 'toListFoldrForeignSliceStrict
+        , 'toListFoldrNativeFullLazy
+        , 'toListFoldrNativeSliceLazy
+        , 'toListFoldrForeignSliceLazy
+        ] `allHaveNoneOfTypes`
+        [''[], ''Known, ''Sing, ''Primitive.Primitive])
+  , expectFail $
+    testGroup
+      "toList + fusion"
+      $(inspectTests $
+        ['toListFoldrForeignFullStrict, 'toListFoldrForeignFullLazy] `allHaveNoneOfTypes`
+        [''[]])
   ]
 
 mkNativeFullLazy ::
@@ -99,3 +120,59 @@ mkForeignSliceLazy ptr# cts len# =
      Array.FArray $
      Array.ForeignArray (ForeignPtr ptr# cts) (Count.CountOf $ I# len#))
     Sequence.NilFS
+
+toListFoldrNativeFullStrict ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Native allocator 'Ownership.Full 'Strictness.Strict Word32
+  -> r
+toListFoldrNativeFullStrict f z = foldr f z . Sequence.toList
+
+toListFoldrForeignFullStrict ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Foreign allocator 'Ownership.Full 'Strictness.Strict Word32
+  -> r
+toListFoldrForeignFullStrict f z = foldr f z . Sequence.toList
+
+toListFoldrNativeSliceStrict ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Native allocator 'Ownership.Slice 'Strictness.Strict Word32
+  -> r
+toListFoldrNativeSliceStrict f z = foldr f z . Sequence.toList
+
+toListFoldrForeignSliceStrict ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Foreign allocator 'Ownership.Slice 'Strictness.Strict Word32
+  -> r
+toListFoldrForeignSliceStrict f z = foldr f z . Sequence.toList
+
+toListFoldrNativeFullLazy ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Native allocator 'Ownership.Full 'Strictness.Lazy Word32
+  -> r
+toListFoldrNativeFullLazy f z = foldr f z . Sequence.toList
+
+toListFoldrForeignFullLazy ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Foreign allocator 'Ownership.Full 'Strictness.Lazy Word32
+  -> r
+toListFoldrForeignFullLazy f z = foldr f z . Sequence.toList
+
+toListFoldrNativeSliceLazy ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Native allocator 'Ownership.Slice 'Strictness.Lazy Word32
+  -> r
+toListFoldrNativeSliceLazy f z = foldr f z . Sequence.toList
+
+toListFoldrForeignSliceLazy ::
+     (Word32 -> r -> r)
+  -> r
+  -> Sequence.Sequence 'Storage.Foreign allocator 'Ownership.Slice 'Strictness.Lazy Word32
+  -> r
+toListFoldrForeignSliceLazy f z = foldr f z . Sequence.toList
