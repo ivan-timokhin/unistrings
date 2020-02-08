@@ -64,7 +64,6 @@ module Data.Unistring.Memory.Array.Internal
 import Control.Monad.ST (stToIO)
 import Data.Foldable (for_, foldl')
 import Data.Kind (Type)
-import Data.Traversable (for)
 import Data.Type.Coercion (Coercion(Coercion), coerceWith)
 import qualified Foreign.ForeignPtr as ForeignPtr
 import qualified GHC.Exts as E
@@ -229,10 +228,10 @@ toList arr =
        in flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
             uncheckedIndexBytes arr# (CountOf i)
     SForeign ->
-      unsafeDupablePerformIO $
-      withForeignPtr (foreignArrayPtr (getFArray arr)) $ \ptr ->
-        for [0 .. foreignArrayLength (getFArray arr) - 1] $ \i ->
-          uncheckedReadPtr ptr i
+      let !(FArray (ForeignArray fptr len)) = arr
+       in flip map [0 .. getCountOf len - 1] $ \i ->
+            unsafeDupablePerformIO $
+            withForeignPtr fptr $ \ptr -> uncheckedReadPtr ptr (CountOf i)
 
 size ::
      (Known storage, Primitive a) => Array storage alloc a -> CountOf a

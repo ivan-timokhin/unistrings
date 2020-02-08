@@ -65,18 +65,14 @@ tests =
       $(inspectTests $
         [ 'toListFoldrNativeFullStrict
         , 'toListFoldrNativeSliceStrict
+        , 'toListFoldrForeignFullStrict
         , 'toListFoldrForeignSliceStrict
         , 'toListFoldrNativeFullLazy
+        , 'toListFoldrForeignFullLazy
         , 'toListFoldrNativeSliceLazy
         , 'toListFoldrForeignSliceLazy
         ] `allHaveNoneOfTypes`
         [''[], ''Known, ''Sing, ''Primitive.Primitive])
-  , expectFail $
-    testGroup
-      "toList + fusion"
-      $(inspectTests $
-        ['toListFoldrForeignFullStrict, 'toListFoldrForeignFullLazy] `allHaveNoneOfTypes`
-        [''[]])
   ]
 
 mkNativeFullLazy ::
