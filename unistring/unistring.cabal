@@ -80,6 +80,8 @@ test-suite unistring-test
                      , Behaviour.Unistring.Memory.Array
                      , Behaviour.Unistring.Memory.Allocator
                      , Behaviour.Unistring.Memory.Slice
+                     , Behaviour.Unistring.Memory.SequenceType
+                     , Behaviour.Unistring.Memory.Sequence
                      , Behaviour.Unistring.Memory.Primitive.Class.Unsafe
                      , Data.Unistring.Compat.Typeable
   build-depends:       base >=4.9 && <4.14

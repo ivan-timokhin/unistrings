@@ -23,12 +23,14 @@ import qualified Behaviour.Unistring.Memory.Allocator as Allocator
 import qualified Behaviour.Unistring.Memory.Array as Array
 import qualified Behaviour.Unistring.Memory.Primitive.Class.Unsafe as Primitive.Class.Unsafe
 import qualified Behaviour.Unistring.Memory.Slice as Slice
+import qualified Behaviour.Unistring.Memory.Sequence as Sequence
 
 tests :: [TestTree]
 tests =
   [ testGroup "Array" Array.tests
   , testGroup "Allocator" Allocator.tests
   , testGroup "Slice" Slice.tests
+  , testGroup "Sequence" Sequence.tests
   , testGroup
       "Primitive"
       [testGroup "Class" [testGroup "Unsafe" Primitive.Class.Unsafe.tests]]
