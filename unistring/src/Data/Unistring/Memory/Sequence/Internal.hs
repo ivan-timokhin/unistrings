@@ -25,6 +25,7 @@ module Data.Unistring.Memory.Sequence.Internal
          ConsNS, NilNS, ConsFS, NilFS)
   , nilL
   , unconsChunk
+  , consChunk
   , chunks
   , storage
   , ownership
@@ -145,6 +146,21 @@ unconsChunk =
       \case
         ConsFS x xs -> Just (SliceStrict x, xs)
         NilFS -> Nothing
+
+consChunk :: forall storage allocator ownership a.
+  (Known storage, Known ownership)
+  => Sequence storage allocator ownership 'Strictness.Strict a
+  -> Sequence storage allocator ownership 'Strictness.Lazy a
+  -> Sequence storage allocator ownership 'Strictness.Lazy a
+{-# INLINE consChunk #-}
+consChunk = case (sing @storage, sing @ownership) of
+  (Storage.SNative, Ownership.SFull) -> ConsNF . getFullStrict
+  (Storage.SNative, Ownership.SSlice) -> ConsNS . getSliceStrict
+  (Storage.SForeign, Ownership.SFull) -> ConsFF . getFullStrict
+  (Storage.SForeign, Ownership.SSlice) -> ConsFS . getSliceStrict
+  where
+    getFullStrict (FullStrict a) = a
+    getSliceStrict (SliceStrict a) = a
 
 chunks ::
      (Known storage, Known ownership)
