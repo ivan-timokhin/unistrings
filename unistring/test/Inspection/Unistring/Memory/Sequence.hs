@@ -27,7 +27,6 @@ import GHC.Exts (Addr#, ByteArray#, Int(I#), Int#)
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents)
 import Test.Tasty (TestTree, testGroup)
 import Data.Word (Word32)
-import Test.Tasty.ExpectedFailure (expectFail)
 
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Array.Unsafe as Array
