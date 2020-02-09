@@ -39,6 +39,8 @@ library
                      , Data.Unistring.Memory.Ownership
                      , Data.Unistring.Memory.Strictness
                      , Data.Unistring.Memory.Sequence.Internal
+                     , Data.Unistring.Scalar.Value
+                     , Data.Unistring.Scalar.Value.Unsafe
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
@@ -55,6 +57,7 @@ library
     ghc-options:       -Werror
   build-depends:       base >=4.9 && <4.14
                      , transformers >= 0.5.2 && <0.6
+                     , unistring-ucd >= 0.1.0 && <0.2
   hs-source-dirs:      src
                      , common
   default-language:    Haskell2010
@@ -86,6 +89,7 @@ test-suite unistring-test
                      , Data.Unistring.Compat.Typeable
   build-depends:       base >=4.9 && <4.14
                      , unistring
+                     , unistring-ucd
                      , tasty
                      , tasty-quickcheck
                      , tasty-hspec
@@ -101,3 +105,4 @@ test-suite unistring-test
                      , Inspection.Unistring.Memory.Array
                      , Inspection.Unistring.Memory.Slice
                      , Inspection.Unistring.Memory.Sequence
+                     , Inspection.Unistring.Scalar.Value

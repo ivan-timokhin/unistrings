@@ -20,7 +20,15 @@ module Inspection
 import Test.Tasty (TestTree, testGroup)
 
 import qualified Inspection.Unistring.Memory
+import qualified Inspection.Unistring.Scalar.Value
 
 tests :: [TestTree]
 tests =
-  [testGroup "Unistring" [testGroup "Memory" Inspection.Unistring.Memory.tests]]
+  [ testGroup
+      "Unistring"
+      [ testGroup "Memory" Inspection.Unistring.Memory.tests
+      , testGroup
+          "Scalar"
+          [testGroup "Value" Inspection.Unistring.Scalar.Value.tests]
+      ]
+  ]
