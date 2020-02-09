@@ -120,6 +120,10 @@ instance (Known storage, Known ownership, Known strictness, Primitive a, Show a)
          Show (Sequence storage allocator ownership strictness a) where
   showsPrec p = showsPrec p . toList
 
+instance (Known storage, Known ownership, Known strictness, Primitive a) =>
+         Eq (Sequence storage allocator ownership strictness a) where
+  (==) = equal
+
 nilL :: forall storage allocator ownership a.
      (Known storage, Known ownership)
   => Sequence storage allocator ownership 'Strictness.Lazy a
