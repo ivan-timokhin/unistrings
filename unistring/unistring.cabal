@@ -41,6 +41,7 @@ library
                      , Data.Unistring.Memory.Sequence.Internal
                      , Data.Unistring.Scalar.Value
                      , Data.Unistring.Scalar.Value.Unsafe
+                     , Data.Unistring.Encoding.Form
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
