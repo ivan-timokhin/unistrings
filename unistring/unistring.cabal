@@ -86,6 +86,7 @@ test-suite unistring-test
                      , Behaviour.Unistring.Memory.SequenceType
                      , Behaviour.Unistring.Memory.Sequence
                      , Behaviour.Unistring.Memory.Primitive.Class.Unsafe
+                     , Behaviour.Unistring.Scalar.Value
                      , Data.Unistring.Compat.Typeable
   build-depends:       base >=4.9 && <4.14
                      , unistring
@@ -93,6 +94,7 @@ test-suite unistring-test
                      , tasty
                      , tasty-quickcheck
                      , tasty-hspec
+                     , tasty-hunit
                      , tasty-expected-failure
                      , tasty-ant-xml
   if flag(inspection)

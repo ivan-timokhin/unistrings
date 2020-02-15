@@ -13,22 +13,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-module Behaviour
+module Behaviour.Unistring.Scalar.Value
   ( tests
   ) where
 
-import Test.Tasty (TestTree, testGroup)
+import Data.Foldable (for_)
+import Data.Maybe (isNothing)
+import Test.Tasty (TestTree)
+import Test.Tasty.HUnit (assertEqual, testCase)
 
-import qualified Behaviour.Unistring.Memory
-import qualified Behaviour.Unistring.Scalar.Value
+import qualified Data.Unistring.Scalar.Value as Value
+import qualified Data.Unistring.UCD as UCD
 
 tests :: [TestTree]
 tests =
-  [ testGroup
-      "Unistring"
-      [ testGroup "Memory" Behaviour.Unistring.Memory.tests
-      , testGroup
-          "Scalar"
-          [testGroup "Value" Behaviour.Unistring.Scalar.Value.tests]
-      ]
+  [ testCase "check scalar value" $
+    for_ [minBound .. maxBound] $ \cp ->
+      assertEqual
+        (show cp)
+        (UCD.generalCategory cp == UCD.Surrogate)
+        (isNothing (Value.checkScalarValue cp))
   ]
