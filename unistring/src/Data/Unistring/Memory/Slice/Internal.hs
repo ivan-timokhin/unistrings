@@ -211,6 +211,7 @@ splitAt ::
 {-# INLINEABLE splitAt #-}
 splitAt n sl
   | n < sz = (sliceUnchecked 0 n sl, sliceUnchecked n (sz - n) sl)
+  | n <= 0 = (sliceUnchecked 0 0 sl, sl)
   | otherwise = (sl, sliceUnchecked sz 0 sl)
   where
     !sz = size sl
