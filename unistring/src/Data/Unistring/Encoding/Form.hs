@@ -19,8 +19,10 @@ limitations under the License.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 {-|
@@ -39,10 +41,15 @@ module Data.Unistring.Encoding.Form
   , CodeUnit(CU8, CU16, CU32)
   ) where
 
+import Data.Coerce (coerce)
 import Data.Type.Equality ((:~:)(Refl))
 import Data.Word (Word16, Word32, Word8)
 
-import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
+import Data.Unistring.Memory.Primitive.Class.Unsafe
+  ( Primitive(inBytes, inElements, uncheckedIndexBytes,
+          uncheckedIndexPtr, uncheckedReadBytes, uncheckedReadPtr,
+          uncheckedWriteBytes, uncheckedWritePtr)
+  )
 import Data.Unistring.Singletons
   ( Decided(Disproven, Proven)
   , Known(sing)
@@ -90,8 +97,17 @@ newtype instance  CodeUnit 'UTF16 = CU16 Word16
 
 newtype instance  CodeUnit 'UTF32 = CU32 Word32
 
-deriving instance Primitive (CodeUnit 'UTF8)
+#define FWD(method) method = case sing @encodingForm of { \
+  SUTF8 -> coerce (method @Word8); \
+  SUTF16 -> coerce (method @Word16); \
+  SUTF32 -> coerce (method @Word32); }
 
-deriving instance Primitive (CodeUnit 'UTF16)
-
-deriving instance Primitive (CodeUnit 'UTF32)
+instance Known encodingForm => Primitive (CodeUnit encodingForm) where
+  FWD(inBytes)
+  FWD(inElements)
+  FWD(uncheckedIndexPtr)
+  FWD(uncheckedReadPtr)
+  FWD(uncheckedWritePtr)
+  FWD(uncheckedIndexBytes)
+  FWD(uncheckedReadBytes)
+  FWD(uncheckedWriteBytes)

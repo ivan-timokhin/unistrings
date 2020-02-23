@@ -17,7 +17,6 @@ limitations under the License.
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE GADTs #-}
 
 module Data.Unistring.Scalar.Sequence.Internal
@@ -41,13 +40,12 @@ import qualified Data.Unistring.Memory.Allocator.Unsafe as Allocator
 import qualified Data.Unistring.Memory.Array as Array
 import Data.Unistring.Memory.Count (CountOf)
 import qualified Data.Unistring.Memory.Ownership as Ownership
-import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
 import qualified Data.Unistring.Memory.Sequence.Internal as M
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Strictness as Strictness
 import Data.Unistring.Scalar.Value (ScalarValue)
-import Data.Unistring.Singletons (Known(sing))
+import Data.Unistring.Singletons (Known)
 
 newtype Sequence storage allocator ownership strictness encoding =
   Sequence
@@ -88,22 +86,7 @@ fromListN ::
   -> [ScalarValue]
   -> Sequence 'Storage.Native allocator 'Ownership.Slice 'Strictness.Strict encoding
 {-# INLINEABLE fromListN #-}
-fromListN =
-  case sing @encoding of
-    EF.SUTF8 -> fromListN_
-    EF.SUTF16 -> fromListN_
-    EF.SUTF32 -> fromListN_
-
-fromListN_ ::
-     ( Known encoding
-     , Allocator.Allocator 'Storage.Native allocator
-     , Primitive (EF.CodeUnit encoding)
-     )
-  => CountOf ScalarValue
-  -> [ScalarValue]
-  -> Sequence 'Storage.Native allocator 'Ownership.Slice 'Strictness.Strict encoding
-{-# INLINEABLE fromListN_ #-}
-fromListN_ n svs = Sequence $ M.SliceStrict $ Slice.NativeSlice arr 0 len
+fromListN n svs = Sequence $ M.SliceStrict $ Slice.NativeSlice arr 0 len
   where
     !(len, arr) =
       Allocator.withAllocatorT $ do
