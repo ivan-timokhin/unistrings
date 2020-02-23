@@ -64,13 +64,12 @@ uncons ::
 uncons (Sequence (M.SliceStrict (Slice.NativeSlice (Array.NArray arr) offset len)))
   | len == 0 = Nothing
   | otherwise =
-    let !(newOffset, sv) = runIdentity $ EFI.uncheckedDecode arr offset
+    let !(shift, sv) = runIdentity $ EFI.uncheckedDecode arr offset
      in Just
           ( sv
           , Sequence $
             M.SliceStrict $
-            Slice.NativeSlice (Array.NArray arr) newOffset $
-            len - (newOffset - offset))
+            Slice.NativeSlice (Array.NArray arr) (offset + shift) (len - shift))
 
 toList ::
      Known encoding

@@ -55,11 +55,11 @@ uncheckedDecodeUTF8 ::
   -> m (CountOf (CodeUnit 'UTF8), ScalarValue)
 uncheckedDecodeUTF8 arr off = do
   CU8 b1 <- uncheckedRead arr off
-  if | b1 .&. 0x80 == 0 -> pure (off + 1, assumeSV $ fromIntegral b1)
+  if | b1 .&. 0x80 == 0 -> pure (1, assumeSV $ fromIntegral b1)
      | b1 .&. 0xE0 == 0xC0 ->
        do CU8 b2 <- uncheckedRead arr $ off + 1
           pure
-            ( off + 2
+            ( 2
             , assumeSV $
               (fromIntegral b1 .&. 0x1F) `shiftL` 6 .|.
               (fromIntegral b2 .&. 0x3F))
@@ -70,7 +70,7 @@ uncheckedDecodeUTF8 arr off = do
                 (fromIntegral b1 .&. 0xF) `shiftL` 12 .|.
                 (fromIntegral b2 .&. 0x3F) `shiftL` 6 .|.
                 (fromIntegral b3 .&. 0x3F)
-          pure (off + 3, assumeSV sv)
+          pure (3, assumeSV sv)
      | otherwise ->
        do CU8 b2 <- uncheckedRead arr $ off + 1
           CU8 b3 <- uncheckedRead arr $ off + 2
@@ -80,7 +80,7 @@ uncheckedDecodeUTF8 arr off = do
                 (fromIntegral b2 .&. 0x3F) `shiftL` 12 .|.
                 (fromIntegral b3 .&. 0x3F) `shiftL` 6 .|.
                 (fromIntegral b4 .&. 0x3F)
-          pure (off + 4, assumeSV sv)
+          pure (4, assumeSV sv)
 
 uncheckedDecodeUTF16 ::
      Readable m arr
@@ -95,8 +95,8 @@ uncheckedDecodeUTF16 arr off = do
       let sv =
             ((fromIntegral w1 .&. 0x3FF) + 0x40) `shiftL` 10 .|.
             (fromIntegral w2 .&. 0x3FF)
-      pure (off + 2, assumeSV sv)
-    else pure (off + 1, assumeSV $ fromIntegral w1)
+      pure (2, assumeSV sv)
+    else pure (1, assumeSV $ fromIntegral w1)
 
 uncheckedDecodeUTF32 ::
      Readable m arr
@@ -105,7 +105,7 @@ uncheckedDecodeUTF32 ::
   -> m (CountOf (CodeUnit 'UTF32), ScalarValue)
 uncheckedDecodeUTF32 arr off = do
   CU32 w <- uncheckedRead arr off
-  pure (off + 1, assumeSV w)
+  pure (1, assumeSV w)
 
 assumeSV :: Word32 -> ScalarValue
 {-# INLINE assumeSV #-}
