@@ -80,24 +80,22 @@ toList ::
 toList = unfoldr uncons
 
 fromListN ::
-     forall allocator encoding.
-     (Known encoding, Allocator.Allocator 'Storage.Native allocator)
+     (Known encoding, Known ownership, Allocator.Allocator storage allocator)
   => CountOf ScalarValue
   -> [ScalarValue]
-  -> Sequence 'Storage.Native allocator 'Ownership.Slice 'Strictness.Strict encoding
+  -> Sequence storage allocator ownership 'Strictness.Strict encoding
 {-# INLINEABLE fromListN #-}
-fromListN n svs = Sequence $ M.SliceStrict $ Slice.NativeSlice arr 0 len
-  where
-    !(len, arr) =
-      Allocator.withAllocatorT $ do
-        marr <- Allocator.new $ EFI.codeUnitUpperBound n
-        let writeSV sv = do
-              offset <- get
-              newOffset <-
-                lift $
-                EFI.genericEncode sv $ \diff write -> do
-                  write marr offset
-                  pure $ offset + diff
-              put newOffset
-        finalOffset <- flip execStateT 0 $ traverse_ writeSV svs
-        pure (finalOffset, marr)
+fromListN n svs =
+  Sequence $
+  M.withAllocator $ do
+    marr <- Allocator.new $ EFI.codeUnitUpperBound n
+    let writeSV sv = do
+          offset <- get
+          newOffset <-
+            lift $
+            EFI.genericEncode sv $ \diff write -> do
+              write marr offset
+              pure $ offset + diff
+          put newOffset
+    finalOffset <- flip execStateT 0 $ traverse_ writeSV svs
+    pure (finalOffset, marr)

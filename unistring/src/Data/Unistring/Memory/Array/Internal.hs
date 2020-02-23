@@ -53,7 +53,7 @@ module Data.Unistring.Memory.Array.Internal
   , empty
   , uncheckedCopyArray
   , Allocator(withAllocator, withAllocatorT, adopt)
-  , AllocatorM(new)
+  , AllocatorM(new, shrink, tryShrink)
   , MutableArray(uncheckedRead, uncheckedWrite,
              uncheckedCopyNativeSlice, uncheckedCopyForeignSlice)
   , MonadWithPtr(withForeignPtr, uncheckedReadPtr)
@@ -480,6 +480,13 @@ class (MutableArray arr m, MonadWithPtr m) =>
   | m -> arr
   where
   new :: Primitive a => CountOf a -> m (arr a)
+  tryShrink :: Primitive a => arr a -> CountOf a -> m (Maybe (arr a))
+  tryShrink _ _ = pure Nothing
+  shrink :: Primitive a => arr a -> CountOf a -> m (arr a)
+  shrink arr n = do
+    arr' <- new n
+    uncheckedCopyArraySlice arr 0 arr' 0 n
+    pure arr'
 
 newtype AllocatorT alloc (arr :: Type -> Type) a =
   AllocatorT
@@ -504,6 +511,13 @@ instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Default (Native
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
       !(E.I# byteCount) = getByteCount $ P.inBytes n
+#if MIN_VERSION_base(4, 11, 0)
+  shrink src@(NativeMutableArray src#) n =
+    AllocatorT $ IO $ \s -> (# E.shrinkMutableByteArray# src# n# s, src #)
+    where
+      !(E.I# n#) = getByteCount $ P.inBytes n
+  tryShrink arr n = Just <$> shrink arr n
+#endif
 
 instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Pinned (NativeMutableArray E.RealWorld)) where
   new n =

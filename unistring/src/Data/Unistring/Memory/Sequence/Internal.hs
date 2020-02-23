@@ -19,6 +19,7 @@ limitations under the License.
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Data.Unistring.Memory.Sequence.Internal
   ( Sequence(FullStrict, SliceStrict, ConsNF, NilNF, ConsFF, NilFF,
@@ -32,16 +33,23 @@ module Data.Unistring.Memory.Sequence.Internal
   , storage
   , ownership
   , strictness
+  , withAllocator
+  , withAllocatorT
   ) where
 
 import Data.List (unfoldr)
 import Data.Maybe (isNothing)
+import Data.Functor.Compose (Compose(Compose, getCompose))
+import Data.Traversable (for)
+import Data.Functor.Identity (Identity(Identity, runIdentity))
 
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Slice.Internal as Slice -- TODO
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Ownership as Ownership
 import qualified Data.Unistring.Memory.Strictness as Strictness
+import qualified Data.Unistring.Memory.Allocator.Unsafe as Allocator
+import qualified Data.Unistring.Memory.Allocator as Allocator
 import Data.Unistring.Singletons (Known(sing), Sing)
 import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
 import Data.Unistring.Memory.Count (CountOf)
@@ -355,3 +363,44 @@ strictness ::
   -> Sing strictness
 {-# INLINE strictness #-}
 strictness = const sing
+
+withAllocator ::
+     forall storage allocator ownership a.
+     (Allocator.Allocator storage allocator, Known ownership, Primitive a)
+  => (forall m arr. Allocator.AllocatorM arr m =>
+                      m (CountOf a, arr a))
+  -> Sequence storage allocator ownership 'Strictness.Strict a
+{-# INLINE withAllocator #-}
+withAllocator body = runIdentity $ withAllocatorT (Identity <$> body)
+
+withAllocatorT ::
+     forall storage allocator ownership a t.
+     ( Allocator.Allocator storage allocator
+     , Known ownership
+     , Primitive a
+     , Traversable t
+     )
+  => (forall m arr. Allocator.AllocatorM arr m =>
+                      m (t (CountOf a, arr a)))
+  -> t (Sequence storage allocator ownership 'Strictness.Strict a)
+{-# INLINE withAllocatorT #-}
+withAllocatorT body =
+  case sing @ownership of
+    Ownership.SFull ->
+      fmap FullStrict $
+      Allocator.withAllocatorT $ do
+        arrays <- body
+        traverse (\(n, array) -> Allocator.shrink array n) arrays
+    Ownership.SSlice ->
+      fmap
+        (\(n, array) ->
+           SliceStrict $ Slice.sliceUnchecked 0 n $ Slice.fromArray array) $
+      getCompose $
+      Allocator.withAllocatorT $ do
+        arrays <- body
+        shrunk <-
+          for arrays $ \(n, array) ->
+            Allocator.tryShrink array n >>= \case
+              Just shrunk -> pure (n, shrunk)
+              Nothing -> pure (n, array)
+        pure $ Compose shrunk

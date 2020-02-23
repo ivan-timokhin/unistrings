@@ -26,14 +26,14 @@ Stability   : experimental
 
 -}
 module Data.Unistring.Memory.Allocator.Unsafe
-  ( AllocatorM(new)
+  ( AllocatorM(new, shrink, tryShrink)
   , MutableArray(uncheckedRead, uncheckedWrite,
              uncheckedCopyNativeSlice, uncheckedCopyForeignSlice)
   , MonadWithPtr(withForeignPtr, uncheckedReadPtr)
   ) where
 
 import Data.Unistring.Memory.Array.Internal
-  ( AllocatorM(new)
+  ( AllocatorM(new, shrink, tryShrink)
   , MonadWithPtr(uncheckedReadPtr, withForeignPtr)
   , MutableArray(uncheckedCopyForeignSlice, uncheckedCopyNativeSlice,
              uncheckedRead, uncheckedWrite)
