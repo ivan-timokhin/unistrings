@@ -75,6 +75,7 @@ import Data.Typeable (Typeable)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
 import Control.Monad.Trans.State.Strict (evalStateT, get, put)
 import Control.Monad.Trans.Class (lift)
+import Data.Functor.Identity (Identity(Identity, runIdentity))
 
 #if MIN_VERSION_base(4, 11, 0)
 import Data.Semigroup (Semigroup(sconcat, stimes))
@@ -521,6 +522,7 @@ class (Known storage, Typeable alloc) =>
     => (forall m arr. AllocatorM arr m =>
                         m (arr a))
     -> Array storage alloc a
+  withAllocator body = runIdentity $ withAllocatorT (Identity <$> body)
   withAllocatorT ::
        (Primitive a, Traversable t)
     => (forall m arr. AllocatorM arr m =>
@@ -536,20 +538,12 @@ class (Known storage, Typeable alloc) =>
     Just arr
 
 instance Allocator 'Native Default where
-  withAllocator = withNativeAllocator run
-    where
-      run :: AllocatorT Default arr (arr a) -> IO (arr a)
-      run = runAllocatorT
   withAllocatorT = withNativeAllocatorT run
     where
       run :: AllocatorT Default arr (t (arr a)) -> IO (t (arr a))
       run = runAllocatorT
 
 instance Allocator 'Native Pinned where
-  withAllocator = withNativeAllocator run
-    where
-      run :: AllocatorT Pinned arr (arr a) -> IO (arr a)
-      run = runAllocatorT
   withAllocatorT = withNativeAllocatorT run
     where
       run :: AllocatorT Pinned arr (t (arr a)) -> IO (t (arr a))
@@ -560,17 +554,6 @@ instance Allocator 'Native Pinned where
     , (NArray (NativeArray ba#)) <- array
     = Just (NArray (NativeArray ba#))
     | otherwise = Nothing
-
-withNativeAllocator ::
-     (n (NativeMutableArray E.RealWorld a) -> IO (NativeMutableArray E.RealWorld a))
-  -> n (NativeMutableArray E.RealWorld a)
-  -> Array 'Native alloc a
-{-# INLINE withNativeAllocator #-}
-withNativeAllocator run f =
-  unsafeDupablePerformIO $ do
-    mutArr <- run f
-    arr <- unsafeFreezeNative mutArr
-    pure $ NArray arr
 
 withNativeAllocatorT ::
      Traversable t
@@ -584,14 +567,6 @@ withNativeAllocatorT run f =
     traverse (fmap NArray . unsafeFreezeNative) mutArrs
 
 instance Allocator 'Foreign Pinned where
-  withAllocator f =
-    unsafeDupablePerformIO $ do
-      mutArr <- run f
-      arr <- unsafeFreezeNativeToForeign mutArr
-      pure $ FArray arr
-    where
-      run :: AllocatorT Pinned arr (arr a) -> IO (arr a)
-      run = runAllocatorT
   withAllocatorT f =
     unsafeDupablePerformIO $ do
       mutArrs <- run f
@@ -628,7 +603,6 @@ instance TypeError ('ShowType Default
                     ':<>: 'ShowType Pinned
                     ':<>: 'Text " instead") =>
          Allocator 'Foreign Default where
-  withAllocator _ = error "unreachable"
   withAllocatorT _ = error "unreachable"
 
 instance (TypeError ('ShowType Unknown
@@ -640,7 +614,6 @@ instance (TypeError ('ShowType Unknown
                      ':<>: 'Text " instead")
          , Known storage) =>
          Allocator storage Unknown where
-  withAllocator _ = error "unreachable"
   withAllocatorT _ = error "unreachable"
 
 unsafeFreezeNative :: NativeMutableArray E.RealWorld a -> IO (NativeArray a)
