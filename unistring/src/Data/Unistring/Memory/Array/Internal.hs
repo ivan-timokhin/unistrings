@@ -52,11 +52,11 @@ module Data.Unistring.Memory.Array.Internal
   , times
   , empty
   , uncheckedCopyArray
-  , Allocator(withAllocator, adopt)
+  , Allocator(withAllocator, withAllocatorT, adopt)
   , AllocatorM(new)
   , MutableArray(uncheckedRead, uncheckedWrite,
              uncheckedCopyNativeSlice, uncheckedCopyForeignSlice)
-  , MonadWithPtr(withForeignPtr)
+  , MonadWithPtr(withForeignPtr, uncheckedReadPtr)
   , allocatorCoercion
   , forgetArrayAllocator
   ) where
@@ -88,10 +88,8 @@ import Data.Unistring.Memory.Count
   ( ByteCount(getByteCount)
   , CountOf(CountOf, getCountOf)
   )
-import Data.Unistring.Memory.Primitive.Class.Unsafe
-  ( Primitive(inBytes, inElements, uncheckedIndexBytes,
-          uncheckedReadBytes, uncheckedReadPtr, uncheckedWriteBytes)
-  )
+import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
+import qualified Data.Unistring.Memory.Primitive.Class.Unsafe as P
 import qualified Data.Unistring.Memory.Primitive.Operations.Unsafe as Operations
 import Data.Unistring.Memory.Storage
   ( Sing(SForeign, SNative)
@@ -130,24 +128,24 @@ uncheckedReadNative ::
      Primitive a => NativeMutableArray E.RealWorld a -> CountOf a -> IO a
 {-# INLINE uncheckedReadNative #-}
 uncheckedReadNative (NativeMutableArray bytes#) =
-  stToIO . uncheckedReadBytes bytes#
+  stToIO . P.uncheckedReadBytes bytes#
 
 uncheckedWriteNative ::
      Primitive a => NativeMutableArray E.RealWorld a -> CountOf a -> a -> IO ()
 {-# INLINE uncheckedWriteNative #-}
 uncheckedWriteNative (NativeMutableArray bytes#) =
-  (stToIO .) . uncheckedWriteBytes bytes#
+  (stToIO .) . P.uncheckedWriteBytes bytes#
 
 nativeArrayLength :: Primitive a => NativeArray a -> CountOf a
 {-# INLINE nativeArrayLength #-}
 nativeArrayLength (NativeArray bytes#) =
-  inElements (Operations.sizeOfByteArray bytes#)
+  P.inElements (Operations.sizeOfByteArray bytes#)
 
 getNativeMutableArrayLength ::
      Primitive a => NativeMutableArray E.RealWorld a -> IO (CountOf a)
 {-# INLINE getNativeMutableArrayLength #-}
 getNativeMutableArrayLength (NativeMutableArray bytes#) =
-  inElements <$> Operations.getSizeOfMutableByteArray bytes#
+  P.inElements <$> Operations.getSizeOfMutableByteArray bytes#
 
 data family Array (storage :: Storage) allocator :: Type -> Type
 
@@ -226,7 +224,7 @@ toList arr =
     SNative ->
       let !(NArray (NativeArray arr#)) = arr
        in flip map [0 .. (getCountOf $ nativeArrayLength (getNArray arr) - 1)] $ \i ->
-            uncheckedIndexBytes arr# (CountOf i)
+            P.uncheckedIndexBytes arr# (CountOf i)
     SForeign ->
       let !(FArray (ForeignArray fptr len)) = arr
        in flip map [0 .. getCountOf len - 1] $ \i ->
@@ -289,14 +287,14 @@ equal x y =
             (withForeignPtr xfptr $ \xptr ->
                withForeignPtr yfptr $ \yptr ->
                  (== 0) <$>
-                 Operations.compareBytesForeign xptr yptr (inBytes xlen))
+                 Operations.compareBytesForeign xptr yptr (P.inBytes xlen))
     mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
     {-# INLINE mixedEq #-}
     mixedEq x' y' =
       let !(NativeArray x#) = x'
           !(ForeignArray yfptr ylen) = y'
           !xb = Operations.sizeOfByteArray x#
-          !yb = inBytes ylen
+          !yb = P.inBytes ylen
        in xb == yb &&
           unsafeDupablePerformIO
             (withForeignPtr yfptr $ \yptr ->
@@ -438,19 +436,19 @@ instance MutableArray (NativeMutableArray E.RealWorld) IO where
   uncheckedCopyNativeSlice src# srcOff (NativeMutableArray dest#) destOff n =
     Operations.copyNativeToNative
       src#
-      (inBytes srcOff)
+      (P.inBytes srcOff)
       dest#
-      (inBytes destOff)
-      (inBytes n)
+      (P.inBytes destOff)
+      (P.inBytes n)
   uncheckedCopyForeignSlice src (NativeMutableArray dest#) destOff n =
-    Operations.copyForeignToNative src dest# (inBytes destOff) (inBytes n)
+    Operations.copyForeignToNative src dest# (P.inBytes destOff) (P.inBytes n)
   uncheckedCopyArraySlice (NativeMutableArray src#) srcOff (NativeMutableArray dest#) destOff n =
     Operations.copyMutableNativeToNative
       src#
-      (inBytes srcOff)
+      (P.inBytes srcOff)
       dest#
-      (inBytes destOff)
-      (inBytes n)
+      (P.inBytes destOff)
+      (P.inBytes n)
   arraySize = getNativeMutableArrayLength
 
 cyclePrefix :: (MutableArray arr m, Primitive a) => arr a -> CountOf a -> m ()
@@ -470,9 +468,11 @@ cyclePrefix arr prefixLen = do
 
 class Monad m => MonadWithPtr m where
   withForeignPtr :: ForeignPtr a -> (E.Ptr a -> m r) -> m r
+  uncheckedReadPtr :: Primitive a => E.Ptr a -> CountOf a -> m a
 
 instance MonadWithPtr IO where
   withForeignPtr = ForeignPtr.withForeignPtr
+  uncheckedReadPtr = P.uncheckedReadPtr
 
 class (MutableArray arr m, MonadWithPtr m) =>
       AllocatorM arr m
@@ -502,7 +502,7 @@ instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Default (Native
       case E.newByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
-      !(E.I# byteCount) = getByteCount $ inBytes n
+      !(E.I# byteCount) = getByteCount $ P.inBytes n
 
 instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Pinned (NativeMutableArray E.RealWorld)) where
   new n =
@@ -511,7 +511,7 @@ instance AllocatorM (NativeMutableArray E.RealWorld) (AllocatorT Pinned (NativeM
       case E.newPinnedByteArray# byteCount s of
         (# s', mba #) -> (# s', NativeMutableArray mba #)
     where
-      !(E.I# byteCount) = getByteCount $ inBytes n
+      !(E.I# byteCount) = getByteCount $ P.inBytes n
 
 class (Known storage, Typeable alloc) =>
       Allocator (storage :: Storage) alloc
@@ -521,6 +521,11 @@ class (Known storage, Typeable alloc) =>
     => (forall m arr. AllocatorM arr m =>
                         m (arr a))
     -> Array storage alloc a
+  withAllocatorT ::
+       (Primitive a, Traversable t)
+    => (forall m arr. AllocatorM arr m =>
+                        m (t (arr a)))
+    -> t (Array storage alloc a)
   adopt ::
        (Typeable alloc', Known storage', Primitive a)
     => Array storage' alloc' a
@@ -535,11 +540,19 @@ instance Allocator 'Native Default where
     where
       run :: AllocatorT Default arr (arr a) -> IO (arr a)
       run = runAllocatorT
+  withAllocatorT = withNativeAllocatorT run
+    where
+      run :: AllocatorT Default arr (t (arr a)) -> IO (t (arr a))
+      run = runAllocatorT
 
 instance Allocator 'Native Pinned where
   withAllocator = withNativeAllocator run
     where
       run :: AllocatorT Pinned arr (arr a) -> IO (arr a)
+      run = runAllocatorT
+  withAllocatorT = withNativeAllocatorT run
+    where
+      run :: AllocatorT Pinned arr (t (arr a)) -> IO (t (arr a))
       run = runAllocatorT
   adopt array
     | SNative <- storage array
@@ -553,10 +566,22 @@ withNativeAllocator ::
   -> n (NativeMutableArray E.RealWorld a)
   -> Array 'Native alloc a
 {-# INLINE withNativeAllocator #-}
-withNativeAllocator run f = unsafeDupablePerformIO $ do
-  mutArr <- run f
-  arr <- unsafeFreezeNative mutArr
-  pure $ NArray arr
+withNativeAllocator run f =
+  unsafeDupablePerformIO $ do
+    mutArr <- run f
+    arr <- unsafeFreezeNative mutArr
+    pure $ NArray arr
+
+withNativeAllocatorT ::
+     Traversable t
+  => (n (t (NativeMutableArray E.RealWorld a)) -> IO (t (NativeMutableArray E.RealWorld a)))
+  -> n (t (NativeMutableArray E.RealWorld a))
+  -> t (Array 'Native alloc a)
+{-# INLINE withNativeAllocatorT #-}
+withNativeAllocatorT run f =
+  unsafeDupablePerformIO $ do
+    mutArrs <- run f
+    traverse (fmap NArray . unsafeFreezeNative) mutArrs
 
 instance Allocator 'Foreign Pinned where
   withAllocator f =
@@ -566,6 +591,13 @@ instance Allocator 'Foreign Pinned where
       pure $ FArray arr
     where
       run :: AllocatorT Pinned arr (arr a) -> IO (arr a)
+      run = runAllocatorT
+  withAllocatorT f =
+    unsafeDupablePerformIO $ do
+      mutArrs <- run f
+      traverse (fmap FArray . unsafeFreezeNativeToForeign) mutArrs
+    where
+      run :: AllocatorT Pinned arr (t (arr a)) -> IO (t (arr a))
       run = runAllocatorT
   adopt array =
     case storage array of
@@ -597,6 +629,7 @@ instance TypeError ('ShowType Default
                     ':<>: 'Text " instead") =>
          Allocator 'Foreign Default where
   withAllocator _ = error "unreachable"
+  withAllocatorT _ = error "unreachable"
 
 instance (TypeError ('ShowType Unknown
                      ':<>: 'Text " is not an allocator, but a placeholder meaning that the actual allocator is not known;"
@@ -608,6 +641,7 @@ instance (TypeError ('ShowType Unknown
          , Known storage) =>
          Allocator storage Unknown where
   withAllocator _ = error "unreachable"
+  withAllocatorT _ = error "unreachable"
 
 unsafeFreezeNative :: NativeMutableArray E.RealWorld a -> IO (NativeArray a)
 {-# INLINE unsafeFreezeNative #-}

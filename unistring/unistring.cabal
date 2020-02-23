@@ -42,9 +42,12 @@ library
                      , Data.Unistring.Scalar.Value
                      , Data.Unistring.Scalar.Value.Unsafe
                      , Data.Unistring.Encoding.Form
+                     , Data.Unistring.Scalar.Sequence.Internal
   other-modules:       Data.Unistring.Compat.Typeable
                      , Data.Unistring.Memory.Primitive.Operations.Unsafe
                      , Data.Unistring.Memory.Array.Internal
+                     , Data.Unistring.Memory.Internal.Readable
+                     , Data.Unistring.Encoding.Form.Internal
   c-sources:           cbits/compare.c
                      , cbits/copy.c
   -- other-extensions:
@@ -88,6 +91,10 @@ test-suite unistring-test
                      , Behaviour.Unistring.Memory.Sequence
                      , Behaviour.Unistring.Memory.Primitive.Class.Unsafe
                      , Behaviour.Unistring.Scalar.Value
+                     , Behaviour.Unistring.Scalar.List
+                     , Behaviour.Unistring.Scalar.Sequence
+                     , Behaviour.Unistring.Encoding.Form
+                     , Behaviour.Unistring.Scalar
                      , Data.Unistring.Compat.Typeable
   build-depends:       base >=4.9 && <4.14
                      , unistring

@@ -29,10 +29,12 @@ module Data.Unistring.Memory.Allocator.Unsafe
   ( AllocatorM(new)
   , MutableArray(uncheckedRead, uncheckedWrite,
              uncheckedCopyNativeSlice, uncheckedCopyForeignSlice)
+  , MonadWithPtr(withForeignPtr, uncheckedReadPtr)
   ) where
 
 import Data.Unistring.Memory.Array.Internal
   ( AllocatorM(new)
+  , MonadWithPtr(uncheckedReadPtr, withForeignPtr)
   , MutableArray(uncheckedCopyForeignSlice, uncheckedCopyNativeSlice,
              uncheckedRead, uncheckedWrite)
   )

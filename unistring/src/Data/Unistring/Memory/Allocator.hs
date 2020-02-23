@@ -26,7 +26,7 @@ Stability   : experimental
 
 -}
 module Data.Unistring.Memory.Allocator
-  ( Allocator(withAllocator, adopt)
+  ( Allocator(withAllocator, withAllocatorT, adopt)
   , Default
   , Pinned
   , Unknown
@@ -36,7 +36,7 @@ module Data.Unistring.Memory.Allocator
   ) where
 
 import Data.Unistring.Memory.Array.Internal
-  ( Allocator(adopt, withAllocator)
+  ( Allocator(adopt, withAllocator, withAllocatorT)
   , AllocatorM
   , Default
   , MonadWithPtr(withForeignPtr)

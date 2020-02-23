@@ -13,20 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-module Behaviour
-  ( tests
-  ) where
+module Behaviour.Unistring.Scalar (tests) where
 
 import Test.Tasty (TestTree, testGroup)
 
-import qualified Behaviour.Unistring.Memory
-import qualified Behaviour.Unistring.Scalar
+import qualified Behaviour.Unistring.Scalar.Value
+import qualified Behaviour.Unistring.Scalar.Sequence
 
 tests :: [TestTree]
 tests =
-  [ testGroup
-      "Unistring"
-      [ testGroup "Memory" Behaviour.Unistring.Memory.tests
-      , testGroup "Scalar" Behaviour.Unistring.Scalar.tests
-      ]
+  [ testGroup "Value" Behaviour.Unistring.Scalar.Value.tests
+  , testGroup "Sequence" Behaviour.Unistring.Scalar.Sequence.tests
   ]
