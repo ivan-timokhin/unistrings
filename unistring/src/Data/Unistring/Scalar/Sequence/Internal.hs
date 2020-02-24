@@ -17,14 +17,15 @@ limitations under the License.
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Data.Unistring.Scalar.Sequence.Internal
   ( Sequence (Sequence)
   , representation
   , fromList
-  , fromListN
   , toList
   , Step(Done, Yield, Skip)
   , Stream(Stream)
@@ -37,7 +38,7 @@ import Control.Monad.Trans.State.Strict (execStateT, get, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Foldable (traverse_)
 import System.IO.Unsafe (unsafeDupablePerformIO)
-import GHC.Exts (build)
+import qualified GHC.Exts as E
 import GHC.Types (SPEC(SPEC))
 
 import Data.Functor.Identity (Identity(runIdentity))
@@ -47,14 +48,15 @@ import qualified Data.Unistring.Memory.Allocator as Allocator
 import qualified Data.Unistring.Memory.Allocator.Unsafe as Allocator
 import qualified Data.Unistring.Memory.Array as Array
 import qualified Data.Unistring.Memory.Array.Unsafe as Array
-import Data.Unistring.Memory.Count (CountOf(CountOf))
+import Data.Unistring.Memory.Count (CountOf(CountOf), ByteCount)
 import qualified Data.Unistring.Memory.Ownership as Ownership
 import qualified Data.Unistring.Memory.Sequence.Internal as M
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Strictness as Strictness
 import Data.Unistring.Scalar.Value (ScalarValue)
-import Data.Unistring.Singletons (Known)
+import Data.Unistring.Singletons (Known(sing))
+import Data.Unistring.Memory.Primitive.Class.Unsafe (inElements)
 
 newtype Sequence storage allocator ownership strictness encoding =
   Sequence
@@ -90,7 +92,7 @@ data Stream a where
 streamToList :: Stream a -> [a]
 {-# INLINE streamToList #-}
 streamToList (Stream step s0) =
-  build
+  E.build
     (\cons nil ->
        let go !sPEC s =
              case step s of
@@ -98,6 +100,14 @@ streamToList (Stream step s0) =
                Skip s' -> go sPEC s'
                Yield a s' -> cons a (go sPEC s')
         in go SPEC s0)
+
+listToStream :: [a] -> Stream a
+{-# INLINE listToStream #-}
+{- HLINT ignore listToStream -}
+listToStream xs = Stream step xs
+  where
+    step (y:ys) = Yield y ys
+    step [] = Done
 
 type Streamer s = s -> Step s ScalarValue
 
@@ -172,6 +182,64 @@ streamLazy (Right (slice, rest))
     let !(sv, slice') = streamSliceNE slice
      in Yield sv $ Right (slice', rest)
 
+unstreamLazy ::
+     forall storage allocator ownership encoding.
+     (Allocator.Allocator storage allocator, Known ownership, Known encoding)
+  => Stream ScalarValue
+  -> Sequence storage allocator ownership 'Strictness.Lazy encoding
+{-# INLINE unstreamLazy #-}
+unstreamLazy (Stream step s0) = Sequence $ unstreamLazy' step s0
+
+unstreamLazy' ::
+     forall storage allocator ownership encoding s.
+     (Allocator.Allocator storage allocator, Known ownership, Known encoding)
+  => Streamer s
+  -> s
+  -> M.Sequence storage allocator ownership 'Strictness.Lazy (EF.CodeUnit encoding)
+{-# INLINE unstreamLazy' #-}
+unstreamLazy' step = loopStart SPEC
+  where
+    loopStart ::
+         SPEC
+      -> s
+      -> M.Sequence storage allocator ownership 'Strictness.Lazy (EF.CodeUnit encoding)
+    loopStart !sPEC s =
+      case step s of
+        Done -> M.nilL
+        Skip s' -> loopStart sPEC s'
+        Yield a s' -> loop1 sPEC a s'
+    loop1 ::
+         SPEC
+      -> ScalarValue
+      -> s
+      -> M.Sequence storage allocator ownership 'Strictness.Lazy (EF.CodeUnit encoding)
+    loop1 !sPEC !sv0 s = M.consChunk chunk rest
+      where
+        !(rest, chunk) =
+          M.withAllocatorT $ do
+            let chunkSize = inElements defaultChunkSize
+            mutArr <- Allocator.new chunkSize
+            offset0 <-
+              EFI.genericEncode sv0 $ \diff write -> do
+                write mutArr 0
+                -- There is always enough space in defaultChunkSize
+                -- for at least one scalar value.  Otherwise, we'll
+                -- never be able to encode anything.
+                pure diff
+            let go !sPEC' offset s' =
+                  case step s' of
+                    Done -> pure (M.nilL, (offset, mutArr))
+                    Skip s'' -> go sPEC' offset s''
+                    Yield !sv s'' ->
+                      EFI.genericEncode sv $ \diff write ->
+                        let !newOffset = offset + diff
+                         in if newOffset <= chunkSize
+                              then do
+                                write mutArr offset
+                                go sPEC' newOffset s''
+                              else pure (loop1 sPEC' sv s'', (offset, mutArr))
+            go sPEC offset0 s
+
 toList ::
      (Known storage, Known ownership, Known strictness, Known encoding)
   => Sequence storage allocator ownership strictness encoding
@@ -179,13 +247,35 @@ toList ::
 {-# INLINE toList #-}
 toList = streamToList . stream
 
-fromListN ::
+fromList ::
+     forall storage allocator ownership strictness encoding.
+     ( Allocator.Allocator storage allocator
+     , Known ownership
+     , Known strictness
+     , Known encoding
+     )
+  => [ScalarValue]
+  -> Sequence storage allocator ownership strictness encoding
+{-# INLINEABLE fromList #-}
+fromList =
+  case sing @strictness of
+    Strictness.SStrict -> fromListStrict
+    Strictness.SLazy -> fromListLazy
+
+fromListStrict ::
+     (Known encoding, Known ownership, Allocator.Allocator storage allocator)
+  => [ScalarValue]
+  -> Sequence storage allocator ownership 'Strictness.Strict encoding
+{-# INLINEABLE fromListStrict #-}
+fromListStrict svs = fromListNStrict (CountOf $ length svs) svs
+
+fromListNStrict ::
      (Known encoding, Known ownership, Allocator.Allocator storage allocator)
   => CountOf ScalarValue
   -> [ScalarValue]
   -> Sequence storage allocator ownership 'Strictness.Strict encoding
-{-# INLINEABLE fromListN #-}
-fromListN n svs =
+{-# INLINEABLE fromListNStrict #-}
+fromListNStrict n svs =
   Sequence $
   M.withAllocator $ do
     marr <- Allocator.new $ EFI.codeUnitUpperBound n
@@ -200,9 +290,29 @@ fromListN n svs =
     finalOffset <- flip execStateT 0 $ traverse_ writeSV svs
     pure (finalOffset, marr)
 
-fromList ::
-     (Known encoding, Known ownership, Allocator.Allocator storage allocator)
+fromListLazy ::
+     (Allocator.Allocator storage allocator, Known ownership, Known encoding)
   => [ScalarValue]
-  -> Sequence storage allocator ownership 'Strictness.Strict encoding
-{-# INLINEABLE fromList #-}
-fromList svs = fromListN (CountOf $ length svs) svs
+  -> Sequence storage allocator ownership 'Strictness.Lazy encoding
+{-# INLINEABLE fromListLazy #-}
+fromListLazy = unstreamLazy . listToStream
+
+instance ( Allocator.Allocator storage allocator
+         , Known ownership
+         , Known strictness
+         , Known encoding
+         ) =>
+         E.IsList (Sequence storage allocator ownership strictness encoding) where
+  type Item (Sequence storage allocator ownership strictness encoding) = ScalarValue
+  toList = toList
+  fromListN =
+    case sing @strictness of
+      Strictness.SStrict -> fromListNStrict . CountOf
+      Strictness.SLazy -> const fromListLazy
+  fromList = fromList
+
+-- The default chunk size is chosen to be large enough that GHC RTS
+-- pins individual chunks.  This way, a long forced lazy string will
+-- not be copied in its entirety from heap to heap during collection.
+defaultChunkSize :: ByteCount
+defaultChunkSize = 4096

@@ -22,8 +22,13 @@ module Behaviour.Unistring.Scalar.Sequence
   ( tests
   ) where
 
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck ((===), testProperty)
+import Test.Tasty (TestTree, testGroup, adjustOption)
+import Test.Tasty.QuickCheck
+  ( QuickCheckMaxSize(QuickCheckMaxSize)
+  , (===)
+  , testProperty
+  )
+import GHC.Exts (fromList, toList)
 
 import qualified Data.Unistring.Memory.Allocator as Allocator
 import qualified Data.Unistring.Memory.Strictness as Strictness
@@ -43,6 +48,16 @@ tests =
       [ testProperty "toList . fromLists" $ \(SomeSequenceType st) sls ->
           let s = fromLists sls `asSequenceType` st
            in SSequence.toList s === concatMap getScalarList sls
+      , testProperty "toList . fromList (short)" $ \(SomeSequenceType st) sl ->
+          let s = fromList (getScalarList sl) `asSequenceType` st
+           in toList s === getScalarList sl
+      -- We need to test on lists long enough that fromList allocates
+      -- several chunks.
+      , adjustOption
+          (\(QuickCheckMaxSize sz) -> QuickCheckMaxSize $ max 10000 sz) $
+        testProperty "toList . fromList (long)" $ \(SomeSequenceType st) sl ->
+          let s = fromList (getScalarList sl) `asSequenceType` st
+           in toList s === getScalarList sl
       ]
   ]
 
