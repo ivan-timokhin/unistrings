@@ -219,26 +219,20 @@ unstreamLazy' step = loopStart SPEC
           M.withAllocatorT $ do
             let chunkSize = inElements defaultChunkSize
             mutArr <- Allocator.new chunkSize
-            offset0 <-
-              EFI.genericEncode sv0 $ \diff write -> do
-                write mutArr 0
-                -- There is always enough space in defaultChunkSize
-                -- for at least one scalar value.  Otherwise, we'll
-                -- never be able to encode anything.
-                pure diff
-            let go !sPEC' offset s' =
+            let go1 !sPEC' offset s' sv =
+                  EFI.genericEncode sv $ \diff write ->
+                    let !newOffset = offset + diff
+                     in if newOffset <= chunkSize
+                          then do
+                            write mutArr offset
+                            go sPEC' newOffset s'
+                          else pure (loop1 sPEC' sv s', (offset, mutArr))
+                go !sPEC' offset s' =
                   case step s' of
                     Done -> pure (M.nilL, (offset, mutArr))
                     Skip s'' -> go sPEC' offset s''
-                    Yield !sv s'' ->
-                      EFI.genericEncode sv $ \diff write ->
-                        let !newOffset = offset + diff
-                         in if newOffset <= chunkSize
-                              then do
-                                write mutArr offset
-                                go sPEC' newOffset s''
-                              else pure (loop1 sPEC' sv s'', (offset, mutArr))
-            go sPEC offset0 s
+                    Yield !sv s'' -> go1 sPEC' offset s'' sv
+            go1 sPEC 0 s sv0
 
 toList ::
      (Known storage, Known ownership, Known strictness, Known encoding)
