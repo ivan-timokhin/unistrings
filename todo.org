@@ -118,7 +118,7 @@ See also [[http://userguide.icu-project.org/strings/properties][ICU properties d
 - [X] Emoji_Modifier_Base
 - [X] Emoji_Component
 - [X] Extended_Pictographic
-* Unistring [0/3]
+* Unistring [0/4]
 ** TODO Core types [0/3]
 - [ ] Byte arrays
 - [ ] Unicode scalar arrays
@@ -154,6 +154,9 @@ files (and doesn't actually test anything).
 - [ ] Find distinct words and display in order of descending frequency
 - [ ] Line wrap text to different widths?  This one is going to be a
   bit unprincipled…
+** Mention in the README
+- stream fusion only reliably works with -O2 (see inspection tests for
+  scalar sequence)
 * Miscellaneous code tasks [7/8]
 ** DONE Switch age to enum
 Then convert it to Version if desired.

@@ -59,15 +59,19 @@ checkOverflow :: Int -> CountOf a -> CountOf a
 -- senior bits set.
 checkOverflow nbits c@(CountOf n)
   | n .&. mask == 0 = c
-  | otherwise = errorWithoutStackTrace $ "Invalid element count: " ++ show c
+  | otherwise = invalidCount c
   where
     mask :: Int
     mask = complement $ maxBound `shiftR` nbits
 
+invalidCount :: Show a => a -> b
+{-# NOINLINE invalidCount #-}
+invalidCount c = errorWithoutStackTrace $ "Invalid element count: " ++ show c
+
 checkNegative :: CountOf Word8 -> CountOf Word8
 {-# INLINE checkNegative #-}
 checkNegative c
-  | c < 0 = errorWithoutStackTrace $ "Invalid element count: " ++ show c
+  | c < 0 = invalidCount c
   | otherwise = c
 
 class Primitive a where

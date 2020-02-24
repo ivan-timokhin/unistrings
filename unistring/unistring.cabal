@@ -118,3 +118,5 @@ test-suite unistring-test
                      , Inspection.Unistring.Memory.Slice
                      , Inspection.Unistring.Memory.Sequence
                      , Inspection.Unistring.Scalar.Value
+                     , Inspection.Unistring.Scalar.Sequence
+                     , Inspection.Unistring.Scalar

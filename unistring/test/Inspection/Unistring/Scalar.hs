@@ -13,20 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -}
-module Inspection
+module Inspection.Unistring.Scalar
   ( tests
   ) where
 
+import qualified Inspection.Unistring.Scalar.Value as Value
+import qualified Inspection.Unistring.Scalar.Sequence as Sequence
+
 import Test.Tasty (TestTree, testGroup)
 
-import qualified Inspection.Unistring.Memory
-import qualified Inspection.Unistring.Scalar
-
 tests :: [TestTree]
-tests =
-  [ testGroup
-      "Unistring"
-      [ testGroup "Memory" Inspection.Unistring.Memory.tests
-      , testGroup "Scalar" Inspection.Unistring.Scalar.tests
-      ]
-  ]
+tests = [testGroup "Value" Value.tests, testGroup "Sequence" Sequence.tests]

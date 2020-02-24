@@ -53,6 +53,7 @@ uncheckedDecodeUTF8 ::
   => arr (CodeUnit 'UTF8)
   -> CountOf (CodeUnit 'UTF8)
   -> m (CountOf (CodeUnit 'UTF8), ScalarValue)
+{-# INLINEABLE uncheckedDecodeUTF8 #-}
 uncheckedDecodeUTF8 arr off = do
   CU8 b1 <- uncheckedRead arr off
   if | b1 .&. 0x80 == 0 -> pure (1, assumeSV $ fromIntegral b1)
@@ -87,6 +88,7 @@ uncheckedDecodeUTF16 ::
   => arr (CodeUnit 'UTF16)
   -> CountOf (CodeUnit 'UTF16)
   -> m (CountOf (CodeUnit 'UTF16), ScalarValue)
+{-# INLINEABLE uncheckedDecodeUTF16 #-}
 uncheckedDecodeUTF16 arr off = do
   CU16 w1 <- uncheckedRead arr off
   if w1 .&. 0xF800 == 0xD800
@@ -103,6 +105,7 @@ uncheckedDecodeUTF32 ::
   => arr (CodeUnit 'UTF32)
   -> CountOf (CodeUnit 'UTF32)
   -> m (CountOf (CodeUnit 'UTF32), ScalarValue)
+{-# INLINEABLE uncheckedDecodeUTF32 #-}
 uncheckedDecodeUTF32 arr off = do
   CU32 w <- uncheckedRead arr off
   pure (1, assumeSV w)
