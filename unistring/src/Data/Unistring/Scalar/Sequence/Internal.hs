@@ -23,6 +23,7 @@ limitations under the License.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE CPP #-}
 
 module Data.Unistring.Scalar.Sequence.Internal
   ( Sequence (Sequence)
@@ -45,6 +46,7 @@ import GHC.Types (IO(IO), SPEC(SPEC))
 import GHC.Word (Word32(W32#))
 import Data.Unistring.UCD.Unsafe (CodePoint(CodePoint))
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr))
+import GHC.Magic (runRW#) -- available in GHC.Exts only for GHC >= 8.2
 
 import Data.Functor.Identity (Identity(runIdentity))
 import qualified Data.Unistring.Encoding.Form as EF
@@ -329,7 +331,7 @@ unsafeDupablePerformIO' ::
      , Slice.Slice 'Storage.Foreign allocator (EF.CodeUnit encoding))
 {-# INLINE unsafeDupablePerformIO' #-}
 unsafeDupablePerformIO' (IO io) =
-  case E.runRW# io' of
+  case runRW# io' of
     (# _, w32#, addr#, contents, len# #) ->
       ( ScalarValue (CodePoint (W32# w32#))
       , Slice.ForeignSlice

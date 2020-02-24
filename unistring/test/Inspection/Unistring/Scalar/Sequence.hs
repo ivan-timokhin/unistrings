@@ -136,6 +136,8 @@ tests =
             , ''Allocator.MutableArray
             , ''IO
             ])
+#ifdef MIN_VERSION_GLASGOW_HASKELL
+#if MIN_VERSION_GLASGOW_HASKELL(8, 6, 1, 0)
       , testGroup
           "fromListN strict list fusion"
           $(inspectTests $
@@ -159,6 +161,8 @@ tests =
             , 'alphabetForeignPinnedSliceStrictUTF8
             ] `allHaveNoneOfTypes`
             [''[]])
+#endif
+#endif
       ]
   ]
 
