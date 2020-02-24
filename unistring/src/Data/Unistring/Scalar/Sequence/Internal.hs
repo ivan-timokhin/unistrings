@@ -27,7 +27,8 @@ module Data.Unistring.Scalar.Sequence.Internal
   , fromListN
   , toList
   , Step(Done, Yield, Skip)
-  , withStream
+  , Stream(Stream)
+  , stream
   , consChunk
   , empty
   ) where
@@ -83,9 +84,12 @@ data Step s a
   | Skip s
   | Yield a s
 
-streamToList :: (s -> Step s a) -> s -> [a]
+data Stream a where
+  Stream :: (s -> Step s a) -> s -> Stream a
+
+streamToList :: Stream a -> [a]
 {-# INLINE streamToList #-}
-streamToList step s0 =
+streamToList (Stream step s0) =
   build
     (\cons nil ->
        let go !sPEC s =
@@ -97,23 +101,22 @@ streamToList step s0 =
 
 type Streamer s = s -> Step s ScalarValue
 
-withStream ::
+stream ::
      (Known storage, Known ownership, Known strictness, Known encoding)
   => Sequence storage allocator ownership strictness encoding
-  -> (forall s. Streamer s -> s -> r)
-  -> r
-{-# INLINE withStream #-}
-withStream (Sequence s) f =
+  -> Stream ScalarValue
+{-# INLINE stream #-}
+stream (Sequence s) =
   case M.strictness s of
     Strictness.SStrict ->
       case M.ownership s of
         Ownership.SSlice ->
           let (M.SliceStrict slice) = s
-           in f streamSlice slice
+           in Stream streamSlice slice
         Ownership.SFull ->
           let (M.FullStrict array) = s
-           in f streamSlice (Slice.fromArray array)
-    Strictness.SLazy -> f streamLazy (Left s)
+           in Stream streamSlice (Slice.fromArray array)
+    Strictness.SLazy -> Stream streamLazy (Left s)
 
 streamSlice ::
      (Known encoding, Known storage)
@@ -174,7 +177,7 @@ toList ::
   => Sequence storage allocator ownership strictness encoding
   -> [ScalarValue]
 {-# INLINE toList #-}
-toList s = withStream s streamToList
+toList = streamToList . stream
 
 fromListN ::
      (Known encoding, Known ownership, Allocator.Allocator storage allocator)
