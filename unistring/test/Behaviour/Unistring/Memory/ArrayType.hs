@@ -24,6 +24,7 @@ limitations under the License.
 module Behaviour.Unistring.Memory.ArrayType
   ( ArrayType
   , SomeArrayType(SomeArrayType)
+  , changeType
   ) where
 
 import Data.Type.Equality ((:~:)(Refl), testEquality)
@@ -42,6 +43,9 @@ data ArrayType (storage :: Storage) allocator a where
   ArrayType
     :: TypeRep allocator -> Sing storage -> ArrayType storage allocator a
   deriving (Show)
+
+changeType :: ArrayType storage allocator a -> ArrayType storage allocator b
+changeType (ArrayType tr st) = ArrayType tr st
 
 data SomeArrayType a where
   SomeArrayType

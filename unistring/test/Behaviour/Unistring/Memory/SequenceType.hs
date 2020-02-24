@@ -21,6 +21,7 @@ limitations under the License.
 module Behaviour.Unistring.Memory.SequenceType
   ( SomeSequenceType(SomeSequenceType)
   , SequenceType
+  , changeType
   ) where
 
 import Test.Tasty.QuickCheck (Arbitrary(arbitrary, shrink))
@@ -34,6 +35,7 @@ import Behaviour.Unistring.Memory.ArrayType
   ( ArrayType
   , SomeArrayType(SomeArrayType)
   )
+import qualified Behaviour.Unistring.Memory.ArrayType as AT
 
 data SequenceType storage allocator (ownership :: Ownership) (strictness :: Strictness) a =
   SequenceType
@@ -41,6 +43,11 @@ data SequenceType storage allocator (ownership :: Ownership) (strictness :: Stri
     (Sing ownership)
     (Sing strictness)
   deriving (Show)
+
+changeType ::
+     SequenceType storage allocator ownership strictness a
+  -> SequenceType storage allocator ownership strictness b
+changeType (SequenceType at o s) = SequenceType (AT.changeType at) o s
 
 data SomeSequenceType a where
   SomeSequenceType
