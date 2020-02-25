@@ -332,7 +332,7 @@ unsafeDupablePerformIO' ::
 {-# INLINE unsafeDupablePerformIO' #-}
 unsafeDupablePerformIO' (IO io) =
   case runRW# io' of
-    (# _, w32#, addr#, contents, len# #) ->
+    (# _, (# w32#, addr#, contents, len# #) #) ->
       ( ScalarValue (CodePoint (W32# w32#))
       , Slice.ForeignSlice
           (Array.FArray
@@ -343,4 +343,4 @@ unsafeDupablePerformIO' (IO io) =
     io' s =
       case io s of
         (# s', (ScalarValue (CodePoint (W32# w32#)), Slice.ForeignSlice (Array.FArray (Array.ForeignArray (ForeignPtr addr# contents) (CountOf (E.I# len#))))) #) ->
-          (# s', w32#, addr#, contents, len# #)
+          (# s', (# w32#, addr#, contents, len# #) #)
