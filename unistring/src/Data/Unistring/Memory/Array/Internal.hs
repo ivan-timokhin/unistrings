@@ -110,6 +110,7 @@ foreignArrayPtr :: ForeignArray a -> ForeignPtr a
 foreignArrayPtr (ForeignArray ptr _) = ptr
 
 foreignArrayLength :: ForeignArray a -> CountOf a
+{-# INLINE foreignArrayLength #-}
 foreignArrayLength (ForeignArray _ len) = len
 
 data NativeArray a =
@@ -234,7 +235,7 @@ toList arr =
 
 size ::
      (Known storage, Primitive a) => Array storage alloc a -> CountOf a
-{-# INLINEABLE size #-}
+{-# INLINE size #-}
 size arr =
   case storage arr of
     SNative -> nativeArrayLength (getNArray arr)
