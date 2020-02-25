@@ -28,7 +28,6 @@ jobs:
       unistring-emoji-data:emoji-inclusions
       unistring:unistring-test
     TASTY_QUICKCHECK_TESTS: 10000
-    TASTY_XML: CI
   steps:
   - script: |
       set -ex
