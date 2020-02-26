@@ -26,6 +26,10 @@ limitations under the License.
 module Data.Unistring.Scalar.Sequence.Internal
   ( Sequence (Sequence)
   , representation
+  , storage
+  , ownership
+  , strictness
+  , encodingForm
   , fromList
   , fromListNStrict
   , toList
@@ -56,7 +60,7 @@ import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Strictness as Strictness
 import Data.Unistring.Scalar.Value (ScalarValue)
-import Data.Unistring.Singletons (Known(sing))
+import Data.Unistring.Singletons (Known(sing), Sing)
 import Data.Unistring.Memory.Primitive.Class.Unsafe (inElements)
 import Data.Unistring.Internal.IO (readOnlyPerformIO)
 
@@ -68,6 +72,34 @@ representation ::
      Sequence storage allocator ownership strictness encoding
   -> M.Sequence storage allocator ownership strictness (EF.CodeUnit encoding)
 representation (Sequence s) = s
+
+storage ::
+     Known storage
+  => Sequence storage allocator ownership strictness encoding
+  -> Sing storage
+{-# INLINE storage #-}
+storage = const sing
+
+ownership ::
+     Known ownership
+  => Sequence storage allocator ownership strictness encoding
+  -> Sing ownership
+{-# INLINE ownership #-}
+ownership = const sing
+
+strictness ::
+     Known strictness
+  => Sequence storage allocator ownership strictness encoding
+  -> Sing strictness
+{-# INLINE strictness #-}
+strictness = const sing
+
+encodingForm ::
+     Known encoding
+  => Sequence storage allocator ownership strictness encoding
+  -> Sing encoding
+{-# INLINE encodingForm #-}
+encodingForm = const sing
 
 consChunk ::
      (Known storage, Known ownership, Known encoding)
