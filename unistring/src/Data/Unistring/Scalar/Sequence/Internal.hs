@@ -21,8 +21,6 @@ limitations under the License.
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MagicHash #-}
-{-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE CPP #-}
 
 module Data.Unistring.Scalar.Sequence.Internal
@@ -42,11 +40,7 @@ import Control.Monad.Trans.State.Strict (execStateT, get, put)
 import Control.Monad.Trans.Class (lift)
 import Data.Foldable (traverse_)
 import qualified GHC.Exts as E
-import GHC.Types (IO(IO), SPEC(SPEC))
-import GHC.Word (Word32(W32#))
-import Data.Unistring.UCD.Unsafe (CodePoint(CodePoint))
-import GHC.ForeignPtr (ForeignPtr(ForeignPtr))
-import GHC.Magic (runRW#) -- available in GHC.Exts only for GHC >= 8.2
+import GHC.Types (SPEC(SPEC))
 
 import Data.Functor.Identity (Identity(runIdentity))
 import qualified Data.Unistring.Encoding.Form as EF
@@ -61,9 +55,10 @@ import qualified Data.Unistring.Memory.Sequence.Internal as M
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Storage as Storage
 import qualified Data.Unistring.Memory.Strictness as Strictness
-import Data.Unistring.Scalar.Value.Unsafe (ScalarValue(ScalarValue))
+import Data.Unistring.Scalar.Value (ScalarValue)
 import Data.Unistring.Singletons (Known(sing))
 import Data.Unistring.Memory.Primitive.Class.Unsafe (inElements)
+import Data.Unistring.Internal.IO (readOnlyPerformIO)
 
 newtype Sequence storage allocator ownership strictness encoding =
   Sequence
@@ -161,7 +156,7 @@ streamSliceNE slice =
     Storage.SForeign ->
       let !(Slice.ForeignSlice (Array.FArray (Array.ForeignArray fptr len))) =
             slice
-       in unsafeDupablePerformIO' $
+       in readOnlyPerformIO $
           Allocator.withForeignPtr fptr $ \ptr -> do
             (shift, sv) <- EFI.uncheckedDecode ptr 0
             pure (sv, Slice.sliceUnchecked shift (len - shift) slice)
@@ -317,30 +312,3 @@ instance ( Allocator.Allocator storage allocator
 -- not be copied in its entirety from heap to heap during collection.
 defaultChunkSize :: ByteCount
 defaultChunkSize = 4096
-
--- https://gitlab.haskell.org/ghc/ghc/issues/15127
---
--- GHC is currently unable to unbox through runRW#, so we do that
--- manually, all the way down, under the assumption that at least
--- inside io everything is (or can be) passed around/generated
--- unboxed, so the case inside io' will disappear.
-unsafeDupablePerformIO' ::
-     IO ( ScalarValue
-        , Slice.Slice 'Storage.Foreign allocator (EF.CodeUnit encoding))
-  -> ( ScalarValue
-     , Slice.Slice 'Storage.Foreign allocator (EF.CodeUnit encoding))
-{-# INLINE unsafeDupablePerformIO' #-}
-unsafeDupablePerformIO' (IO io) =
-  case runRW# io' of
-    (# _, (# w32#, addr#, contents, len# #) #) ->
-      ( ScalarValue (CodePoint (W32# w32#))
-      , Slice.ForeignSlice
-          (Array.FArray
-             (Array.ForeignArray
-                (ForeignPtr addr# contents)
-                (CountOf (E.I# len#)))))
-  where
-    io' s =
-      case io s of
-        (# s', (ScalarValue (CodePoint (W32# w32#)), Slice.ForeignSlice (Array.FArray (Array.ForeignArray (ForeignPtr addr# contents) (CountOf (E.I# len#))))) #) ->
-          (# s', (# w32#, addr#, contents, len# #) #)

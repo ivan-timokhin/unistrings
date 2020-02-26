@@ -48,6 +48,7 @@ library
                      , Data.Unistring.Memory.Array.Internal
                      , Data.Unistring.Memory.Internal.Readable
                      , Data.Unistring.Encoding.Form.Internal
+                     , Data.Unistring.Internal.IO
   c-sources:           cbits/compare.c
                      , cbits/copy.c
   -- other-extensions:

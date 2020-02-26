@@ -70,7 +70,6 @@ import qualified GHC.Exts as E
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr), ForeignPtrContents(PlainPtr))
 import GHC.IO (IO(IO))
 import GHC.TypeLits (ErrorMessage((:$$:), (:<>:), ShowType, Text), TypeError)
-import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Typeable (Typeable)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
 import Control.Monad.Trans.State.Strict (evalStateT, get, put)
@@ -96,6 +95,7 @@ import Data.Unistring.Memory.Storage
   ( Sing(SForeign, SNative)
   , Storage(Foreign, Native)
   )
+import Data.Unistring.Internal.IO (readOnlyPerformIO, readWritePerformIO)
 
 --------------------------------------------------------------------------------
 -- Arrays
@@ -230,7 +230,7 @@ toList arr =
     SForeign ->
       let !(FArray (ForeignArray fptr len)) = arr
        in flip map [0 .. getCountOf len - 1] $ \i ->
-            unsafeDupablePerformIO $
+            readOnlyPerformIO $
             withForeignPtr fptr $ \ptr -> uncheckedReadPtr ptr (CountOf i)
 
 size ::
@@ -285,7 +285,7 @@ equal x y =
       let !(ForeignArray xfptr xlen) = x'
           !(ForeignArray yfptr ylen) = y'
        in xlen == ylen &&
-          unsafeDupablePerformIO
+          readOnlyPerformIO
             (withForeignPtr xfptr $ \xptr ->
                withForeignPtr yfptr $ \yptr ->
                  (== 0) <$>
@@ -298,7 +298,7 @@ equal x y =
           !xb = Operations.sizeOfByteArray x#
           !yb = P.inBytes ylen
        in xb == yb &&
-          unsafeDupablePerformIO
+          readOnlyPerformIO
             (withForeignPtr yfptr $ \yptr ->
                (== 0) <$> Operations.compareBytesMixed x# yptr xb)
 
@@ -577,13 +577,13 @@ withNativeAllocatorT ::
   -> t (Array 'Native alloc a)
 {-# INLINE withNativeAllocatorT #-}
 withNativeAllocatorT run f =
-  unsafeDupablePerformIO $ do
+  readWritePerformIO $ do
     mutArrs <- run f
     traverse (fmap NArray . unsafeFreezeNative) mutArrs
 
 instance Allocator 'Foreign Pinned where
   withAllocatorT f =
-    unsafeDupablePerformIO $ do
+    readWritePerformIO $ do
       mutArrs <- run f
       traverse (fmap FArray . unsafeFreezeNativeToForeign) mutArrs
     where

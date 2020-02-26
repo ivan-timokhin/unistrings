@@ -40,7 +40,6 @@ import qualified GHC.Exts as E
 import GHC.ForeignPtr (ForeignPtr(ForeignPtr))
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.List (unfoldr)
-import System.IO.Unsafe (unsafeDupablePerformIO)
 import Data.Type.Equality ((:~:)(Refl), testEquality)
 
 import qualified Data.Unistring.Memory.Storage as Storage
@@ -61,6 +60,7 @@ import Data.Unistring.Memory.Primitive.Operations.Unsafe
   , compareBytesSliceMixed
   , compareBytesSliceNative
   )
+import Data.Unistring.Internal.IO (readOnlyPerformIO)
 
 data family Slice (storage :: Storage) allocator a
 
@@ -123,7 +123,7 @@ equal x y =
       (ForeignSlice (Array.FArray (Array.ForeignArray xfptr xlen)))
       (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
       = xlen == ylen
-      && unsafeDupablePerformIO
+      && readOnlyPerformIO
            (withForeignPtr xfptr $ \xptr ->
               withForeignPtr yfptr $ \yptr ->
                 (== 0) <$> compareBytesSliceForeign xptr yptr (inBytes xlen))
@@ -137,7 +137,7 @@ equal x y =
       (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
       (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
       = xlen == ylen
-      && unsafeDupablePerformIO
+      && readOnlyPerformIO
            (withForeignPtr yfptr $ \yptr ->
               (== 0) <$> compareBytesSliceMixed x# (inBytes xoff) yptr (inBytes xlen))
 
@@ -266,7 +266,7 @@ uncons slice =
        in if len == 0
             then Nothing
             else Just
-                   ( unsafeDupablePerformIO $
+                   ( readOnlyPerformIO $
                      withForeignPtr fptr $ \ptr -> uncheckedReadPtr ptr 0
                    , ForeignSlice
                        (Array.FArray

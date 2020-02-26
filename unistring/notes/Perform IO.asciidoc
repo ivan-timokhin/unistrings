@@ -1,0 +1,223 @@
+= Perform IO
+Ivan Timokhin <dev.unistring@ivan.timokhin.name>
+v1.0, 2020-02-26
+:icons: font
+:source-highlighter: prettify
+:toc: left
+
+[abstract]
+
+Since `unistring` utilises foreign pointers as one of its storage
+mechanisms, it needs to use `withForeignPtr`, which, together with its
+underlying `touch#` primitive, runs in `IO`.  This means that there
+needs to be some way to get _out_ of `IO` and back into the pure code.
+This note records the mechanisms utilised to do that in different
+circumstances, and reasoning for each choice.
+
+== Problem statement
+
+The first reason why something _like_ `IO` is needed in `unistring` is
+that it needs to allocate and fill mutable arrays.  By itself, this
+requires working in some `State# s` state thread, which could
+technically be done with just the `ST` monad (which, in fact, exists
+for this very purpose).
+
+Unfortunately, there's also a second reason--the use of `ForeignPtr`
+as one of the storage mechanisms.  The problem with the `ForeignPtr`
+is that the pointer to the data (`Addr#`) is separated from the thing
+that keeps that data alive (`ForeignPtrContents`).  Thus, every access
+to the data has to be followed by a call to a `touch#` primop to
+ensure that the underlying data lives long enough.  The type of
+`touch#` is
+
+[source,haskell]
+----
+touch# :: o -> State# RealWorld -> State# RealWorld
+----
+
+and, correspondingly,
+
+[source,haskell]
+----
+withForeignPtr :: ForeignPtr a -> (Ptr a -> IO b) -> IO b
+----
+
+This is actually a more serious problem, since it requires performing
+`IO` at _each and every memory access_.  By contrast, the '`mutable
+arrays`' problem only requires executing `IO` (or `ST`) at array
+creation, where any overhead involved is masked by the actual
+allocation and filling the array.  Granted, memory accesses can be
+batched (and `unistring` tries to do that), but sometimes that's not
+an option (e.g. when converting to a list, if one wishes for proper
+laziness and list fusion).  Therefore, one must pay close attention to
+the costs imposed by the particular escape hatch used.
+
+== Overview of available mechanisms
+
+Essentially, we're interested in various ways to write a function with
+type `IO a -> a`.  From a purely formal, type-directed perspective,
+the problem is that `IO` is a wrapper around `State# RealWorld -> (#
+State# RealWorld, a \#)`.  Dropping an extraneous `State# RealWorld` in
+the result is not a problem; the problem is where to get the `State#
+RealWorld` to pass in as an argument.  I know of two mechanisms to do
+so in GHC, `realWorld#` and `runRW#`.
+
+.Why isn't dropping `State# RealWorld` a problem?
+
+NOTE: Especially for the primops that only produce a state token as an
+output, one might worry about GHC dropping them on the ground if their
+'`result`' is unused.  Fortunately for us, such primops, including the
+all-important `touch#`, have `has_side_effects = True` in
+`primops.txt.pp`, which prevents GHC from dropping them entirely.
+
+=== `realWorld#`
+
+Historically, the only available option was `realWorld#`, available
+from `GHC.Base`, which is just a global constant of type `State#
+RealWorld`.  Thus the definition of `accursedUnutterablePerformIO` in
+the `bytestring` library:
+
+[source,haskell]
+----
+{-# INLINE accursedUnutterablePerformIO #-}
+accursedUnutterablePerformIO :: IO a -> a
+accursedUnutterablePerformIO (IO m) = case m realWorld# of (# _, r #) -> r
+----
+
+Unfortunately, as the name of the function hints at, there's a very
+serious problem associated with `realWorld#`: floating and common
+subexpression elimination.  To quote,
+
+[quote, SLPJ 95/04, Note ‘runRW magic’ in GHC source]
+____
+Some definitions, for instance `runST`, must have careful control over float out
+of the bindings in their body. Consider this use of `runST`,
+
+[source,haskell]
+----
+f x = runST ( \ s -> let (a, s')  = newArray# 100 [] s
+                         (_, s'') = fill_in_array_or_something a x s'
+                     in freezeArray# a s'' )
+----
+
+If we inline `runST`, we'll get:
+
+[source,haskell]
+----
+f x = let (a, s')  = newArray# 100 [] realWorld#{-NB-}
+          (_, s'') = fill_in_array_or_something a x s'
+      in freezeArray# a s''
+----
+
+And now if we allow the `newArray#` binding to float out to become a CAF,
+we end up with a result that is totally and utterly wrong:
+
+[source,haskell]
+----
+f = let (a, s')  = newArray# 100 [] realWorld#{-NB-} -- YIKES!!!
+    in \ x ->
+        let (_, s'') = fill_in_array_or_something a x s'
+        in freezeArray# a s''
+----
+
+All calls to `f` will share a *single* array! Clearly this is nonsense and
+must be prevented.
+____
+
+The core of the problem, then, is that we really expect some primops
+to allocate a new instance of something (in `unistring` case, mostly
+`MutableByteArray#`) '`each time they're called,`' but GHC doesn't
+really have a concept of '`each time they're called,`' considering
+referential transparency and all that.footnote:[I'm not really sure
+why can't GHC use the same `has_side_effects` machinery to control
+floating and CSE, but I'm assuming there is some good reason.]
+
+Historically, this was worked around by a strategic use of `NOINLINE`
+annotations--until a better solution arrived in a form of `runRW#`.
+
+=== `runRW#`
+
+`runRW#` was introduced by Ben Gamari in
+https://gitlab.haskell.org/ghc/ghc/commit/351de169e14ad9277aaca653df4a3753c151f7bb[commit 351de169]
+for GHC 8.0 with a type `(State# RealWorld -> (# State# RealWorld, o \#)) -> (# State# RealWorld, o \#)`,
+which was subsequently generalised to `(State# RealWorld -> o) -> o` by David Feuer in
+https://gitlab.haskell.org/ghc/ghc/commit/c344005b2344800bee9fee1c5ca97867691b9c70[commit c344005b]
+for GHC 8.2.
+
+In all versions, `runRW# f` is equivalent to `f realWorld#`, which it
+expands to _after all other optimisations_.  Which is to say, at
+runtime it is equivalent to `f realWorld#` (and ultimately just to
+`f`, since `State# s` is zero-sized), but the optimiser can't see
+that, and therefore can't float bindings out of the `runRW#` argument
+or CSE across different invocations.  This is actually a marked
+improvement over the previous situation, where similar wrappers were
+_never_ inlined.
+
+Unfortunately, `runRW#` is _still_ a bit too opaque for the optimiser,
+as witnessed in
+https://gitlab.haskell.org/ghc/ghc/issues/15127[GHC issue 15127 '`Unbox around runRW#`'].
+A quick summary of the issue is that GHC really cannot optimise across
+`runRW#` boundaries, and so will actually pass around exactly the type
+indicated in the source--a boxed integer if a boxed integer was used,
+a boxed tuple if a tuple was used, etc.  This is generally fine for
+creating new arrays--where all the overhead will hopefully be drowned
+out by the actual array allocation and construction--but is absolutely
+unacceptable for reading out individual elements.
+
+Now there _is_ a workaround for this particular issue, as demonstrated in
+https://gitlab.haskell.org/ghc/ghc/issues/15127#note_210177[Andrew Martin's comment],
+which is to manually unwrap everything going across the `runRW#` boundary, like this:
+
+[source,haskell]
+----
+runDoubleST :: (forall s. ST s Double) -> Double
+{-# inline runDoubleST #-}
+runDoubleST f = D# (runRW# (\s0 -> case f of { ST g -> case g s0 of { (# _, D# r #) -> r }}))
+----
+
+But there are downsides as well.
+
+1. It seems impossible to do that in a fully polymorphic fashion (my
+attempts to do so have bumped into levity polymorphism
+limitations).footnote:[Granted, that polymorphism is only really
+needed in `Memory` interfaces, which are not the point of the library,
+but it still irks me.]
+2. We still need to awkwardly wrap multiple return values into unboxed
+tuples, which might or might not be less efficient than just plumbing
+them to where they're needed.
+3. As indicated in
+https://gitlab.haskell.org/ghc/ghc/issues/15127#note_211583[Simon Peyton Jones’ comment],
+GHC's optimisation arsenal is vast, and `runRW#` poses trouble to all
+of them.footnote:[Which, admittedly, is part of the point.]  The
+manual unwrapping trick helps with some of them, but I'm not exactly
+eager to find out what else is broken.
+
+== Higher-lever interfaces
+
+As of the moment of this writing,
+
+* `runST` and `unsafeDupablePerformIO` are both implemented in terms
+  of `runRW#`, and are both inlineable (or, rather, they aren't marked
+  specifically as `NOINLINE`);
+* `unsafePerformIO` is just a wrapper around `unsafeDupablePerformIO`,
+  with some extra code to ensure the computation is only ever run
+  once.  This is not a concern for `unistring` purposes, as the `IO`
+  it needs to perform never has visible side effects (aside from
+  memory allocation);
+* both `bytestring` and `text` define some version of
+  `accursedUnutterablePerformIO` for their own internal use.  Together
+  with a couple of one-off uses, these seem to be the only occurrences
+  of `realWorld#` in libraries in GHC repository.
+
+== Conclusion
+
+Here's my executive summary for all of the above:
+
+* For computations that allocate memory and/or write to it, `runRW#`
+  seems to be genuinely the best option; extra overhead or not, it's
+  the fastest _safe_ way to run them anyway.
+* For computations that only _read_ from memory, using `realWorld#`
+  directly is much faster and just as safe: `touch#` will be kept in
+  place by data dependencies and `has_side_effects`, and opaqueness of
+  `runRW#` will ensure that nothing is ever read from the array before
+  its construction is complete.
