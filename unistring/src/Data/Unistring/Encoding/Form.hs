@@ -46,9 +46,9 @@ import Data.Type.Equality ((:~:)(Refl))
 import Data.Word (Word16, Word32, Word8)
 
 import Data.Unistring.Memory.Primitive.Class.Unsafe
-  ( Primitive(inBytes, inElements, uncheckedIndexBytes,
-          uncheckedIndexPtr, uncheckedReadBytes, uncheckedReadPtr,
-          uncheckedWriteBytes, uncheckedWritePtr)
+  ( Primitive(inBytes, inElements, uncheckedInBytes,
+          uncheckedIndexBytes, uncheckedIndexPtr, uncheckedReadBytes,
+          uncheckedReadPtr, uncheckedWriteBytes, uncheckedWritePtr)
   )
 import Data.Unistring.Singletons
   ( Decided(Disproven, Proven)
@@ -104,6 +104,7 @@ newtype instance  CodeUnit 'UTF32 = CU32 Word32
 
 instance Known encodingForm => Primitive (CodeUnit encodingForm) where
   FWD(inBytes)
+  FWD(uncheckedInBytes)
   FWD(inElements)
   FWD(uncheckedIndexPtr)
   FWD(uncheckedReadPtr)

@@ -52,7 +52,7 @@ import qualified Data.Unistring.Memory.Allocator.Unsafe as Allocator
 import Data.Unistring.Memory.Array (Array)
 import Data.Unistring.Singletons (Known(sing))
 import Data.Unistring.Memory.Primitive.Class.Unsafe
-  ( Primitive(inBytes, uncheckedIndexBytes, uncheckedReadPtr)
+  ( Primitive(uncheckedInBytes, uncheckedIndexBytes, uncheckedReadPtr)
   )
 import Data.Unistring.Compat.Typeable (TypeRep, typeRep, Typeable)
 import Data.Unistring.Memory.Primitive.Operations.Unsafe
@@ -112,7 +112,9 @@ equal x y =
       (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
       (NativeSlice (Array.NArray (Array.NativeArray y#)) yoff ylen)
       = xlen == ylen
-      && compareBytesSliceNative x# (inBytes xoff) y# (inBytes yoff) (inBytes xlen) == 0
+      && compareBytesSliceNative x# (uncheckedInBytes xoff)
+                                 y# (uncheckedInBytes yoff)
+                                 (uncheckedInBytes xlen) == 0
     foreignEq ::
          Primitive a
       => Slice 'Storage.Foreign allocator1 a
@@ -126,7 +128,7 @@ equal x y =
       && readOnlyPerformIO
            (withForeignPtr xfptr $ \xptr ->
               withForeignPtr yfptr $ \yptr ->
-                (== 0) <$> compareBytesSliceForeign xptr yptr (inBytes xlen))
+                (== 0) <$> compareBytesSliceForeign xptr yptr (uncheckedInBytes xlen))
     mixedEq ::
          Primitive a
       => Slice 'Storage.Native allocator1 a
@@ -139,7 +141,7 @@ equal x y =
       = xlen == ylen
       && readOnlyPerformIO
            (withForeignPtr yfptr $ \yptr ->
-              (== 0) <$> compareBytesSliceMixed x# (inBytes xoff) yptr (inBytes xlen))
+              (== 0) <$> compareBytesSliceMixed x# (uncheckedInBytes xoff) yptr (uncheckedInBytes xlen))
 
 fromArray ::
      (Primitive a, Known storage)
@@ -241,7 +243,7 @@ plusForeignPtr (ForeignPtr addr# finalisers) (ByteCount (E.I# diff#)) =
 
 plusForeignPtr' :: Primitive a => ForeignPtr a -> CountOf a -> ForeignPtr a
 {-# INLINE plusForeignPtr' #-}
-plusForeignPtr' fptr diff = fptr `plusForeignPtr` inBytes diff
+plusForeignPtr' fptr diff = fptr `plusForeignPtr` uncheckedInBytes diff
 
 size :: Known storage => Slice storage allocator a -> CountOf a
 {-# INLINEABLE size #-}

@@ -28,9 +28,9 @@ Stability   : experimental
 
 -}
 module Data.Unistring.Memory.Primitive.Class.Unsafe
-  ( Primitive(inBytes, inElements, uncheckedIndexPtr, uncheckedReadPtr,
-          uncheckedWritePtr, uncheckedIndexBytes, uncheckedReadBytes,
-          uncheckedWriteBytes)
+  ( Primitive(inBytes, uncheckedInBytes, inElements, uncheckedIndexPtr,
+          uncheckedReadPtr, uncheckedWritePtr, uncheckedIndexBytes,
+          uncheckedReadBytes, uncheckedWriteBytes)
   ) where
 
 import Data.Bits ((.&.), complement, shiftL, shiftR)
@@ -65,7 +65,6 @@ checkOverflow nbits c@(CountOf n)
     mask = complement $ maxBound `shiftR` nbits
 
 invalidCount :: Show a => a -> b
-{-# NOINLINE invalidCount #-}
 invalidCount c = errorWithoutStackTrace $ "Invalid element count: " ++ show c
 
 checkNegative :: CountOf Word8 -> CountOf Word8
@@ -76,6 +75,7 @@ checkNegative c
 
 class Primitive a where
   inBytes :: CountOf a -> ByteCount
+  uncheckedInBytes :: CountOf a -> ByteCount
   inElements :: ByteCount -> CountOf a
   uncheckedIndexPtr :: E.Ptr a -> CountOf a -> a
   uncheckedReadPtr :: E.Ptr a -> CountOf a -> IO a
@@ -86,6 +86,7 @@ class Primitive a where
 
 instance Primitive Word8 where
   inBytes = ByteCount . getCountOf . checkNegative
+  uncheckedInBytes = ByteCount . getCountOf
   inElements = CountOf . getByteCount
   uncheckedIndexPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
     W8# (E.indexWord8OffAddr# ptr ix)
@@ -106,6 +107,7 @@ instance Primitive Word8 where
 
 instance Primitive Word16 where
   inBytes = ByteCount . (`shiftL` 1) . getCountOf . checkOverflow 1
+  uncheckedInBytes = ByteCount . (`shiftL` 1) . getCountOf
   inElements = CountOf . (`shiftR` 1) . getByteCount
   uncheckedIndexPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
     W16# (E.indexWord16OffAddr# ptr ix)
@@ -126,6 +128,7 @@ instance Primitive Word16 where
 
 instance Primitive Word32 where
   inBytes = ByteCount . (`shiftL` 2) . getCountOf . checkOverflow 2
+  uncheckedInBytes = ByteCount . (`shiftL` 2) . getCountOf
   inElements = CountOf . (`shiftR` 2) . getByteCount
   uncheckedIndexPtr (E.Ptr ptr) (CountOf (E.I# ix)) =
     W32# (E.indexWord32OffAddr# ptr ix)

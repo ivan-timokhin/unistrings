@@ -289,14 +289,14 @@ equal x y =
             (withForeignPtr xfptr $ \xptr ->
                withForeignPtr yfptr $ \yptr ->
                  (== 0) <$>
-                 Operations.compareBytesForeign xptr yptr (P.inBytes xlen))
+                 Operations.compareBytesForeign xptr yptr (P.uncheckedInBytes xlen))
     mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
     {-# INLINE mixedEq #-}
     mixedEq x' y' =
       let !(NativeArray x#) = x'
           !(ForeignArray yfptr ylen) = y'
           !xb = Operations.sizeOfByteArray x#
-          !yb = P.inBytes ylen
+          !yb = P.uncheckedInBytes ylen
        in xb == yb &&
           readOnlyPerformIO
             (withForeignPtr yfptr $ \yptr ->
@@ -438,19 +438,19 @@ instance MutableArray (NativeMutableArray E.RealWorld) IO where
   uncheckedCopyNativeSlice src# srcOff (NativeMutableArray dest#) destOff n =
     Operations.copyNativeToNative
       src#
-      (P.inBytes srcOff)
+      (P.uncheckedInBytes srcOff)
       dest#
-      (P.inBytes destOff)
-      (P.inBytes n)
+      (P.uncheckedInBytes destOff)
+      (P.uncheckedInBytes n)
   uncheckedCopyForeignSlice src (NativeMutableArray dest#) destOff n =
     Operations.copyForeignToNative src dest# (P.inBytes destOff) (P.inBytes n)
   uncheckedCopyArraySlice (NativeMutableArray src#) srcOff (NativeMutableArray dest#) destOff n =
     Operations.copyMutableNativeToNative
       src#
-      (P.inBytes srcOff)
+      (P.uncheckedInBytes srcOff)
       dest#
-      (P.inBytes destOff)
-      (P.inBytes n)
+      (P.uncheckedInBytes destOff)
+      (P.uncheckedInBytes n)
   arraySize = getNativeMutableArrayLength
 
 cyclePrefix :: (MutableArray arr m, Primitive a) => arr a -> CountOf a -> m ()
