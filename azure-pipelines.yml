@@ -225,8 +225,6 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
-      ghc-8.2.2:
-        GHCVER: 8.2
       ghc-8.6.5:
         GHCVER: 8.6
       ghc-8.8.1:
