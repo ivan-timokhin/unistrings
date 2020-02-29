@@ -33,6 +33,7 @@ import Data.Unistring.Scalar.Sequence.Internal
   , Step
   , Stream
   , toList
+  , equal
   )
 import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
 import Data.Unistring.Scalar.Value.Unsafe (ScalarValue(ScalarValue))
@@ -164,6 +165,21 @@ tests =
 #endif
 #endif
       ]
+  , testGroup
+      "Eq"
+      $(inspectTests $
+        [ 'equal1
+        , 'equal2
+        , 'equal3
+        , 'equal4
+        ] `allHaveNoneOfTypes`
+        [ ''Sing
+        , ''Known
+        , ''Stream
+        , ''Step
+        , ''Primitive
+        , ''ScalarValue
+        ])
   ]
 
 foldrNativeFullStrict32 ::
@@ -513,3 +529,27 @@ alphabetForeignPinnedSliceLazyUTF8 ::
      Sequence 'Storage.Foreign Allocator.Pinned 'Ownership.Slice 'Strictness.Lazy 'Form.UTF8
 alphabetForeignPinnedSliceLazyUTF8 =
   fromListN 26 $ map (ScalarValue . toCodePoint) ['a' .. 'z']
+
+equal1 ::
+     Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Strict 'Form.UTF8
+  -> Sequence 'Storage.Foreign a2 'Ownership.Full 'Strictness.Lazy 'Form.UTF8
+  -> Bool
+equal1 = equal
+
+equal2 ::
+     Sequence 'Storage.Native a1 'Ownership.Full 'Strictness.Strict 'Form.UTF32
+  -> Sequence 'Storage.Native a2 'Ownership.Slice 'Strictness.Strict 'Form.UTF32
+  -> Bool
+equal2 = equal
+
+equal3 ::
+     Sequence 'Storage.Foreign a2 'Ownership.Slice 'Strictness.Lazy 'Form.UTF16
+  -> Sequence 'Storage.Native a1 'Ownership.Full 'Strictness.Strict 'Form.UTF16
+  -> Bool
+equal3 = equal
+
+equal4 ::
+     Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Lazy 'Form.UTF32
+  -> Sequence 'Storage.Foreign a2 'Ownership.Full 'Strictness.Lazy 'Form.UTF32
+  -> Bool
+equal4 = equal

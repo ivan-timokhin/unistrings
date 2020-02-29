@@ -26,6 +26,7 @@ import qualified Data.Unistring.Memory.Array as Array
 import Data.Unistring.Memory.Primitive.Class.Unsafe (Primitive)
 import qualified Data.Unistring.Memory.Slice.Internal as Slice
 import qualified Data.Unistring.Memory.Sequence.Internal as Sequence
+import qualified Data.Unistring.Scalar.Sequence.Internal as SSequence
 import Data.Unistring.Singletons (Known)
 
 class Eqv a b where
@@ -51,6 +52,18 @@ instance ( Known storage1
          (Sequence.Sequence storage1 allocator1 ownership1 strictness1 a)
          (Sequence.Sequence storage2 allocator2 ownership2 strictness2 a) where
   eqv = Sequence.equal
+
+instance ( Known storage1
+         , Known storage2
+         , Known ownership1
+         , Known ownership2
+         , Known strictness1
+         , Known strictness2
+         , Known encoding
+         ) =>
+         Eqv (SSequence.Sequence storage1 allocator1 ownership1 strictness1 encoding)
+             (SSequence.Sequence storage2 allocator2 ownership2 strictness2 encoding) where
+  eqv = SSequence.equal
 
 (~~~) :: (Eqv a b, Show a, Show b) => a -> b -> Property
 a ~~~ b = counterexample (show a ++ interpret res ++ show b) res

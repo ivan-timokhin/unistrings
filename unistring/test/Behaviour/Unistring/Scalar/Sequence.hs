@@ -40,6 +40,7 @@ import Behaviour.Unistring.Scalar.SequenceType
   ( SequenceType
   , SomeSequenceType(SomeSequenceType)
   )
+import Behaviour.Common ((~/~), (~~~))
 
 tests :: [TestTree]
 tests =
@@ -59,6 +60,25 @@ tests =
           let s = fromList (getScalarList sl) `asSequenceType` st
            in toList s === getScalarList sl
       ]
+  , testGroup "Equality" $
+    let test :: [TestTree]
+        test =
+          [ testProperty "Equal" $ \(SomeSequenceType st) sl ->
+              let s1 = fromList (getScalarList sl) `asSequenceType` st
+                  s2 = fromList (getScalarList sl) `asSequenceType` st
+               in s1 ~~~ s2
+          , testProperty "Random" $ \(SomeSequenceType st) sl1 sl2 ->
+              let s1 = fromList (getScalarList sl1) `asSequenceType` st
+                  s2 = fromList (getScalarList sl2) `asSequenceType` st
+               in if sl1 == sl2
+                    then s1 ~~~ s2
+                    else s1 ~/~ s2
+          ]
+     in [ testGroup "Small" test
+        , adjustOption
+            (\(QuickCheckMaxSize sz) -> QuickCheckMaxSize $ max 10000 sz) $
+          testGroup "Large" test
+        ]
   ]
 
 fromLists ::

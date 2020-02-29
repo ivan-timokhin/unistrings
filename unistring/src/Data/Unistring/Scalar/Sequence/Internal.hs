@@ -30,6 +30,7 @@ module Data.Unistring.Scalar.Sequence.Internal
   , ownership
   , strictness
   , encodingForm
+  , equal
   , fromList
   , fromListNStrict
   , toList
@@ -67,6 +68,10 @@ import Data.Unistring.Internal.IO (readOnlyPerformIO)
 newtype Sequence storage allocator ownership strictness encoding =
   Sequence
     (M.Sequence storage allocator ownership strictness (EF.CodeUnit encoding))
+
+instance (Known storage, Known ownership, Known strictness, Known encoding) =>
+         Show (Sequence storage allocator ownership strictness encoding) where
+  showsPrec p = showsPrec p . toList
 
 representation ::
      Sequence storage allocator ownership strictness encoding
@@ -117,8 +122,8 @@ empty = Sequence M.nilL
 
 data Step s a
   = Done
-  | Skip s
-  | Yield a s
+  | Skip !s
+  | Yield !a !s
 
 data Stream a where
   Stream :: (s -> Step s a) -> s -> Stream a
@@ -213,7 +218,7 @@ streamLazy (Left chunks) =
 streamLazy (Right (slice, rest))
   | Slice.size slice == 0 = Skip $ Left rest
   | otherwise =
-    let !(sv, slice') = streamSliceNE slice
+    let (!sv, !slice') = streamSliceNE slice
      in Yield sv $ Right (slice', rest)
 
 unstreamLazy ::
@@ -267,6 +272,25 @@ unstreamLazy' step = loopStart SPEC
                     Skip s'' -> go sPEC' offset s''
                     Yield !sv s'' -> go1 sPEC' offset s'' sv
             go1 sPEC 0 s sv0
+
+equal ::
+     ( Known storage1
+     , Known ownership1
+     , Known strictness1
+     , Known storage2
+     , Known ownership2
+     , Known strictness2
+     , Known encoding
+     )
+  => Sequence storage1 allocator1 ownership1 strictness1 encoding
+  -> Sequence storage2 allocator2 ownership2 strictness2 encoding
+  -> Bool
+{-# INLINEABLE equal #-}
+equal x y = representation x `M.equal` representation y
+
+instance (Known storage, Known ownership, Known strictness, Known encoding) =>
+         Eq (Sequence storage allocator ownership strictness encoding) where
+  (==) = equal
 
 toList ::
      (Known storage, Known ownership, Known strictness, Known encoding)
