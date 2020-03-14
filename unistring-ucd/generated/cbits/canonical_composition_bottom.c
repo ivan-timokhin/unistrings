@@ -641,7 +641,8 @@ HsInt16 const _hs__ucd__canonical_composition_bottom_layer_0[] = { 0
   , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
   , 1, 1, 1, 1, 1, 376, 1, 1, 1, 1
   , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-  , 1
+  , 1, 1, 377, 1, 1, 1, 1, 1, 1, 1
+  , 1, 1, 1, 1, 1, 1, 1, 1
 };
 HsInt16 const _hs__ucd__canonical_composition_bottom_layer_1[] = { 0
   , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
@@ -1850,7 +1851,10 @@ HsInt16 const _hs__ucd__canonical_composition_bottom_layer_1[] = { 0
   , 1, 1, 1, 376, 1, 1, 1, 1, 1, 1
   , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
   , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-  , 1, 1, 1
+  , 1, 1, 1, 1, 1, 1, 377, 1, 1, 1
+  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+  , 1, 1, 1, 1, 1
 };
 HsInt16 const _hs__ucd__canonical_composition_bottom_layer_2[] = { 0
   , 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
@@ -2456,7 +2460,8 @@ HsInt16 const _hs__ucd__canonical_composition_bottom_layer_2[] = { 0
   , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   , 375, 0, 0, 0, 0, 0, 0, 0, 0, 0
   , 0, 0, 0, 0, 0, 0, 376, 0, 0, 0
-  , 0
+  , 0, 0, 0, 377, 0, 0, 0, 0, 0, 0
+  , 0, 0, 0, 0, 0, 0, 0
 };
 HsInt16 const _hs__ucd__canonical_composition_bottom_layer_3[] = { 0
   , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -3062,7 +3067,8 @@ HsInt16 const _hs__ucd__canonical_composition_bottom_layer_3[] = { 0
   , 0, 0, 0, 0, 604, 0, 0, 0, 0, 0
   , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   , 605, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  , 0
+  , 0, 0, 0, 0, 0, 0, 0, 606, 0, 0
+  , 0, 0, 0, 0, 0, 0, 0
 };
 HsInt32 const _hs__ucd__canonical_composition_bottom_bottom[] = { 0
   , 0, 0, 0, 0, 0, 0, 0, 8814, 0, 0
@@ -3549,5 +3555,6 @@ HsInt32 const _hs__ucd__canonical_composition_bottom_bottom[] = { 0
   , 0, 0, 0, 0, 70476, 70844, 0, 0, 0, 0
   , 0, 0, 0, 0, 0, 70843, 0, 0, 70846, 0
   , 0, 0, 0, 0, 0, 0, 0, 0, 71098, 0
-  , 0, 0, 0, 0, 0, 0, 71099
+  , 0, 0, 0, 0, 0, 0, 71099, 71992, 0, 0
+  , 0, 0, 0, 0, 0
 };

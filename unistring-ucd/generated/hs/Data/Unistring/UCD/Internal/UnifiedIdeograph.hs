@@ -22,8 +22,8 @@ retrieve :: Int -> Bool
 {-# INLINE retrieve #-}
 retrieve cp = val
  where
-  i0 = fromEnum $ unsafeReadPtr layer_0 $ cp `shiftR` 15
-  i1 = fromEnum $ unsafeReadPtr layer_1 $ i0 `shiftL` 5 + (cp `shiftR` 10) .&. 0x1f
-  i2 = fromEnum $ unsafeReadPtr layer_2 $ i1 `shiftL` 4 + (cp `shiftR` 6) .&. 0xf
+  i0 = fromEnum $ unsafeReadPtr layer_0 $ cp `shiftR` 13
+  i1 = fromEnum $ unsafeReadPtr layer_1 $ i0 `shiftL` 4 + (cp `shiftR` 9) .&. 0xf
+  i2 = fromEnum $ unsafeReadPtr layer_2 $ i1 `shiftL` 3 + (cp `shiftR` 6) .&. 0x7
   i3 = fromEnum $ unsafeReadPtr layer_3 $ i2 `shiftL` 3 + (cp `shiftR` 3) .&. 0x7
   val = tagToEnum# (toInt# (unsafeReadPtr bottom $ i3 `shiftL` 3 + cp .&. 0x7)) :: Bool

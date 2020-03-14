@@ -48,3 +48,5 @@ data/ucd/Unihan.zip
 /data/ucd/auxiliary/SentenceBreakTest.txt
 /data/ucd/auxiliary/WordBreakTest.txt
 /data/ucd/*.pdf
+/data/ucd/emoji/ReadMe.txt
+/data/ucd/emoji/emoji-variation-sequences.txt

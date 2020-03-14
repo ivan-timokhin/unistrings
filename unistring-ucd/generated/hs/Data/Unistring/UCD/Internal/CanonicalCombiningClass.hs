@@ -11,7 +11,7 @@ import Data.Word (Word8, Word16, Word32)
 
 foreign import ccall "&_hs__ucd__canonical_combining_class_layer_0" layer_0 :: Ptr Int8
 foreign import ccall "&_hs__ucd__canonical_combining_class_layer_1" layer_1 :: Ptr Int8
-foreign import ccall "&_hs__ucd__canonical_combining_class_layer_2" layer_2 :: Ptr Int8
+foreign import ccall "&_hs__ucd__canonical_combining_class_layer_2" layer_2 :: Ptr Word8
 foreign import ccall "&_hs__ucd__canonical_combining_class_layer_3" layer_3 :: Ptr Int8
 foreign import ccall "&_hs__ucd__canonical_combining_class_bottom" bottom :: Ptr Word8
 

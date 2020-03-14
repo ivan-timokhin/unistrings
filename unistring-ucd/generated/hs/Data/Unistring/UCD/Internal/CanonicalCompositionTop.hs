@@ -20,7 +20,7 @@ retrieve :: Int -> Maybe Int
 retrieve cp = val
  where
   i0 = fromEnum $ unsafeReadPtr layer_0 $ cp `shiftR` 14
-  i1 = fromEnum $ unsafeReadPtr layer_1 $ i0 `shiftL` 5 + (cp `shiftR` 9) .&. 0x1f
-  i2 = fromEnum $ unsafeReadPtr layer_2 $ i1 `shiftL` 4 + (cp `shiftR` 5) .&. 0xf
+  i1 = fromEnum $ unsafeReadPtr layer_1 $ i0 `shiftL` 6 + (cp `shiftR` 8) .&. 0x3f
+  i2 = fromEnum $ unsafeReadPtr layer_2 $ i1 `shiftL` 3 + (cp `shiftR` 5) .&. 0x7
   i3 = fromEnum $ unsafeReadPtr layer_3 $ i2 `shiftL` 3 + (cp `shiftR` 2) .&. 0x7
   val = let v = (unsafeReadPtr bottom $ i3 `shiftL` 2 + cp .&. 0x3) in if v == 0 then Nothing else Just (fromIntegral $ (v - 1))

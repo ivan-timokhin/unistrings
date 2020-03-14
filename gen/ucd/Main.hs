@@ -208,14 +208,16 @@ main = do
       map
         (, "")
         ([0xAC00 .. 0xD7A3] ++
-         [0x3400 .. 0x4DB5] ++
-         [0x4E00 .. 0x9FEF] ++
+         [0x3400 .. 0x4DBF] ++
+         [0x4E00 .. 0x9FFC] ++
          [0x20000 .. 0x2A6D6] ++
          [0x2A700 .. 0x2B734] ++
          [0x2B740 .. 0x2B81D] ++
          [0x2B820 .. 0x2CEA1] ++
          [0x2CEB0 .. 0x2EBE0] ++
+         [0x30000 .. 0x3134A] ++
          [0x17000 .. 0x187F7] ++
+         [0x18D00 .. 0x18D08] ++
          [0xF900 .. 0xFA6D] ++ [0xFA70 .. 0xFAD9] ++ [0x2F800 .. 0x2FA1D])
     , generateASCIITableSources fullPartitionings "unicode_1_name" $
       UCD.UnicodeData.tableToVector "" $

@@ -182,6 +182,7 @@ data Age
   | V11_0 -- ^ @since 0.1.0.0
   | V12_0 -- ^ @since 0.1.0.0
   | V12_1 -- ^ @since 0.1.0.0
+  | V13_0 -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
 
 instance EnumeratedProperty Age where
@@ -209,6 +210,7 @@ instance EnumeratedProperty Age where
       V11_0 -> "V11_0"
       V12_0 -> "V12_0"
       V12_1 -> "V12_1"
+      V13_0 -> "V13_0"
   abbreviatedPropertyValueName a =
     case a of
       V1_1 -> "1.1"
@@ -233,6 +235,7 @@ instance EnumeratedProperty Age where
       V11_0 -> "11.0"
       V12_0 -> "12.0"
       V12_1 -> "12.1"
+      V13_0 -> "13.0"
 
 -- | See 'Data.Unistring.UCD.bidiClass'
 --
@@ -586,8 +589,10 @@ data Block
   | OldHungarianBlock -- ^ @since 0.1.0.0
   | HanifiRohingyaBlock -- ^ @since 0.1.0.0
   | RumiNumeralSymbolsBlock -- ^ @since 0.1.0.0
+  | YezidiBlock -- ^ @since 0.1.0.0
   | OldSogdianBlock -- ^ @since 0.1.0.0
   | SogdianBlock -- ^ @since 0.1.0.0
+  | ChorasmianBlock -- ^ @since 0.1.0.0
   | ElymaicBlock -- ^ @since 0.1.0.0
   | BrahmiBlock -- ^ @since 0.1.0.0
   | KaithiBlock -- ^ @since 0.1.0.0
@@ -609,6 +614,7 @@ data Block
   | AhomBlock -- ^ @since 0.1.0.0
   | DograBlock -- ^ @since 0.1.0.0
   | WarangCitiBlock -- ^ @since 0.1.0.0
+  | DivesAkuruBlock -- ^ @since 0.1.0.0
   | NandinagariBlock -- ^ @since 0.1.0.0
   | ZanabazarSquareBlock -- ^ @since 0.1.0.0
   | SoyomboBlock -- ^ @since 0.1.0.0
@@ -618,6 +624,7 @@ data Block
   | MasaramGondiBlock -- ^ @since 0.1.0.0
   | GunjalaGondiBlock -- ^ @since 0.1.0.0
   | MakasarBlock -- ^ @since 0.1.0.0
+  | LisuSupplementBlock -- ^ @since 0.1.0.0
   | TamilSupplementBlock -- ^ @since 0.1.0.0
   | CuneiformBlock -- ^ @since 0.1.0.0
   | CuneiformNumbersAndPunctuationBlock -- ^ @since 0.1.0.0
@@ -634,6 +641,8 @@ data Block
   | IdeographicSymbolsAndPunctuationBlock -- ^ @since 0.1.0.0
   | TangutBlock -- ^ @since 0.1.0.0
   | TangutComponentsBlock -- ^ @since 0.1.0.0
+  | KhitanSmallScriptBlock -- ^ @since 0.1.0.0
+  | TangutSupplementBlock -- ^ @since 0.1.0.0
   | KanaSupplementBlock -- ^ @since 0.1.0.0
   | KanaExtendedABlock -- ^ @since 0.1.0.0
   | SmallKanaExtensionBlock -- ^ @since 0.1.0.0
@@ -671,12 +680,14 @@ data Block
   | SupplementalSymbolsAndPictographsBlock -- ^ @since 0.1.0.0
   | ChessSymbolsBlock -- ^ @since 0.1.0.0
   | SymbolsAndPictographsExtendedABlock -- ^ @since 0.1.0.0
+  | SymbolsForLegacyComputingBlock -- ^ @since 0.1.0.0
   | CJKUnifiedIdeographsExtensionBBlock -- ^ @since 0.1.0.0
   | CJKUnifiedIdeographsExtensionCBlock -- ^ @since 0.1.0.0
   | CJKUnifiedIdeographsExtensionDBlock -- ^ @since 0.1.0.0
   | CJKUnifiedIdeographsExtensionEBlock -- ^ @since 0.1.0.0
   | CJKUnifiedIdeographsExtensionFBlock -- ^ @since 0.1.0.0
   | CJKCompatibilityIdeographsSupplementBlock -- ^ @since 0.1.0.0
+  | CJKUnifiedIdeographsExtensionGBlock -- ^ @since 0.1.0.0
   | TagsBlock -- ^ @since 0.1.0.0
   | VariationSelectorsSupplementBlock -- ^ @since 0.1.0.0
   | SupplementaryPrivateUseAreaABlock -- ^ @since 0.1.0.0
@@ -743,6 +754,8 @@ instance EnumeratedProperty Block where
         "CJK_Unified_Ideographs_Extension_E"
       CJKUnifiedIdeographsExtensionFBlock ->
         "CJK_Unified_Ideographs_Extension_F"
+      CJKUnifiedIdeographsExtensionGBlock ->
+        "CJK_Unified_Ideographs_Extension_G"
       CarianBlock -> "Carian"
       CaucasianAlbanianBlock -> "Caucasian_Albanian"
       ChakmaBlock -> "Chakma"
@@ -1009,6 +1022,13 @@ instance EnumeratedProperty Block where
       YiSyllablesBlock -> "Yi_Syllables"
       YijingHexagramSymbolsBlock -> "Yijing_Hexagram_Symbols"
       ZanabazarSquareBlock -> "Zanabazar_Square"
+      YezidiBlock -> "Yezidi"
+      ChorasmianBlock -> "Chorasmian"
+      DivesAkuruBlock -> "Dives_Akuru"
+      LisuSupplementBlock -> "Lisu_Supplement"
+      KhitanSmallScriptBlock -> "Khitan_Small_Script"
+      TangutSupplementBlock -> "Tangut_Supplement"
+      SymbolsForLegacyComputingBlock -> "Symbols_For_Legacy_Computing"
   abbreviatedPropertyValueName b =
     case b of
       AdlamBlock -> "Adlam"
@@ -1060,6 +1080,7 @@ instance EnumeratedProperty Block where
       CJKUnifiedIdeographsExtensionDBlock -> "CJK_Ext_D"
       CJKUnifiedIdeographsExtensionEBlock -> "CJK_Ext_E"
       CJKUnifiedIdeographsExtensionFBlock -> "CJK_Ext_F"
+      CJKUnifiedIdeographsExtensionGBlock -> "CJK_Ext_G"
       CarianBlock -> "Carian"
       CaucasianAlbanianBlock -> "Caucasian_Albanian"
       ChakmaBlock -> "Chakma"
@@ -1312,6 +1333,13 @@ instance EnumeratedProperty Block where
       YiSyllablesBlock -> "Yi_Syllables"
       YijingHexagramSymbolsBlock -> "Yijing"
       ZanabazarSquareBlock -> "Zanabazar_Square"
+      YezidiBlock -> "Yezidi"
+      ChorasmianBlock -> "Chorasmian"
+      DivesAkuruBlock -> "Dives_Akuru"
+      LisuSupplementBlock -> "Lisu_Sup"
+      KhitanSmallScriptBlock -> "Khitan_Small_Script"
+      TangutSupplementBlock -> "Tangut_Sup"
+      SymbolsForLegacyComputingBlock -> "Symbols_For_Legacy_Computing"
 
 -- | A catalogue of scripts encoded in Unicode
 --
@@ -1342,6 +1370,7 @@ data Script
   | ChakmaScript -- ^ @since 0.1.0.0
   | ChamScript -- ^ @since 0.1.0.0
   | CherokeeScript -- ^ @since 0.1.0.0
+  | ChorasmianScript -- ^ @since 0.1.0.0
   | CommonScript -- ^ @since 0.1.0.0
   | CopticScript -- ^ @since 0.1.0.0
   | CuneiformScript -- ^ @since 0.1.0.0
@@ -1349,6 +1378,7 @@ data Script
   | CyrillicScript -- ^ @since 0.1.0.0
   | DeseretScript -- ^ @since 0.1.0.0
   | DevanagariScript -- ^ @since 0.1.0.0
+  | DivesAkuruScript -- ^ @since 0.1.0.0
   | DograScript -- ^ @since 0.1.0.0
   | DuployanScript -- ^ @since 0.1.0.0
   | EgyptianHieroglyphsScript -- ^ @since 0.1.0.0
@@ -1382,6 +1412,7 @@ data Script
   | KharoshthiScript -- ^ @since 0.1.0.0
   | KhmerScript -- ^ @since 0.1.0.0
   | KhojkiScript -- ^ @since 0.1.0.0
+  | KhitanSmallScriptScript -- ^ @since 0.1.0.0
   | KhudawadiScript -- ^ @since 0.1.0.0
   | LaoScript -- ^ @since 0.1.0.0
   | LatinScript -- ^ @since 0.1.0.0
@@ -1470,6 +1501,7 @@ data Script
   | VaiScript -- ^ @since 0.1.0.0
   | WanchoScript -- ^ @since 0.1.0.0
   | WarangCitiScript -- ^ @since 0.1.0.0
+  | YezidiScript -- ^ @since 0.1.0.0
   | YiScript -- ^ @since 0.1.0.0
   | ZanabazarSquareScript -- ^ @since 0.1.0.0
   deriving (Eq, Ord, Enum, Bounded, Show, Read, Data, Generic, Ix)
@@ -1500,6 +1532,7 @@ instance EnumeratedProperty Script where
       ChakmaScript -> "Chakma"
       ChamScript -> "Cham"
       CherokeeScript -> "Cherokee"
+      ChorasmianScript -> "Chorasmian"
       CommonScript -> "Common"
       CopticScript -> "Coptic"
       CuneiformScript -> "Cuneiform"
@@ -1507,6 +1540,7 @@ instance EnumeratedProperty Script where
       CyrillicScript -> "Cyrillic"
       DeseretScript -> "Deseret"
       DevanagariScript -> "Devanagari"
+      DivesAkuruScript -> "Dives_Akuru"
       DograScript -> "Dogra"
       DuployanScript -> "Duployan"
       EgyptianHieroglyphsScript -> "Egyptian_Hieroglyphs"
@@ -1540,6 +1574,7 @@ instance EnumeratedProperty Script where
       KharoshthiScript -> "Kharoshthi"
       KhmerScript -> "Khmer"
       KhojkiScript -> "Khojki"
+      KhitanSmallScriptScript -> "Khitan_Small_Script"
       KhudawadiScript -> "Khudawadi"
       LaoScript -> "Lao"
       LatinScript -> "Latin"
@@ -1628,6 +1663,7 @@ instance EnumeratedProperty Script where
       VaiScript -> "Vai"
       WanchoScript -> "Wancho"
       WarangCitiScript -> "Warang_Citi"
+      YezidiScript -> "Yezidi"
       YiScript -> "Yi"
       ZanabazarSquareScript -> "Zanabazar_Square"
   abbreviatedPropertyValueName s =
@@ -1655,6 +1691,7 @@ instance EnumeratedProperty Script where
       ChakmaScript -> "Cakm"
       ChamScript -> "Cham"
       CherokeeScript -> "Cher"
+      ChorasmianScript -> "Chrs"
       CommonScript -> "Zyyy"
       CopticScript -> "Copt"
       CuneiformScript -> "Xsux"
@@ -1662,6 +1699,7 @@ instance EnumeratedProperty Script where
       CyrillicScript -> "Cyrl"
       DeseretScript -> "Dsrt"
       DevanagariScript -> "Deva"
+      DivesAkuruScript -> "Diak"
       DograScript -> "Dogr"
       DuployanScript -> "Dupl"
       EgyptianHieroglyphsScript -> "Egyp"
@@ -1695,6 +1733,7 @@ instance EnumeratedProperty Script where
       KharoshthiScript -> "Khar"
       KhmerScript -> "Khmr"
       KhojkiScript -> "Khoj"
+      KhitanSmallScriptScript -> "Kits"
       KhudawadiScript -> "Sind"
       LaoScript -> "Laoo"
       LatinScript -> "Latn"
@@ -1783,6 +1822,7 @@ instance EnumeratedProperty Script where
       VaiScript -> "Vaii"
       WanchoScript -> "Wcho"
       WarangCitiScript -> "Wara"
+      YezidiScript -> "Yezi"
       YiScript -> "Yiii"
       ZanabazarSquareScript -> "Zanb"
 
@@ -2503,6 +2543,7 @@ data IndicPositionalCategory
   | RightIPC -- ^ @since 0.1.0.0
   | TopIPC -- ^ @since 0.1.0.0
   | TopAndBottomIPC -- ^ @since 0.1.0.0
+  | TopAndBottomAndLeftIPC -- ^ @since 0.1.0.0
   | TopAndBottomAndRightIPC -- ^ @since 0.1.0.0
   | TopAndLeftIPC -- ^ @since 0.1.0.0
   | TopAndLeftAndRightIPC -- ^ @since 0.1.0.0
@@ -2522,6 +2563,7 @@ instance EnumeratedProperty IndicPositionalCategory where
       RightIPC -> "Right"
       TopIPC -> "Top"
       TopAndBottomIPC -> "Top_And_Bottom"
+      TopAndBottomAndLeftIPC -> "Top_And_Bottom_And_Left"
       TopAndBottomAndRightIPC -> "Top_And_Bottom_And_Right"
       TopAndLeftIPC -> "Top_And_Left"
       TopAndLeftAndRightIPC -> "Top_And_Left_And_Right"

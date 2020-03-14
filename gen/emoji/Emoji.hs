@@ -35,7 +35,7 @@ data Props =
 
 fetch :: IO Props
 fetch = do
-  m <- fetchBinaryMulti "data/emoji/emoji-data.txt"
+  m <- fetchBinaryMulti "data/ucd/emoji/emoji-data.txt"
   let get prop =
         case Map.lookup prop m of
           Nothing -> fail $ "Can't find property " ++ show prop

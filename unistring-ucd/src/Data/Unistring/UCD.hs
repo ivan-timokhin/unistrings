@@ -74,7 +74,7 @@ added to the Haskell enumeration type as well.
 
 = Database version
 
-This module provides property values according to __Unicode 12.1__
+This module provides property values according to __Unicode 13.0__
 
 @since 0.1.0.0
 -}
@@ -372,28 +372,28 @@ instance IsCodePoint Char where
 -- >>> import Data.List (sort)
 -- >>> import qualified Data.List.NonEmpty as NE
 -- >>> mapM_ (\cs -> putStrLn $ show (NE.head cs) ++ ": " ++ show (NE.length cs)) $ NE.group $ sort $ map generalCategory ['\x0'..]
--- UppercaseLetter: 1788
--- LowercaseLetter: 2151
+-- UppercaseLetter: 1791
+-- LowercaseLetter: 2155
 -- TitlecaseLetter: 31
--- ModifierLetter: 259
--- OtherLetter: 121414
--- NonSpacingMark: 1826
--- SpacingCombiningMark: 429
+-- ModifierLetter: 260
+-- OtherLetter: 127004
+-- NonSpacingMark: 1839
+-- SpacingCombiningMark: 443
 -- EnclosingMark: 13
--- DecimalNumber: 630
+-- DecimalNumber: 650
 -- LetterNumber: 236
--- OtherNumber: 888
+-- OtherNumber: 895
 -- ConnectorPunctuation: 10
--- DashPunctuation: 24
+-- DashPunctuation: 25
 -- OpenPunctuation: 75
 -- ClosePunctuation: 73
 -- InitialQuote: 12
 -- FinalQuote: 10
--- OtherPunctuation: 588
+-- OtherPunctuation: 593
 -- MathSymbol: 948
 -- CurrencySymbol: 62
--- ModifierSymbol: 121
--- OtherSymbol: 6161
+-- ModifierSymbol: 123
+-- OtherSymbol: 6431
 -- Space: 17
 -- LineSeparator: 1
 -- ParagraphSeparator: 1
@@ -401,7 +401,7 @@ instance IsCodePoint Char where
 -- Format: 161
 -- Surrogate: 2048
 -- PrivateUse: 137468
--- NotAssigned: 836602
+-- NotAssigned: 830672
 --
 -- === Property type
 --
@@ -509,14 +509,16 @@ name cp
         tbase = 0xA7
         (lindex, vindex, tindex) = splitHangulSyllable icp
     prefix
-      | (0x3400 <= icp && icp <= 0x4DB5) ||
-          (0x4E00 <= icp && icp <= 0x9FEF) ||
-          (0x20000 <= icp && icp <= 0x2A6D6) ||
+      | (0x3400 <= icp && icp <= 0x4DBF) ||
+          (0x4E00 <= icp && icp <= 0x9FFC) ||
+          (0x20000 <= icp && icp <= 0x2A6DD) ||
           (0x2A700 <= icp && icp <= 0x2B734) ||
           (0x2B740 <= icp && icp <= 0x2B81D) ||
           (0x2B820 <= icp && icp <= 0x2CEA1) ||
-          (0x2CEB0 <= icp && icp <= 0x2EBE0) = Just "CJK UNIFIED IDEOGRAPH-"
-      | 0x17000 <= icp && icp <= 0x187F7 = Just "TANGUT IDEOGRAPH-"
+          (0x2CEB0 <= icp && icp <= 0x2EBE0) ||
+          (0x30000 <= icp && icp <= 0x3134A) = Just "CJK UNIFIED IDEOGRAPH-"
+      | (0x17000 <= icp && icp <= 0x187F7) || (0x18D00 <= icp && icp <= 0x18D08)
+        = Just "TANGUT IDEOGRAPH-"
       | (0xF900 <= icp && icp <= 0xFA6D) ||
           (0xFA70 <= icp && icp <= 0xFAD9) || (0x2F800 <= icp && icp <= 0x2FA1D) =
         Just "CJK COMPATIBILITY IDEOGRAPH-"
@@ -629,7 +631,7 @@ nameAliases cp =
 --
 -- >>> import Data.Maybe (isJust)
 -- >>> length $ filter (\c -> isJust (block c) && generalCategory c == NotAssigned) ['\x0'..]
--- 3882
+-- 4032
 --
 -- Blocks in the enumeration are given in the order they are located
 -- in the codespace:
@@ -996,6 +998,7 @@ joinControl c = cp >= CodePoint 0x200C && cp <= CodePoint 0x200D
 -- (toEnum 0xfe58,"SMALL EM DASH")
 -- (toEnum 0xfe63,"SMALL HYPHEN-MINUS")
 -- (toEnum 0xff0d,"FULLWIDTH HYPHEN-MINUS")
+-- (toEnum 0x10ead,"YEZIDI HYPHENATION MARK")
 --
 -- === Property type
 --
@@ -1201,11 +1204,11 @@ diacritic = withCP Di.retrieve
 -- (toEnum 0x2d1,"MODIFIER LETTER HALF TRIANGULAR COLON")
 -- (toEnum 0x640,"ARABIC TATWEEL")
 -- (toEnum 0x7fa,"NKO LAJANYALAN")
+-- (toEnum 0xb55,"ORIYA SIGN OVERLINE")
 -- (toEnum 0xe46,"THAI CHARACTER MAIYAMOK")
 -- (toEnum 0xec6,"LAO KO LA")
 -- (toEnum 0x180a,"MONGOLIAN NIRUGU")
 -- (toEnum 0x1843,"MONGOLIAN LETTER TODO LONG VOWEL SIGN")
--- (toEnum 0x1aa7,"TAI THAM SIGN MAI YAMOK")
 --
 -- === Property type
 --

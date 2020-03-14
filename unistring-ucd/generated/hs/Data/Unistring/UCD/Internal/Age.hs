@@ -22,8 +22,8 @@ retrieve :: Int -> Maybe Age
 {-# INLINE retrieve #-}
 retrieve cp = val
  where
-  i0 = fromEnum $ unsafeReadPtr layer_0 $ cp `shiftR` 11
-  i1 = fromEnum $ unsafeReadPtr layer_1 $ i0 `shiftL` 4 + (cp `shiftR` 7) .&. 0xf
-  i2 = fromEnum $ unsafeReadPtr layer_2 $ i1 `shiftL` 3 + (cp `shiftR` 4) .&. 0x7
+  i0 = fromEnum $ unsafeReadPtr layer_0 $ cp `shiftR` 12
+  i1 = fromEnum $ unsafeReadPtr layer_1 $ i0 `shiftL` 4 + (cp `shiftR` 8) .&. 0xf
+  i2 = fromEnum $ unsafeReadPtr layer_2 $ i1 `shiftL` 4 + (cp `shiftR` 4) .&. 0xf
   i3 = fromEnum $ unsafeReadPtr layer_3 $ i2 `shiftL` 3 + (cp `shiftR` 1) .&. 0x7
   val = let v = (unsafeReadPtr bottom $ i3 `shiftL` 1 + cp .&. 0x1) in if v == 0 then Nothing else Just (tagToEnum# (toInt# ((v - 1))) :: Age)
