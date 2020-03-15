@@ -172,9 +172,13 @@ tests =
         , 'equal2
         , 'equal3
         , 'equal4
+#ifdef MIN_VERSION_GLASGOW_HASKELL
+#if MIN_VERSION_GLASGOW_HASKELL(8, 2, 2, 0)
         , 'equal1E
         , 'equal2E
         , 'equal3E
+#endif
+#endif
         ] `allHaveNoneOfTypes`
         [ ''Sing
         , ''Known
@@ -559,6 +563,8 @@ equal4 ::
   -> Bool
 equal4 = equal
 
+#ifdef MIN_VERSION_GLASGOW_HASKELL
+#if MIN_VERSION_GLASGOW_HASKELL(8, 2, 2, 0)
 equal1E ::
      Sequence 'Storage.Native Allocator.Default 'Ownership.Slice 'Strictness.Strict 'Form.UTF8
   -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF16
@@ -582,3 +588,5 @@ _equal4E ::
   -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF8
   -> Bool
 _equal4E = equal
+#endif
+#endif
