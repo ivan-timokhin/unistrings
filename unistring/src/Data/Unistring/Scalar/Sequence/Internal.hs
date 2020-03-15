@@ -46,6 +46,7 @@ import Control.Monad.Trans.Class (lift)
 import Data.Foldable (traverse_)
 import qualified GHC.Exts as E
 import GHC.Types (SPEC(SPEC))
+import Data.Type.Equality ((:~:)(Refl), testEquality)
 
 import Data.Functor.Identity (Identity(runIdentity))
 import qualified Data.Unistring.Encoding.Form as EF
@@ -150,41 +151,66 @@ listToStream xs = Stream step xs
 
 type Streamer s = s -> Step s ScalarValue
 
-stream ::
-     (Known storage, Known ownership, Known strictness, Known encoding)
+stream
+  :: (Known storage, Known ownership, Known strictness, Known encoding)
   => Sequence storage allocator ownership strictness encoding
   -> Stream ScalarValue
-{-# INLINE stream #-}
-stream (Sequence s) =
-  case M.strictness s of
-    Strictness.SStrict ->
-      case M.ownership s of
-        Ownership.SSlice ->
-          let (M.SliceStrict slice) = s
-           in Stream streamSlice slice
-        Ownership.SFull ->
-          let (M.FullStrict array) = s
-           in Stream streamSlice (Slice.fromArray array)
-    Strictness.SLazy -> Stream streamLazy (Left s)
+{-# INLINE [0] stream #-}
+stream s = case strictness s of
+  Strictness.SStrict -> case ownership s of
+    Ownership.SSlice -> streamSlice s
+    Ownership.SFull  -> streamFull s
+  Strictness.SLazy -> streamLazy s
 
-streamSlice ::
+{-# RULES
+"stream -> streamSlice" stream = streamSlice
+"stream -> streamFull" stream = streamFull
+"stream -> streamLazy" stream = streamLazy
+  #-}
+
+streamSlice
+  :: (Known encoding, Known storage)
+  => Sequence
+       storage
+       allocator
+       'Ownership.Slice
+       'Strictness.Strict
+       encoding
+  -> Stream ScalarValue
+{-# INLINE streamSlice #-}
+streamSlice (Sequence (M.SliceStrict slice)) = Stream streamerSlice slice
+
+streamFull
+  :: (Known encoding, Known storage)
+  => Sequence storage allocator 'Ownership.Full 'Strictness.Strict encoding
+  -> Stream ScalarValue
+{-# INLINE streamFull #-}
+streamFull (Sequence (M.FullStrict array)) =
+  Stream streamerSlice (Slice.fromArray array)
+
+streamLazy :: (Known e, Known s, Known o) =>
+  Sequence s a o 'Strictness.Lazy e -> Stream ScalarValue
+{-# INLINE streamLazy #-}
+streamLazy (Sequence s) = Stream streamerLazy (Left s)
+
+streamerSlice ::
      (Known encoding, Known storage)
   => Streamer (Slice.Slice storage allocator (EF.CodeUnit encoding))
-{-# INLINE streamSlice #-}
-streamSlice slice
+{-# INLINE streamerSlice #-}
+streamerSlice slice
   | len == 0 = Done
   | otherwise =
-    let !(sv, slice') = streamSliceNE slice
+    let !(sv, slice') = streamerSliceNE slice
      in Yield sv slice'
   where
     len = Slice.size slice
 
-streamSliceNE ::
+streamerSliceNE ::
      (Known encoding, Known storage)
   => Slice.Slice storage allocator (EF.CodeUnit encoding)
   -> (ScalarValue, Slice.Slice storage allocator (EF.CodeUnit encoding))
-{-# INLINE streamSliceNE #-}
-streamSliceNE slice =
+{-# INLINE streamerSliceNE #-}
+streamerSliceNE slice =
   case Slice.storage slice of
     Storage.SNative ->
       let !(Slice.NativeSlice (Array.NArray arr) offset len) = slice
@@ -198,14 +224,14 @@ streamSliceNE slice =
             (shift, sv) <- EFI.uncheckedDecode ptr 0
             pure (sv, Slice.sliceUnchecked shift (len - shift) slice)
 
-streamLazy ::
+streamerLazy ::
      (Known e, Known s, Known o)
   => Streamer (Either
                (M.Sequence s a o 'Strictness.Lazy (EF.CodeUnit e))
                ( Slice.Slice s a (EF.CodeUnit e)
                , M.Sequence s a o 'Strictness.Lazy (EF.CodeUnit e)))
-{-# INLINE streamLazy #-}
-streamLazy (Left chunks) =
+{-# INLINE streamerLazy #-}
+streamerLazy (Left chunks) =
   case M.unconsChunk chunks of
     Nothing -> Done
     Just (chunk, rest) ->
@@ -215,10 +241,10 @@ streamLazy (Left chunks) =
         Ownership.SFull
           | M.FullStrict array <- chunk ->
             Skip $ Right (Slice.fromArray array, rest)
-streamLazy (Right (slice, rest))
+streamerLazy (Right (slice, rest))
   | Slice.size slice == 0 = Skip $ Left rest
   | otherwise =
-    let (!sv, !slice') = streamSliceNE slice
+    let (!sv, !slice') = streamerSliceNE slice
      in Yield sv $ Right (slice', rest)
 
 unstreamLazy ::
@@ -280,13 +306,41 @@ equal ::
      , Known storage2
      , Known ownership2
      , Known strictness2
-     , Known encoding
+     , Known encoding1
+     , Known encoding2
      )
-  => Sequence storage1 allocator1 ownership1 strictness1 encoding
-  -> Sequence storage2 allocator2 ownership2 strictness2 encoding
+  => Sequence storage1 allocator1 ownership1 strictness1 encoding1
+  -> Sequence storage2 allocator2 ownership2 strictness2 encoding2
   -> Bool
-{-# INLINEABLE equal #-}
-equal x y = representation x `M.equal` representation y
+{-# INLINEABLE[0] equal #-}
+equal x y =
+  case encodingForm x `testEquality` encodingForm y of
+    Just Refl -> representation x `M.equal` representation y
+    Nothing -> stream x `equalStream` stream y
+
+{-# RULES
+"equal on representation"
+  equal = \x y -> representation x `M.equal` representation y
+"equal on streams"[1]
+  equal = \x y -> stream x `equalStream` stream y
+  #-}
+
+equalStream :: Eq a => Stream a -> Stream a -> Bool
+{-# INLINE equalStream #-}
+equalStream (Stream stepX sX0) (Stream stepY sY0) = go SPEC sX0 sY0
+ where
+  go !sPEC sX !sY = case stepX sX of
+    Yield x sX' -> goY sPEC x sX' sY
+    Skip sX'    -> go sPEC sX' sY
+    Done        -> yNull sPEC sY
+  yNull !sPEC sY = case stepY sY of
+    Yield _ _ -> False
+    Done      -> True
+    Skip sY'  -> yNull sPEC sY'
+  goY !sPEC x !sX sY = case stepY sY of
+    Yield y sY' -> x == y && go sPEC sX sY'
+    Skip sY'    -> goY sPEC x sX sY'
+    Done        -> False
 
 instance (Known storage, Known ownership, Known strictness, Known encoding) =>
          Eq (Sequence storage allocator ownership strictness encoding) where

@@ -263,44 +263,47 @@ equal ::
   => Array storage1 alloc1 a
   -> Array storage2 alloc2 a
   -> Bool
-{-# INLINEABLE equal #-}
+{-# INLINEABLE[0] equal #-}
 equal x y =
   case (storage x, storage y) of
-    (SNative, SNative) -> nativeEq (getNArray x) (getNArray y)
-    (SForeign, SForeign) -> foreignEq (getFArray x) (getFArray y)
-    (SNative, SForeign) -> mixedEq (getNArray x) (getFArray y)
-    (SForeign, SNative) -> mixedEq (getNArray y) (getFArray x)
-  where
-    nativeEq :: NativeArray a -> NativeArray a -> Bool
-    {-# INLINE nativeEq #-}
-    nativeEq x' y' =
-      let !(NativeArray x#) = x'
-          !(NativeArray y#) = y'
-          !xn = Operations.sizeOfByteArray x#
-          !yn = Operations.sizeOfByteArray y#
-       in xn == yn && (Operations.compareBytesNative x# y# xn == 0)
-    foreignEq :: Primitive a => ForeignArray a -> ForeignArray a -> Bool
-    {-# INLINE foreignEq #-}
-    foreignEq x' y' =
-      let !(ForeignArray xfptr xlen) = x'
-          !(ForeignArray yfptr ylen) = y'
-       in xlen == ylen &&
-          readOnlyPerformIO
-            (withForeignPtr xfptr $ \xptr ->
-               withForeignPtr yfptr $ \yptr ->
-                 (== 0) <$>
-                 Operations.compareBytesForeign xptr yptr (P.uncheckedInBytes xlen))
-    mixedEq :: Primitive a => NativeArray a -> ForeignArray a -> Bool
-    {-# INLINE mixedEq #-}
-    mixedEq x' y' =
-      let !(NativeArray x#) = x'
-          !(ForeignArray yfptr ylen) = y'
-          !xb = Operations.sizeOfByteArray x#
-          !yb = P.uncheckedInBytes ylen
-       in xb == yb &&
-          readOnlyPerformIO
-            (withForeignPtr yfptr $ \yptr ->
-               (== 0) <$> Operations.compareBytesMixed x# yptr xb)
+    (SNative, SNative) -> nativeEq x y
+    (SForeign, SForeign) -> foreignEq x y
+    (SNative, SForeign) -> mixedEq x y
+    (SForeign, SNative) -> mixedEq y x
+
+{-# RULES
+"equal -> nativeEq"     equal = nativeEq
+"equal -> foreignEq"    equal = foreignEq
+"equal -> mixedEq"      equal = mixedEq
+"equal -> flip mixedEq" equal = flip mixedEq
+  #-}
+
+nativeEq :: Array 'Native al a -> Array 'Native al' a -> Bool
+{-# INLINABLE nativeEq #-}
+nativeEq (NArray (NativeArray x#)) (NArray (NativeArray y#)) =
+  let !xn = Operations.sizeOfByteArray x#
+      !yn = Operations.sizeOfByteArray y#
+  in  xn == yn && (Operations.compareBytesNative x# y# xn == 0)
+
+foreignEq
+  :: Primitive a => Array 'Foreign al a -> Array 'Foreign al' a -> Bool
+{-# INLINABLE foreignEq #-}
+foreignEq (FArray (ForeignArray xfptr xlen)) (FArray (ForeignArray yfptr ylen))
+  = xlen == ylen && readOnlyPerformIO
+    (withForeignPtr xfptr $ \xptr -> withForeignPtr yfptr $ \yptr ->
+      (== 0)
+        <$> Operations.compareBytesForeign xptr yptr (P.uncheckedInBytes xlen)
+    )
+
+mixedEq :: Primitive a => Array 'Native al a -> Array 'Foreign al' a -> Bool
+{-# INLINABLE mixedEq #-}
+mixedEq (NArray (NativeArray x#)) (FArray (ForeignArray yfptr ylen)) =
+  let !xb = Operations.sizeOfByteArray x#
+      !yb = P.uncheckedInBytes ylen
+  in  xb == yb && readOnlyPerformIO
+        ( withForeignPtr yfptr
+        $ \yptr -> (== 0) <$> Operations.compareBytesMixed x# yptr xb
+        )
 
 convert ::
      ( Known storage

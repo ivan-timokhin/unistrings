@@ -245,13 +245,20 @@ equal ::
      => Sequence storage1 allocator1 ownership1 strictness1 a
      -> Sequence storage2 allocator2 ownership2 strictness2 a
      -> Bool
-{-# INLINEABLE equal #-}
+{-# INLINEABLE[0] equal #-}
 equal s1 s2 =
   case (strictness s1, strictness s2) of
     (Strictness.SStrict, Strictness.SStrict) -> s1 `equalStrict` s2
     (Strictness.SStrict, Strictness.SLazy) -> s1 `equalMixed` s2
     (Strictness.SLazy, Strictness.SStrict) -> s2 `equalMixed` s1
     (Strictness.SLazy, Strictness.SLazy) -> s1 `equalLazy` s2
+
+{-# RULES
+"equal -> equalStrict" equal = equalStrict
+"equal -> equalMixed" equal = equalMixed
+"equal -> flip equalMixed" equal = flip equalMixed
+"equal -> equalLazy" equal = equalLazy
+  #-}
 
 equalStrict ::
      ( Known storage1

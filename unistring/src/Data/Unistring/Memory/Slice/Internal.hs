@@ -94,54 +94,63 @@ equal ::
   => Slice storage1 allocator1 a
   -> Slice storage2 allocator2 a
   -> Bool
-{-# INLINEABLE equal #-}
+{-# INLINEABLE[0] equal #-}
 equal x y =
   case (storage x, storage y) of
     (SNative, SNative) -> nativeEq x y
     (SForeign, SForeign) -> foreignEq x y
     (SNative, SForeign) -> mixedEq x y
     (SForeign, SNative) -> mixedEq y x
-  where
-    nativeEq ::
-         Primitive a
-      => Slice 'Storage.Native allocator1 a
-      -> Slice 'Storage.Native allocator2 a
-      -> Bool
-    {-# INLINE nativeEq #-}
-    nativeEq
-      (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
-      (NativeSlice (Array.NArray (Array.NativeArray y#)) yoff ylen)
-      = xlen == ylen
-      && compareBytesSliceNative x# (uncheckedInBytes xoff)
-                                 y# (uncheckedInBytes yoff)
-                                 (uncheckedInBytes xlen) == 0
-    foreignEq ::
-         Primitive a
-      => Slice 'Storage.Foreign allocator1 a
-      -> Slice 'Storage.Foreign allocator2 a
-      -> Bool
-    {-# INLINE foreignEq #-}
-    foreignEq
-      (ForeignSlice (Array.FArray (Array.ForeignArray xfptr xlen)))
-      (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
-      = xlen == ylen
-      && readOnlyPerformIO
-           (withForeignPtr xfptr $ \xptr ->
-              withForeignPtr yfptr $ \yptr ->
-                (== 0) <$> compareBytesSliceForeign xptr yptr (uncheckedInBytes xlen))
-    mixedEq ::
-         Primitive a
-      => Slice 'Storage.Native allocator1 a
-      -> Slice 'Storage.Foreign allocator2 a
-      -> Bool
-    {-# INLINE mixedEq #-}
-    mixedEq
-      (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
-      (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
-      = xlen == ylen
-      && readOnlyPerformIO
-           (withForeignPtr yfptr $ \yptr ->
-              (== 0) <$> compareBytesSliceMixed x# (uncheckedInBytes xoff) yptr (uncheckedInBytes xlen))
+
+{-# RULES
+"equal -> nativeEq"     equal = nativeEq
+"equal -> foreignEq"    equal = foreignEq
+"equal -> mixedEq"      equal = mixedEq
+"equal -> flip mixedEq" equal = flip mixedEq
+  #-}
+
+nativeEq ::
+     Primitive a
+  => Slice 'Storage.Native allocator1 a
+  -> Slice 'Storage.Native allocator2 a
+  -> Bool
+{-# INLINE nativeEq #-}
+nativeEq
+  (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
+  (NativeSlice (Array.NArray (Array.NativeArray y#)) yoff ylen)
+  = xlen == ylen
+  && compareBytesSliceNative x# (uncheckedInBytes xoff)
+                             y# (uncheckedInBytes yoff)
+                             (uncheckedInBytes xlen) == 0
+
+foreignEq ::
+     Primitive a
+  => Slice 'Storage.Foreign allocator1 a
+  -> Slice 'Storage.Foreign allocator2 a
+  -> Bool
+{-# INLINE foreignEq #-}
+foreignEq
+  (ForeignSlice (Array.FArray (Array.ForeignArray xfptr xlen)))
+  (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
+  = xlen == ylen
+  && readOnlyPerformIO
+       (withForeignPtr xfptr $ \xptr ->
+          withForeignPtr yfptr $ \yptr ->
+            (== 0) <$> compareBytesSliceForeign xptr yptr (uncheckedInBytes xlen))
+
+mixedEq ::
+     Primitive a
+  => Slice 'Storage.Native allocator1 a
+  -> Slice 'Storage.Foreign allocator2 a
+  -> Bool
+{-# INLINE mixedEq #-}
+mixedEq
+  (NativeSlice (Array.NArray (Array.NativeArray x#)) xoff xlen)
+  (ForeignSlice (Array.FArray (Array.ForeignArray yfptr ylen)))
+  = xlen == ylen
+  && readOnlyPerformIO
+       (withForeignPtr yfptr $ \yptr ->
+          (== 0) <$> compareBytesSliceMixed x# (uncheckedInBytes xoff) yptr (uncheckedInBytes xlen))
 
 fromArray ::
      (Primitive a, Known storage)

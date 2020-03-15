@@ -172,6 +172,10 @@ tests =
         , 'equal2
         , 'equal3
         , 'equal4
+        , 'equal1E
+        , 'equal2E
+        , 'equal3E
+        , 'equal4E
         ] `allHaveNoneOfTypes`
         [ ''Sing
         , ''Known
@@ -179,6 +183,7 @@ tests =
         , ''Step
         , ''Primitive
         , ''ScalarValue
+        , ''Either
         ])
   ]
 
@@ -531,25 +536,49 @@ alphabetForeignPinnedSliceLazyUTF8 =
   fromListN 26 $ map (ScalarValue . toCodePoint) ['a' .. 'z']
 
 equal1 ::
-     Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Strict 'Form.UTF8
-  -> Sequence 'Storage.Foreign a2 'Ownership.Full 'Strictness.Lazy 'Form.UTF8
+     Sequence 'Storage.Native Allocator.Default 'Ownership.Slice 'Strictness.Strict 'Form.UTF8
+  -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF8
   -> Bool
 equal1 = equal
 
 equal2 ::
-     Sequence 'Storage.Native a1 'Ownership.Full 'Strictness.Strict 'Form.UTF32
-  -> Sequence 'Storage.Native a2 'Ownership.Slice 'Strictness.Strict 'Form.UTF32
+     Sequence 'Storage.Native Allocator.Default 'Ownership.Full 'Strictness.Strict 'Form.UTF32
+  -> Sequence 'Storage.Native Allocator.Unknown 'Ownership.Slice 'Strictness.Strict 'Form.UTF32
   -> Bool
 equal2 = equal
 
 equal3 ::
-     Sequence 'Storage.Foreign a2 'Ownership.Slice 'Strictness.Lazy 'Form.UTF16
-  -> Sequence 'Storage.Native a1 'Ownership.Full 'Strictness.Strict 'Form.UTF16
+     Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Slice 'Strictness.Lazy 'Form.UTF16
+  -> Sequence 'Storage.Native Allocator.Default 'Ownership.Full 'Strictness.Strict 'Form.UTF16
   -> Bool
 equal3 = equal
 
 equal4 ::
-     Sequence 'Storage.Native a1 'Ownership.Slice 'Strictness.Lazy 'Form.UTF32
-  -> Sequence 'Storage.Foreign a2 'Ownership.Full 'Strictness.Lazy 'Form.UTF32
+     Sequence 'Storage.Native Allocator.Default 'Ownership.Slice 'Strictness.Lazy 'Form.UTF32
+  -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF32
   -> Bool
 equal4 = equal
+
+equal1E ::
+     Sequence 'Storage.Native Allocator.Default 'Ownership.Slice 'Strictness.Strict 'Form.UTF8
+  -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF16
+  -> Bool
+equal1E = equal
+
+equal2E ::
+     Sequence 'Storage.Native Allocator.Default 'Ownership.Full 'Strictness.Strict 'Form.UTF32
+  -> Sequence 'Storage.Native Allocator.Unknown 'Ownership.Slice 'Strictness.Strict 'Form.UTF8
+  -> Bool
+equal2E = equal
+
+equal3E ::
+     Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Slice 'Strictness.Lazy 'Form.UTF16
+  -> Sequence 'Storage.Native Allocator.Default 'Ownership.Full 'Strictness.Strict 'Form.UTF32
+  -> Bool
+equal3E = equal
+
+equal4E ::
+     Sequence 'Storage.Native Allocator.Default 'Ownership.Slice 'Strictness.Lazy 'Form.UTF32
+  -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF8
+  -> Bool
+equal4E = equal
