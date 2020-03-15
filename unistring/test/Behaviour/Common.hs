@@ -59,10 +59,11 @@ instance ( Known storage1
          , Known ownership2
          , Known strictness1
          , Known strictness2
-         , Known encoding
+         , Known encoding1
+         , Known encoding2
          ) =>
-         Eqv (SSequence.Sequence storage1 allocator1 ownership1 strictness1 encoding)
-             (SSequence.Sequence storage2 allocator2 ownership2 strictness2 encoding) where
+         Eqv (SSequence.Sequence storage1 allocator1 ownership1 strictness1 encoding1)
+             (SSequence.Sequence storage2 allocator2 ownership2 strictness2 encoding2) where
   eqv = SSequence.equal
 
 (~~~) :: (Eqv a b, Show a, Show b) => a -> b -> Property

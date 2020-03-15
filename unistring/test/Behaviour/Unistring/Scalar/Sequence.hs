@@ -63,13 +63,13 @@ tests =
   , testGroup "Equality" $
     let test :: [TestTree]
         test =
-          [ testProperty "Equal" $ \(SomeSequenceType st) sl ->
-              let s1 = fromList (getScalarList sl) `asSequenceType` st
-                  s2 = fromList (getScalarList sl) `asSequenceType` st
+          [ testProperty "Equal" $ \(SomeSequenceType st1) (SomeSequenceType st2) sl ->
+              let s1 = fromList (getScalarList sl) `asSequenceType` st1
+                  s2 = fromList (getScalarList sl) `asSequenceType` st2
                in s1 ~~~ s2
-          , testProperty "Random" $ \(SomeSequenceType st) sl1 sl2 ->
-              let s1 = fromList (getScalarList sl1) `asSequenceType` st
-                  s2 = fromList (getScalarList sl2) `asSequenceType` st
+          , testProperty "Random" $ \(SomeSequenceType st1) (SomeSequenceType st2) sl1 sl2 ->
+              let s1 = fromList (getScalarList sl1) `asSequenceType` st1
+                  s2 = fromList (getScalarList sl2) `asSequenceType` st2
                in if sl1 == sl2
                     then s1 ~~~ s2
                     else s1 ~/~ s2
