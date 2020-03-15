@@ -299,6 +299,7 @@ unstreamLazy' step = loopStart SPEC
                     Yield !sv s'' -> go1 sPEC' offset s'' sv
             go1 sPEC 0 s sv0
 
+-- Note: Heterogeneous equality of lazy sequences likely slow.
 equal ::
      ( Known storage1
      , Known ownership1
@@ -337,7 +338,7 @@ equalStream (Stream stepX sX0) (Stream stepY sY0) = go SPEC sX0 sY0
     Yield _ _ -> False
     Done      -> True
     Skip sY'  -> yNull sPEC sY'
-  goY !sPEC x !sX sY = case stepY sY of
+  goY !sPEC !x !sX sY = case stepY sY of
     Yield y sY' -> x == y && go sPEC sX sY'
     Skip sY'    -> goY sPEC x sX sY'
     Done        -> False

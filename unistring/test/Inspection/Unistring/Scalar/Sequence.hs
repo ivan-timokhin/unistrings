@@ -175,7 +175,6 @@ tests =
         , 'equal1E
         , 'equal2E
         , 'equal3E
-        , 'equal4E
         ] `allHaveNoneOfTypes`
         [ ''Sing
         , ''Known
@@ -184,6 +183,7 @@ tests =
         , ''Primitive
         , ''ScalarValue
         , ''Either
+        , ''(,)
         ])
   ]
 
@@ -577,8 +577,8 @@ equal3E ::
   -> Bool
 equal3E = equal
 
-equal4E ::
+_equal4E ::
      Sequence 'Storage.Native Allocator.Default 'Ownership.Slice 'Strictness.Lazy 'Form.UTF32
   -> Sequence 'Storage.Foreign Allocator.Unknown 'Ownership.Full 'Strictness.Lazy 'Form.UTF8
   -> Bool
-equal4E = equal
+_equal4E = equal
