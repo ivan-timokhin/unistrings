@@ -83,9 +83,13 @@ tests =
             , ''Known
             , ''Sing
             , ''Primitive
+#ifdef MIN_VERSION_GLASGOW_HASKELL
+#if MIN_VERSION_GLASGOW_HASKELL(8, 6, 1, 0)
             , ''IO
             , ''Either
             , ''(,)
+#endif
+#endif
             ])
       , testGroup
           "fromListN"
